@@ -124,6 +124,9 @@ using (var scope = app.Services.CreateScope())
 
         // Crear usuario admin si no existe
         InicializarUsuarioAdmin.CrearAdminSiNoExiste(dbContext, logger);
+        
+        // Poblar datos de San Carlos
+        await SeedSanCarlos.SeedAsync(dbContext);
     }
     catch (Exception ex)
     {
