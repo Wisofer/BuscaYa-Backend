@@ -14,17 +14,20 @@ public class PublicController : ControllerBase
     private readonly ITiendaService _tiendaService;
     private readonly ICategoriaService _categoriaService;
     private readonly IAnalyticsService _analyticsService;
+    private readonly IProductoService _productoService;
 
     public PublicController(
         IBusquedaService busquedaService,
         ITiendaService tiendaService,
         ICategoriaService categoriaService,
-        IAnalyticsService analyticsService)
+        IAnalyticsService analyticsService,
+        IProductoService productoService)
     {
         _busquedaService = busquedaService;
         _tiendaService = tiendaService;
         _categoriaService = categoriaService;
         _analyticsService = analyticsService;
+        _productoService = productoService;
     }
 
     [HttpGet("buscar")]
@@ -62,12 +65,58 @@ public class PublicController : ControllerBase
     }
 
     [HttpGet("producto/{id}")]
-    public IActionResult ObtenerProducto(int id)
+    public IActionResult ObtenerProducto(int id, [FromQuery] decimal? lat, [FromQuery] decimal? lng)
     {
         try
         {
-            // Implementar si es necesario
-            return Ok(new { mensaje = "Endpoint en desarrollo" });
+            var producto = _productoService.ObtenerPorId(id);
+            
+            if (producto == null || !producto.Activo)
+                return NotFound(new { error = "Producto no encontrado" });
+
+            if (producto.Tienda == null || !producto.Tienda.Activo)
+                return NotFound(new { error = "Tienda no encontrada o inactiva" });
+
+            // Calcular distancia si se proporcionan coordenadas
+            double? distancia = null;
+            if (lat.HasValue && lng.HasValue)
+            {
+                distancia = GeolocationHelper.CalcularDistanciaKm(
+                    lat.Value, lng.Value,
+                    producto.Tienda.Latitud, producto.Tienda.Longitud);
+            }
+
+            // Mapear a ProductoResponse
+            var response = new ProductoResponse
+            {
+                Id = producto.Id,
+                Nombre = producto.Nombre,
+                Descripcion = producto.Descripcion,
+                Precio = producto.Precio,
+                Moneda = producto.Moneda,
+                FotoUrl = producto.FotoUrl,
+                Tienda = new TiendaInfoResponse
+                {
+                    Id = producto.Tienda.Id,
+                    Nombre = producto.Tienda.Nombre,
+                    Direccion = producto.Tienda.Direccion,
+                    Ciudad = producto.Tienda.Ciudad,
+                    WhatsApp = producto.Tienda.WhatsApp,
+                    Telefono = producto.Tienda.Telefono,
+                    LogoUrl = producto.Tienda.LogoUrl,
+                    Latitud = producto.Tienda.Latitud,
+                    Longitud = producto.Tienda.Longitud
+                },
+                Categoria = new CategoriaInfoResponse
+                {
+                    Id = producto.Categoria.Id,
+                    Nombre = producto.Categoria.Nombre,
+                    Icono = producto.Categoria.Icono
+                },
+                DistanciaKm = distancia
+            };
+
+            return Ok(response);
         }
         catch (Exception ex)
         {

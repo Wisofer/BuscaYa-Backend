@@ -863,6 +863,7 @@ Todo completamente gratis 🎉
 ### 🔓 Públicos (Sin autenticación)
 - `GET /api/public/buscar` - Buscar productos
 - `GET /api/public/tienda/{id}` - Ver detalles de tienda
+- `GET /api/public/producto/{id}` - Ver detalle de producto
 - `GET /api/public/categorias` - Obtener categorías activas
 - `GET /api/public/sugerencias` - Obtener sugerencias de búsqueda
 - `POST /api/public/analytics/evento` - Registrar evento de analytics
@@ -1040,7 +1041,83 @@ GET /api/public/tienda/3?lat=11.123&lng=-84.456
 
 ---
 
-#### 3. Obtener Categorías Activas
+#### 3. Obtener Detalle de Producto
+```
+GET /api/public/producto/{id}
+```
+
+**Query Parameters:**
+- `id` (int, requerido) - ID del producto
+- `lat` (decimal, opcional) - Latitud del usuario (para calcular distancia)
+- `lng` (decimal, opcional) - Longitud del usuario (para calcular distancia)
+
+**Ejemplo de Request:**
+```
+GET /api/public/producto/5?lat=11.123&lng=-84.456
+```
+
+**Response (200 OK):**
+```json
+{
+  "id": 5,
+  "nombre": "Zapatos Nike Air Max",
+  "descripcion": "Zapatos deportivos Nike Air Max, talla 42",
+  "precio": 2500.00,
+  "moneda": "C$",
+  "fotoUrl": "https://...",
+  "tienda": {
+    "id": 3,
+    "nombre": "La Esquinita",
+    "direccion": "Calle Principal #45",
+    "ciudad": "San Carlos",
+    "whatsApp": "50587654321",
+    "telefono": "50587654321",
+    "logoUrl": "https://...",
+    "latitud": 11.125,
+    "longitud": -84.458
+  },
+  "categoria": {
+    "id": 2,
+    "nombre": "Zapatos",
+    "icono": "👟"
+  },
+  "distanciaKm": 2.3
+}
+```
+
+**Errores:**
+- `404` - Producto no encontrado o inactivo / Tienda no encontrada o inactiva
+- `500` - Error del servidor
+
+**Nota:** 
+- Si se proporcionan `lat` y `lng`, se calcula la distancia en kilómetros desde la ubicación del usuario hasta la tienda.
+- Si no se proporcionan coordenadas, `distanciaKm` será `null`.
+- Este endpoint es público y no requiere autenticación.
+
+**Ejemplo de uso en JavaScript:**
+```javascript
+// Obtener detalle de producto con distancia
+const productoId = 5;
+const lat = 11.123;
+const lng = -84.456;
+
+fetch(`https://api.buscaya.com/api/public/producto/${productoId}?lat=${lat}&lng=${lng}`)
+  .then(response => response.json())
+  .then(data => {
+    console.log('Producto:', data.nombre);
+    console.log('Precio:', data.precio, data.moneda);
+    console.log('Tienda:', data.tienda.nombre);
+    console.log('Distancia:', data.distanciaKm, 'km');
+    console.log('WhatsApp:', data.tienda.whatsApp);
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+```
+
+---
+
+#### 4. Obtener Categorías Activas
 ```
 GET /api/public/categorias
 ```
@@ -1067,7 +1144,7 @@ GET /api/public/categorias
 
 ---
 
-#### 4. Obtener Sugerencias de Búsqueda
+#### 5. Obtener Sugerencias de Búsqueda
 ```
 GET /api/public/sugerencias
 ```
@@ -1092,7 +1169,7 @@ GET /api/public/sugerencias?termino=zapa&limite=5
 
 ---
 
-#### 5. Registrar Evento de Analytics
+#### 6. Registrar Evento de Analytics
 ```
 POST /api/public/analytics/evento
 ```
