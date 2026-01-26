@@ -77,7 +77,7 @@ public static class SecurityHelper
         var rol = GetUserRole(user);
         return rol switch
         {
-            SD.RolAdministrador => "/",
+            SD.RolAdministrador => "/admin/dashboard",
             SD.RolTiendaOwner => "/",
             SD.RolCliente => "/",
             _ => "/login"

@@ -77,10 +77,76 @@ public class AuthApiController : ControllerBase
     [HttpPost("register")]
     public IActionResult Register([FromBody] RegisterRequest request)
     {
-        // Por ahora solo permitir registro de clientes
-        // Los dueños de tienda y admin se crean desde el panel admin
-        return BadRequest(new { error = "Registro no disponible. Contacta al administrador." });
+        try
+        {
+            // Validar campos requeridos
+            if (string.IsNullOrWhiteSpace(request.NombreUsuario) || 
+                string.IsNullOrWhiteSpace(request.Contrasena) || 
+                string.IsNullOrWhiteSpace(request.NombreCompleto))
+            {
+                return BadRequest(new { error = "El nombre de usuario, contraseña y nombre completo son requeridos" });
+            }
+
+            // Validar que el nombre de usuario no exista
+            if (_authService.ExisteNombreUsuario(request.NombreUsuario))
+            {
+                return BadRequest(new { error = "El nombre de usuario ya está en uso" });
+            }
+
+            // Registrar cliente
+            var usuario = _authService.RegistrarCliente(
+                request.NombreUsuario,
+                request.Contrasena,
+                request.NombreCompleto,
+                request.Telefono,
+                request.Email
+            );
+
+            if (usuario == null)
+            {
+                return BadRequest(new { error = "Error al crear la cuenta" });
+            }
+
+            // Generar token JWT automáticamente después del registro
+            var jwtSettings = _configuration.GetSection("JwtSettings");
+            var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey no configurada");
+            var issuer = jwtSettings["Issuer"] ?? "BuscaYa";
+            var audience = jwtSettings["Audience"] ?? "BuscaYaUsers";
+            var expirationMinutes = int.Parse(jwtSettings["ExpirationInMinutes"] ?? "60");
+
+            var token = JwtHelper.GenerateToken(
+                usuario.Id,
+                usuario.NombreUsuario,
+                usuario.Rol,
+                usuario.NombreCompleto,
+                secretKey,
+                issuer,
+                audience,
+                expirationMinutes
+            );
+
+            return Ok(new LoginResponse
+            {
+                Token = token,
+                Usuario = new UsuarioInfoResponse
+                {
+                    Id = usuario.Id,
+                    NombreUsuario = usuario.NombreUsuario,
+                    NombreCompleto = usuario.NombreCompleto,
+                    Rol = usuario.Rol,
+                    Email = usuario.Email,
+                    Telefono = usuario.Telefono,
+                    TiendaId = usuario.TiendaId
+                },
+                ExpiraEn = expirationMinutes
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error al registrar usuario", mensaje = ex.Message });
+        }
     }
+
 }
 
 public class LoginRequest
@@ -97,6 +163,7 @@ public class RegisterRequest
     public string? Email { get; set; }
     public string? Telefono { get; set; }
 }
+
 
 public class LoginResponse
 {

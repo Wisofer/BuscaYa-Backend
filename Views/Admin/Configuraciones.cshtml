@@ -1,0 +1,117 @@
+@{
+    ViewData["Title"] = "Configuraciones";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div>
+        <div class="card bg-base-100 shadow-lg">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="bi bi-tags"></i>
+                    Categorías
+                </h2>
+
+                <form method="post" action="/admin/configuraciones/categoria" class="mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                        <div class="md:col-span-2">
+                            <input type="text" name="nombre" class="input input-bordered w-full" placeholder="Nombre de categoría" required>
+                        </div>
+                        <div>
+                            <input type="text" name="icono" class="input input-bordered w-full" placeholder="Icono (emoji)">
+                        </div>
+                        <div>
+                            <button type="submit" class="btn btn-primary w-full">
+                                <i class="bi bi-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Icono</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var categoria in ViewBag.Categorias)
+                            {
+                                <tr>
+                                    <td>@categoria.Id</td>
+                                    <td class="font-bold">@categoria.Nombre</td>
+                                    <td>@(categoria.Icono ?? "-")</td>
+                                    <td>
+                                        @if (categoria.Activo)
+                                        {
+                                            <div class="badge badge-success">Activa</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="badge badge-error">Inactiva</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (categoria.Activo)
+                                        {
+                                            <form method="post" action="/admin/configuraciones/categoria/@categoria.Id/desactivar" class="inline">
+                                                <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('¿Desactivar esta categoría?')">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form method="post" action="/admin/configuraciones/categoria/@categoria.Id/activar" class="inline">
+                                                <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('¿Activar esta categoría?')">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card bg-base-100 shadow-lg">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="bi bi-info-circle"></i>
+                    Información del Sistema
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <div class="text-sm text-base-content/70">Versión</div>
+                        <div class="text-xl font-bold">1.0.0</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-base-content/70">Ambiente</div>
+                        <div class="text-xl font-bold">Producción</div>
+                    </div>
+                    <div class="divider"></div>
+                    <div>
+                        <h3 class="font-bold mb-2">Endpoints API</h3>
+                        <ul class="list-disc list-inside space-y-1 text-sm">
+                            <li><code class="bg-base-200 px-1 rounded">/api/public/*</code> - Endpoints públicos</li>
+                            <li><code class="bg-base-200 px-1 rounded">/api/auth/*</code> - Autenticación</li>
+                            <li><code class="bg-base-200 px-1 rounded">/api/cliente/*</code> - Clientes</li>
+                            <li><code class="bg-base-200 px-1 rounded">/api/tienda/*</code> - Tiendas</li>
+                            <li><code class="bg-base-200 px-1 rounded">/api/admin/*</code> - Administración</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

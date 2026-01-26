@@ -1,0 +1,130 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    <div class="stat bg-base-100 shadow-lg rounded-lg">
+        <div class="stat-figure text-primary">
+            <i class="bi bi-people text-4xl"></i>
+        </div>
+        <div class="stat-title">Total Usuarios</div>
+        <div class="stat-value text-primary">@ViewBag.TotalUsuarios</div>
+    </div>
+
+    <div class="stat bg-base-100 shadow-lg rounded-lg">
+        <div class="stat-figure text-success">
+            <i class="bi bi-person-check text-4xl"></i>
+        </div>
+        <div class="stat-title">Clientes</div>
+        <div class="stat-value text-success">@ViewBag.TotalClientes</div>
+    </div>
+
+    <div class="stat bg-base-100 shadow-lg rounded-lg">
+        <div class="stat-figure text-warning">
+            <i class="bi bi-shop text-4xl"></i>
+        </div>
+        <div class="stat-title">Tiendas</div>
+        <div class="stat-value text-warning">@ViewBag.TotalTiendas</div>
+        <div class="stat-desc">@ViewBag.TiendasActivas activas</div>
+    </div>
+
+    <div class="stat bg-base-100 shadow-lg rounded-lg">
+        <div class="stat-figure text-error">
+            <i class="bi bi-box-seam text-4xl"></i>
+        </div>
+        <div class="stat-title">Productos</div>
+        <div class="stat-value text-error">@ViewBag.TotalProductos</div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        <div class="card bg-base-100 shadow-lg">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="bi bi-clock-history"></i>
+                    Usuarios Recientes
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra">
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Nombre</th>
+                                <th>Rol</th>
+                                <th>Tienda</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var usuario in ViewBag.UsuariosRecientes)
+                            {
+                                <tr>
+                                    <td class="font-bold">@usuario.NombreUsuario</td>
+                                    <td>@usuario.NombreCompleto</td>
+                                    <td>
+                                        <div class="badge badge-@(usuario.Rol == "Administrador" ? "error" : usuario.Rol == "TiendaOwner" ? "warning" : "primary")">
+                                            @usuario.Rol
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (usuario.TieneTienda)
+                                        {
+                                            <div class="badge badge-success">Sí</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="badge badge-ghost">No</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a href="/admin/usuarios/@usuario.Id" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-eye"></i> Ver
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card bg-base-100 shadow-lg">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="bi bi-bar-chart"></i>
+                    Resumen
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <span>Usuarios con Tienda</span>
+                            <strong>@ViewBag.UsuariosConTienda</strong>
+                        </div>
+                        <progress class="progress progress-primary" value="@(ViewBag.TotalUsuarios > 0 ? (ViewBag.UsuariosConTienda * 100 / ViewBag.TotalUsuarios) : 0)" max="100"></progress>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <span>Tiendas Activas</span>
+                            <strong>@ViewBag.TiendasActivas</strong>
+                        </div>
+                        <progress class="progress progress-success" value="@(ViewBag.TotalTiendas > 0 ? (ViewBag.TiendasActivas * 100 / ViewBag.TotalTiendas) : 0)" max="100"></progress>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div class="card-actions justify-center">
+                    <a href="/admin/usuarios" class="btn btn-primary w-full">
+                        <i class="bi bi-people"></i> Ver Todos los Usuarios
+                    </a>
+                    <a href="/admin/tiendas" class="btn btn-outline btn-primary w-full">
+                        <i class="bi bi-shop"></i> Ver Todas las Tiendas
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

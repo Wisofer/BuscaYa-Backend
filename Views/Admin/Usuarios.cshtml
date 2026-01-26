@@ -1,0 +1,115 @@
+@{
+    ViewData["Title"] = "Usuarios";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="card bg-base-100 shadow-lg">
+    <div class="card-body">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="card-title">
+                <i class="bi bi-people"></i>
+                Gestión de Usuarios
+            </h2>
+            <div class="badge badge-primary badge-lg">Total: @ViewBag.Total</div>
+        </div>
+
+        <form method="get" class="mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="label">
+                        <span class="label-text">Filtrar por Rol</span>
+                    </label>
+                    <select name="rol" class="select select-bordered w-full">
+                        <option value="Todos" selected="@(ViewBag.RolFiltro == "Todos")">Todos</option>
+                        <option value="Cliente" selected="@(ViewBag.RolFiltro == "Cliente")">Cliente</option>
+                        <option value="TiendaOwner" selected="@(ViewBag.RolFiltro == "TiendaOwner")">Tienda Owner</option>
+                        <option value="Administrador" selected="@(ViewBag.RolFiltro == "Administrador")">Administrador</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="label">
+                        <span class="label-text">Buscar</span>
+                    </label>
+                    <input type="text" name="busqueda" class="input input-bordered w-full" value="@ViewBag.Busqueda" placeholder="Nombre, usuario o email...">
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="btn btn-primary w-full">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div class="overflow-x-auto">
+            <table class="table table-zebra">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Usuario</th>
+                        <th>Nombre Completo</th>
+                        <th>Rol</th>
+                        <th>Email</th>
+                        <th>Teléfono</th>
+                        <th>Tienda</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var usuario in ViewBag.Usuarios)
+                    {
+                        <tr>
+                            <td>@usuario.Id</td>
+                            <td class="font-bold">@usuario.NombreUsuario</td>
+                            <td>@usuario.NombreCompleto</td>
+                            <td>
+                                <div class="badge badge-@(usuario.Rol == "Administrador" ? "error" : usuario.Rol == "TiendaOwner" ? "warning" : "primary")">
+                                    @usuario.Rol
+                                </div>
+                            </td>
+                            <td>@(usuario.Email ?? "-")</td>
+                            <td>@(usuario.Telefono ?? "-")</td>
+                            <td>
+                                @if (usuario.TiendaId != null)
+                                {
+                                    <div class="badge badge-success">@usuario.TiendaNombre</div>
+                                }
+                                else
+                                {
+                                    <div class="badge badge-ghost">Sin tienda</div>
+                                }
+                            </td>
+                            <td>
+                                @if (usuario.Activo)
+                                {
+                                    <div class="badge badge-success">Activo</div>
+                                }
+                                else
+                                {
+                                    <div class="badge badge-error">Inactivo</div>
+                                }
+                            </td>
+                            <td>
+                                <a href="/admin/usuarios/@usuario.Id" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-eye"></i> Ver
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (ViewBag.TotalPaginas > 1)
+        {
+            <div class="flex justify-center mt-6">
+                <div class="join">
+                    @for (int i = 1; i <= ViewBag.TotalPaginas; i++)
+                    {
+                        <a href="?pagina=@i&rol=@ViewBag.RolFiltro&busqueda=@ViewBag.Busqueda" class="join-item btn @(i == ViewBag.Pagina ? "btn-active" : "")">@i</a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

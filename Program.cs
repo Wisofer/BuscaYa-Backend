@@ -63,9 +63,9 @@ var audience = jwtSettings["Audience"] ?? "BuscaYaUsers";
 // Configurar Authentication con múltiples esquemas (Cookies para web, JWT para API)
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
     .AddCookie("Cookies", options =>
     {
@@ -162,9 +162,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // Configurar rutas
-app.MapControllers(); // Para API controllers
+// Mapear controladores con rutas absolutas (tanto MVC como API)
+app.MapControllers();
+
+// Ruta por defecto para controladores MVC con routing convencional
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Auth}/{action=Login}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();

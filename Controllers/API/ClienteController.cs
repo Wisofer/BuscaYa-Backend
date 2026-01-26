@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using BuscaYa.Data;
 using BuscaYa.Models.Entities;
+using BuscaYa.Services.IServices;
 using BuscaYa.Utils;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
@@ -14,10 +15,12 @@ namespace BuscaYa.Controllers.API;
 public class ClienteController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly IAuthService _authService;
 
-    public ClienteController(ApplicationDbContext context)
+    public ClienteController(ApplicationDbContext context, IAuthService authService)
     {
         _context = context;
+        _authService = authService;
     }
 
     private int? GetUserId()
@@ -227,6 +230,80 @@ public class ClienteController : ControllerBase
             return StatusCode(500, new { error = "Error al crear dirección", mensaje = ex.Message });
         }
     }
+
+    [HttpPost("crear-tienda")]
+    public IActionResult CrearTienda([FromBody] CrearTiendaRequest request)
+    {
+        try
+        {
+            var userId = GetUserId();
+            if (!userId.HasValue)
+                return Unauthorized(new { error = "Usuario no autenticado" });
+
+            // Obtener usuario actual
+            var usuario = _authService.ObtenerUsuarioPorId(userId.Value);
+            if (usuario == null)
+                return NotFound(new { error = "Usuario no encontrado" });
+
+            // Validar que sea Cliente (no puede crear tienda si ya es TiendaOwner)
+            if (usuario.Rol != SD.RolCliente)
+            {
+                return BadRequest(new { error = "Ya tienes una tienda asociada" });
+            }
+
+            // Validar campos requeridos de la tienda
+            if (string.IsNullOrWhiteSpace(request.NombreTienda) || 
+                string.IsNullOrWhiteSpace(request.WhatsAppTienda) || 
+                string.IsNullOrWhiteSpace(request.DireccionTienda) ||
+                string.IsNullOrWhiteSpace(request.Ciudad) ||
+                string.IsNullOrWhiteSpace(request.Departamento))
+            {
+                return BadRequest(new { error = "Los datos de la tienda son requeridos" });
+            }
+
+            // Convertir Cliente a TiendaOwner y crear tienda
+            var usuarioActualizado = _authService.ConvertirClienteATienda(
+                userId.Value,
+                request.NombreTienda,
+                request.DescripcionTienda,
+                request.TelefonoTienda,
+                request.WhatsAppTienda,
+                request.EmailTienda,
+                request.DireccionTienda,
+                request.Latitud,
+                request.Longitud,
+                request.Ciudad,
+                request.Departamento,
+                request.HorarioApertura,
+                request.HorarioCierre,
+                request.DiasAtencion,
+                request.LogoTienda,
+                request.FotoTienda
+            );
+
+            if (usuarioActualizado == null)
+            {
+                return BadRequest(new { error = "Error al crear la tienda. Verifica que no tengas una tienda ya asociada." });
+            }
+
+            return Ok(new
+            {
+                mensaje = "Tienda creada exitosamente",
+                usuario = new
+                {
+                    id = usuarioActualizado.Id,
+                    nombreUsuario = usuarioActualizado.NombreUsuario,
+                    nombreCompleto = usuarioActualizado.NombreCompleto,
+                    rol = usuarioActualizado.Rol,
+                    tiendaId = usuarioActualizado.TiendaId
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error al crear tienda", mensaje = ex.Message });
+        }
+    }
 }
 
 public class CrearDireccionRequest
@@ -236,4 +313,23 @@ public class CrearDireccionRequest
     public decimal Latitud { get; set; }
     public decimal Longitud { get; set; }
     public bool EsPrincipal { get; set; } = false;
+}
+
+public class CrearTiendaRequest
+{
+    public string NombreTienda { get; set; } = string.Empty;
+    public string? DescripcionTienda { get; set; }
+    public string? TelefonoTienda { get; set; }
+    public string WhatsAppTienda { get; set; } = string.Empty;
+    public string? EmailTienda { get; set; }
+    public string DireccionTienda { get; set; } = string.Empty;
+    public decimal Latitud { get; set; }
+    public decimal Longitud { get; set; }
+    public string Ciudad { get; set; } = string.Empty;
+    public string Departamento { get; set; } = string.Empty;
+    public TimeSpan? HorarioApertura { get; set; }
+    public TimeSpan? HorarioCierre { get; set; }
+    public string? DiasAtencion { get; set; }
+    public string? LogoTienda { get; set; }
+    public string? FotoTienda { get; set; }
 }

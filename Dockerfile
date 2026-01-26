@@ -17,6 +17,11 @@ RUN dotnet publish "BuscaYa.csproj" -c Release -o /app/publish --no-restore
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
 
+# Instalar wget para health check
+RUN apt-get update && \
+    apt-get install -y wget && \
+    rm -rf /var/lib/apt/lists/*
+
 # Configurar zona horaria (Nicaragua)
 ENV TZ=America/Managua
 ENV GENERIC_TIMEZONE=America/Managua
@@ -33,8 +38,8 @@ COPY --from=build /app/publish .
 # Exponer puerto
 EXPOSE 5000
 
-# Health check (opcional - requiere curl o wget instalado)
-# HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-#   CMD wget --no-verbose --tries=1 --spider http://localhost:5000/api/public/categorias || exit 1
+# Health check - verifica que la API esté respondiendo
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/api/public/categorias || exit 1
 
 ENTRYPOINT ["dotnet", "BuscaYa.dll"]

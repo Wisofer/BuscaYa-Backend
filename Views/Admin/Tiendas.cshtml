@@ -1,0 +1,117 @@
+@{
+    ViewData["Title"] = "Tiendas";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="card bg-base-100 shadow-lg">
+    <div class="card-body">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="card-title">
+                <i class="bi bi-shop"></i>
+                Gestión de Tiendas
+            </h2>
+            <div class="badge badge-primary badge-lg">Total: @ViewBag.Total</div>
+        </div>
+
+        <form method="get" class="mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="label">
+                        <span class="label-text">Ciudad</span>
+                    </label>
+                    <select name="ciudad" class="select select-bordered w-full">
+                        <option value="Todas" selected="@(ViewBag.CiudadFiltro == "Todas")">Todas</option>
+                        @foreach (var ciudad in ViewBag.Ciudades)
+                        {
+                            <option value="@ciudad" selected="@(ViewBag.CiudadFiltro == ciudad)">@ciudad</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="label">
+                        <span class="label-text">Estado</span>
+                    </label>
+                    <select name="activo" class="select select-bordered w-full">
+                        <option value="">Todos</option>
+                        <option value="true" selected="@(ViewBag.ActivoFiltro == true)">Activas</option>
+                        <option value="false" selected="@(ViewBag.ActivoFiltro == false)">Inactivas</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="label">
+                        <span class="label-text">Buscar</span>
+                    </label>
+                    <input type="text" name="busqueda" class="input input-bordered w-full" value="@ViewBag.Busqueda" placeholder="Nombre de tienda...">
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="btn btn-primary w-full">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div class="overflow-x-auto">
+            <table class="table table-zebra">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Ciudad</th>
+                        <th>Dueño</th>
+                        <th>Productos</th>
+                        <th>Plan</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var tienda in ViewBag.Tiendas)
+                    {
+                        <tr>
+                            <td>@tienda.Id</td>
+                            <td class="font-bold">@tienda.Nombre</td>
+                            <td>@tienda.Ciudad</td>
+                            <td>@tienda.UsuarioNombre</td>
+                            <td>
+                                <div class="badge badge-info">@tienda.TotalProductos</div>
+                            </td>
+                            <td>
+                                <div class="badge badge-@(tienda.Plan == "Pro" ? "warning" : "ghost")">
+                                    @tienda.Plan
+                                </div>
+                            </td>
+                            <td>
+                                @if (tienda.Activo)
+                                {
+                                    <div class="badge badge-success">Activa</div>
+                                }
+                                else
+                                {
+                                    <div class="badge badge-error">Inactiva</div>
+                                }
+                            </td>
+                            <td>
+                                <a href="/admin/tiendas/@tienda.Id" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-eye"></i> Ver
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (ViewBag.TotalPaginas > 1)
+        {
+            <div class="flex justify-center mt-6">
+                <div class="join">
+                    @for (int i = 1; i <= ViewBag.TotalPaginas; i++)
+                    {
+                        <a href="?pagina=@i&ciudad=@ViewBag.CiudadFiltro&activo=@ViewBag.ActivoFiltro&busqueda=@ViewBag.Busqueda" class="join-item btn @(i == ViewBag.Pagina ? "btn-active" : "")">@i</a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

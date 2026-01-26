@@ -1,0 +1,179 @@
+@{
+    ViewData["Title"] = "Detalle de Tienda";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var tienda = ViewBag.Tienda as dynamic;
+    var estadisticas = ViewBag.Estadisticas as dynamic;
+}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        <div class="card bg-base-100 shadow-lg">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="card-title">
+                        <i class="bi bi-shop"></i>
+                        Información de la Tienda
+                    </h2>
+                    <div class="flex gap-2">
+                        @if (tienda.Activo)
+                        {
+                            <div class="badge badge-success badge-lg">Activa</div>
+                        }
+                        else
+                        {
+                            <div class="badge badge-error badge-lg">Inactiva</div>
+                        }
+                        <div class="badge badge-@(tienda.Plan == "Pro" ? "warning" : "ghost") badge-lg">@tienda.Plan</div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th class="w-48">ID:</th>
+                                <td>@tienda.Id</td>
+                            </tr>
+                            <tr>
+                                <th>Nombre:</th>
+                                <td class="font-bold">@tienda.Nombre</td>
+                            </tr>
+                            <tr>
+                                <th>Descripción:</th>
+                                <td>@(tienda.Descripcion ?? "-")</td>
+                            </tr>
+                            <tr>
+                                <th>Dueño:</th>
+                                <td>
+                                    <a href="/admin/usuarios/@tienda.Usuario.Id" class="btn btn-sm btn-primary">
+                                        @tienda.Usuario.NombreUsuario
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Dirección:</th>
+                                <td>@tienda.Direccion, @tienda.Ciudad, @tienda.Departamento</td>
+                            </tr>
+                            <tr>
+                                <th>WhatsApp:</th>
+                                <td>@tienda.WhatsApp</td>
+                            </tr>
+                            <tr>
+                                <th>Email:</th>
+                                <td>@(tienda.Email ?? "-")</td>
+                            </tr>
+                            <tr>
+                                <th>Horario:</th>
+                                <td>@(tienda.HorarioApertura?.ToString(@"hh\:mm") ?? "-") - @(tienda.HorarioCierre?.ToString(@"hh\:mm") ?? "-")</td>
+                            </tr>
+                            <tr>
+                                <th>Productos:</th>
+                                <td>
+                                    <div class="badge badge-info badge-lg">@(tienda.Productos?.Count ?? 0) productos</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="divider"></div>
+                <div>
+                    <h3 class="font-bold mb-4">Acciones</h3>
+                    <div class="flex gap-2 flex-wrap">
+                        @if (tienda.Activo)
+                        {
+                            <form method="post" action="/admin/tiendas/@tienda.Id/desactivar" class="inline">
+                                <button type="submit" class="btn btn-warning" onclick="return confirm('¿Desactivar esta tienda?')">
+                                    <i class="bi bi-x-circle"></i> Desactivar
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form method="post" action="/admin/tiendas/@tienda.Id/activar" class="inline">
+                                <button type="submit" class="btn btn-success" onclick="return confirm('¿Activar esta tienda?')">
+                                    <i class="bi bi-check-circle"></i> Activar
+                                </button>
+                            </form>
+                        }
+                        <form method="post" action="/admin/tiendas/@tienda.Id/plan" class="inline">
+                            <input type="hidden" name="plan" value="@(tienda.Plan == "Free" ? "Pro" : "Free")">
+                            <button type="submit" class="btn btn-@(tienda.Plan == "Free" ? "warning" : "ghost")" onclick="return confirm('¿Cambiar plan a @(tienda.Plan == "Free" ? "Pro" : "Free")?')">
+                                <i class="bi bi-arrow-repeat"></i> Cambiar a @(tienda.Plan == "Free" ? "Pro" : "Free")
+                            </button>
+                        </form>
+                        <a href="/admin/tiendas" class="btn btn-ghost">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (tienda.Productos != null && tienda.Productos.Count > 0)
+        {
+            <div class="card bg-base-100 shadow-lg mt-6">
+                <div class="card-body">
+                    <h2 class="card-title">
+                        <i class="bi bi-box-seam"></i>
+                        Productos (@tienda.Productos.Count)
+                    </h2>
+                    <div class="overflow-x-auto">
+                        <table class="table table-zebra table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Precio</th>
+                                    <th>Categoría</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var producto in tienda.Productos)
+                                {
+                                    <tr>
+                                        <td>@producto.Nombre</td>
+                                        <td>@producto.Moneda @producto.Precio?.ToString("N2")</td>
+                                        <td>@(producto.Categoria?.Nombre ?? "-")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div>
+        @if (estadisticas != null)
+        {
+            <div class="card bg-base-100 shadow-lg">
+                <div class="card-body">
+                    <h2 class="card-title">
+                        <i class="bi bi-bar-chart"></i>
+                        Estadísticas
+                    </h2>
+                    <div class="text-sm text-base-content/70 mb-2">Últimos 30 días</div>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="text-sm text-base-content/70">Vistas</div>
+                            <div class="text-2xl font-bold">@estadisticas.TotalVistas</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-base-content/70">Clicks WhatsApp</div>
+                            <div class="text-2xl font-bold">@estadisticas.TotalClicksWhatsApp</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-base-content/70">Llamadas</div>
+                            <div class="text-2xl font-bold">@estadisticas.TotalClicksLlamar</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-base-content/70">Búsquedas</div>
+                            <div class="text-2xl font-bold">@estadisticas.TotalBusquedas</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

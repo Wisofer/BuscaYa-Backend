@@ -1,0 +1,127 @@
+@{
+    ViewData["Title"] = "Detalle de Usuario";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var usuario = ViewBag.Usuario as dynamic;
+}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        <div class="card bg-base-100 shadow-lg">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="card-title">
+                        <i class="bi bi-person"></i>
+                        Información del Usuario
+                    </h2>
+                    <div>
+                        @if (usuario.Activo)
+                        {
+                            <div class="badge badge-success badge-lg">Activo</div>
+                        }
+                        else
+                        {
+                            <div class="badge badge-error badge-lg">Inactivo</div>
+                        }
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th class="w-48">ID:</th>
+                                <td>@usuario.Id</td>
+                            </tr>
+                            <tr>
+                                <th>Nombre de Usuario:</th>
+                                <td class="font-bold">@usuario.NombreUsuario</td>
+                            </tr>
+                            <tr>
+                                <th>Nombre Completo:</th>
+                                <td>@usuario.NombreCompleto</td>
+                            </tr>
+                            <tr>
+                                <th>Rol:</th>
+                                <td>
+                                    <div class="badge badge-@(usuario.Rol == "Administrador" ? "error" : usuario.Rol == "TiendaOwner" ? "warning" : "primary") badge-lg">
+                                        @usuario.Rol
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Email:</th>
+                                <td>@(usuario.Email ?? "-")</td>
+                            </tr>
+                            <tr>
+                                <th>Teléfono:</th>
+                                <td>@(usuario.Telefono ?? "-")</td>
+                            </tr>
+                            @if (usuario.Tienda != null)
+                            {
+                                <tr>
+                                    <th>Tienda:</th>
+                                    <td>
+                                        <a href="/admin/tiendas/@usuario.Tienda.Id" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-shop"></i> @usuario.Tienda.Nombre
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="divider"></div>
+                <div>
+                    <h3 class="font-bold mb-4">Acciones</h3>
+                    <div class="flex gap-2 flex-wrap">
+                        @if (usuario.Activo)
+                        {
+                            <form method="post" action="/admin/usuarios/@usuario.Id/desactivar" class="inline">
+                                <button type="submit" class="btn btn-warning" onclick="return confirm('¿Desactivar este usuario?')">
+                                    <i class="bi bi-x-circle"></i> Desactivar
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form method="post" action="/admin/usuarios/@usuario.Id/activar" class="inline">
+                                <button type="submit" class="btn btn-success" onclick="return confirm('¿Activar este usuario?')">
+                                    <i class="bi bi-check-circle"></i> Activar
+                                </button>
+                            </form>
+                        }
+                        <a href="/admin/usuarios" class="btn btn-ghost">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card bg-base-100 shadow-lg">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="bi bi-bar-chart"></i>
+                    Estadísticas
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <div class="text-sm text-base-content/70">Favoritos</div>
+                        <div class="text-2xl font-bold">@(usuario.Favoritos?.Count ?? 0)</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-base-content/70">Búsquedas</div>
+                        <div class="text-2xl font-bold">@(usuario.HistorialBusquedas?.Count ?? 0)</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-base-content/70">Direcciones</div>
+                        <div class="text-2xl font-bold">@(usuario.DireccionesGuardadas?.Count ?? 0)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
