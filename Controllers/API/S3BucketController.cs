@@ -20,21 +20,31 @@ public class S3BucketController : ControllerBase
     [HttpPost("image/webp")]
     public async Task<IActionResult> UploadImageToWebP([FromForm] string prefix, [FromForm] IFormFile image, [FromForm] string? previousImageUrl = null)
     {
-        if (string.IsNullOrWhiteSpace(prefix))
-            return BadRequest(new { error = "Prefix es requerido" });
+        try
+        {
+            if (string.IsNullOrWhiteSpace(prefix))
+                return BadRequest(new { error = "Prefix es requerido" });
 
-        if (image == null || image.Length == 0)
-            return BadRequest(new { error = "Imagen es requerida" });
+            if (image == null || image.Length == 0)
+                return BadRequest(new { error = "Imagen es requerida" });
 
-        if (!_s3Service.IsValidImage(image))
-            return BadRequest(new { error = "Formato de imagen no válido" });
+            if (!_s3Service.IsValidImage(image))
+                return BadRequest(new { error = "Formato de imagen no válido", contentType = image.ContentType, fileName = image.FileName });
 
-        var url = await _s3Service.UploadImageToWebPAsync(prefix, image, previousImageUrl);
+            var url = await _s3Service.UploadImageToWebPAsync(prefix, image, previousImageUrl);
 
-        if (url == null)
-            return BadRequest(new { error = "No se pudo subir la imagen" });
+            if (url == null)
+            {
+                // Revisar los logs del servidor para más detalles
+                return BadRequest(new { error = "No se pudo subir la imagen. Revisa los logs del servidor para más detalles." });
+            }
 
-        return Ok(new { url });
+            return Ok(new { url });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error interno al subir imagen", mensaje = ex.Message });
+        }
     }
 
     [HttpPost("image/jpg")]

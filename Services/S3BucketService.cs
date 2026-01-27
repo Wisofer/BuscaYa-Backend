@@ -35,7 +35,11 @@ public class S3BucketService : IS3BucketService
 
     public async Task<string?> UploadImageToWebPAsync(string prefix, IFormFile image, string? previousImageUrl = null)
     {
-        if (!IsValidImage(image)) return null;
+        if (!IsValidImage(image))
+        {
+            Console.WriteLine($"[S3] ❌ Imagen no válida: {image.ContentType}, {image.FileName}");
+            return null;
+        }
 
         try
         {
@@ -43,7 +47,13 @@ public class S3BucketService : IS3BucketService
 
             using var inputStream = image.OpenReadStream();
             using var original = await Task.Run(() => SKBitmap.Decode(inputStream));
-            if (original == null) return null;
+            if (original == null)
+            {
+                Console.WriteLine("[S3] ❌ No se pudo decodificar la imagen con SkiaSharp");
+                return null;
+            }
+
+            Console.WriteLine($"[S3] ✅ Imagen decodificada: {original.Width}x{original.Height}");
 
             using var imagePrepared = SKImage.FromBitmap(original);
             using var data = await Task.Run(() => imagePrepared.Encode(SKEncodedImageFormat.Webp, 40));
@@ -51,22 +61,44 @@ public class S3BucketService : IS3BucketService
             var fileName = $"{Guid.NewGuid()}.webp";
             var filePath = $"{prefix}{fileName}";
 
+            Console.WriteLine($"[S3] 📤 Subiendo a R2: bucket={_bucketName}, key={filePath}, size={data.Size} bytes");
+
             var request = new PutObjectRequest()
             {
                 BucketName = _bucketName,
                 Key = filePath,
                 InputStream = data.AsStream(),
                 ContentType = "image/webp",
-                CannedACL = S3CannedACL.PublicRead,
+                // R2 no soporta CannedACL, el bucket debe estar configurado como público
                 DisablePayloadSigning = true
             };
 
-            await _s3Client.PutObjectAsync(request);
+            var response = await _s3Client.PutObjectAsync(request);
+            Console.WriteLine($"[S3] ✅ Imagen subida exitosamente. ETag: {response.ETag}");
 
-            return $"https://{_baseUrl}/{_bucketName}/{filePath}";
+            // Construir URL pública (R2 usa path-style URLs)
+            var publicUrl = $"https://{_baseUrl}/{_bucketName}/{filePath}";
+            Console.WriteLine($"[S3] 🔗 URL pública: {publicUrl}");
+            
+            return publicUrl;
         }
-        catch (Exception)
+        catch (AmazonS3Exception ex)
         {
+            Console.WriteLine($"[S3] ❌ Error de S3/R2: {ex.Message}");
+            Console.WriteLine($"[S3] Status Code: {ex.StatusCode}");
+            Console.WriteLine($"[S3] Error Code: {ex.ErrorCode}");
+            Console.WriteLine($"[S3] Request ID: {ex.RequestId}");
+            if (ex.InnerException != null)
+                Console.WriteLine($"[S3] Inner Exception: {ex.InnerException.Message}");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[S3] ❌ Error inesperado: {ex.GetType().Name}");
+            Console.WriteLine($"[S3] Mensaje: {ex.Message}");
+            Console.WriteLine($"[S3] StackTrace: {ex.StackTrace}");
+            if (ex.InnerException != null)
+                Console.WriteLine($"[S3] Inner Exception: {ex.InnerException.Message}");
             return null;
         }
     }
@@ -100,7 +132,7 @@ public class S3BucketService : IS3BucketService
                 Key = filePath,
                 InputStream = data.AsStream(),
                 ContentType = "image/jpeg",
-                CannedACL = S3CannedACL.PublicRead,
+                // R2 no soporta CannedACL, el bucket debe estar configurado como público
                 DisablePayloadSigning = true,
                 Metadata =
                 {
@@ -139,7 +171,7 @@ public class S3BucketService : IS3BucketService
                 Key = filePath,
                 InputStream = image.OpenReadStream(),
                 ContentType = image.ContentType,
-                CannedACL = S3CannedACL.PublicRead,
+                // R2 no soporta CannedACL, el bucket debe estar configurado como público
                 DisablePayloadSigning = true,
                 Metadata =
                 {
@@ -190,7 +222,7 @@ public class S3BucketService : IS3BucketService
                 Key = filePath,
                 InputStream = data.AsStream(),
                 ContentType = "image/jpeg",
-                CannedACL = S3CannedACL.PublicRead,
+                // R2 no soporta CannedACL, el bucket debe estar configurado como público
                 DisablePayloadSigning = true
             };
 
@@ -244,7 +276,7 @@ public class S3BucketService : IS3BucketService
                 Key = filePath,
                 InputStream = data.AsStream(),
                 ContentType = "image/webp",
-                CannedACL = S3CannedACL.PublicRead,
+                // R2 no soporta CannedACL, el bucket debe estar configurado como público
                 DisablePayloadSigning = true,
                 Metadata =
                 {
