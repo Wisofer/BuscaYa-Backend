@@ -16,8 +16,10 @@ WORKDIR /app
 ENV TZ=America/Managua
 ENV GENERIC_TIMEZONE=America/Managua
 
-# Instalar dependencias necesarias para SkiaSharp en Linux
+# Instalar dependencias necesarias para SkiaSharp en Linux (Debian-based)
 RUN apt-get update && apt-get install -y \
+    libgdiplus \
+    libc6-dev \
     libfontconfig1 \
     libfreetype6 \
     libharfbuzz0b \
