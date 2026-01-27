@@ -6,12 +6,13 @@ using BuscaYa.Services.IServices;
 using BuscaYa.Utils;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace BuscaYa.Controllers.API;
 
 [ApiController]
 [Route("api/cliente")]
-[Authorize]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class ClienteController : ControllerBase
 {
     private readonly ApplicationDbContext _context;

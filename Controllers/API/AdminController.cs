@@ -3,12 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using BuscaYa.Services.IServices;
 using BuscaYa.Utils;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace BuscaYa.Controllers.API;
 
 [ApiController]
 [Route("api/admin")]
-[Authorize(Policy = "Administrador")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Administrador")]
 public class AdminController : ControllerBase
 {
     private readonly ITiendaService _tiendaService;

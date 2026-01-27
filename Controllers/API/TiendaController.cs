@@ -5,12 +5,13 @@ using BuscaYa.Models.DTOs.Responses;
 using BuscaYa.Services.IServices;
 using BuscaYa.Utils;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace BuscaYa.Controllers.API;
 
 [ApiController]
 [Route("api/tienda")]
-[Authorize]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class TiendaController : ControllerBase
 {
     private readonly ITiendaService _tiendaService;

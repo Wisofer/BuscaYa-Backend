@@ -21,6 +21,7 @@ public class ProductoService : IProductoService
         return _context.Productos
             .Where(p => p.TiendaId == tiendaId && p.Activo)
             .Include(p => p.Categoria)
+            .AsNoTracking()
             .OrderBy(p => p.Nombre)
             .ToList();
     }
@@ -30,6 +31,7 @@ public class ProductoService : IProductoService
         return _context.Productos
             .Include(p => p.Tienda)
             .Include(p => p.Categoria)
+            .AsNoTracking()
             .FirstOrDefault(p => p.Id == id);
     }
 
