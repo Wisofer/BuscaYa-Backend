@@ -1,3 +1,5 @@
+using Amazon.S3;
+using Amazon;
 using BuscaYa.Data;
 using BuscaYa.Services;
 using BuscaYa.Services.IServices;
@@ -58,6 +60,28 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
     options.Cookie.SameSite = SameSiteMode.Lax;
 });
+
+// Configurar R2/S3 (Cloudflare R2)
+var r2Settings = builder.Configuration.GetSection("R2");
+if (!string.IsNullOrEmpty(r2Settings["AccessKey"]) && !string.IsNullOrEmpty(r2Settings["SecretKey"]))
+{
+    var credentials = new Amazon.Runtime.BasicAWSCredentials(
+        r2Settings["AccessKey"],
+        r2Settings["SecretKey"]
+    );
+
+    var s3Config = new AmazonS3Config
+    {
+        ServiceURL = $"https://{r2Settings["AccountId"]}.r2.cloudflarestorage.com",
+        ForcePathStyle = true,
+        SignatureVersion = "4"
+    };
+
+    var s3Client = new AmazonS3Client(credentials, s3Config);
+    builder.Services.AddSingleton<IAmazonS3>(s3Client);
+    builder.Services.AddHttpClient();
+    builder.Services.AddScoped<IS3BucketService, S3BucketService>();
+}
 
 // Configurar JWT Settings
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

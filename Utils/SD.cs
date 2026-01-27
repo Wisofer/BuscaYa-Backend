@@ -28,4 +28,12 @@ public static class SD
     public const int TamanoPaginaMaximo = 50;
     public const double RadioBusquedaDefault = 5.0; // km
     public const double RadioBusquedaMaximo = 50.0; // km
+
+    // R2 Storage - Carpetas
+    public const string Folder_Productos = "productos/";
+    public const string Folder_Tiendas = "tiendas/";
+    public const string Folder_Tiendas_Logos = "tiendas/logos/";
+    public const string Folder_Tiendas_Fotos = "tiendas/fotos/";
+    public const string Folder_Perfiles = "perfiles/";
+    public const string Folder_Categorias = "categorias/";
 }
