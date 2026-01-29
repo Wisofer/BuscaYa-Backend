@@ -24,6 +24,7 @@ public class TiendaInfoResponse
     public string? LogoUrl { get; set; }
     public decimal Latitud { get; set; }
     public decimal Longitud { get; set; }
+    public string? WhatsAppUrl { get; set; } // Link de WhatsApp con mensaje personalizado (para productos)
 }
 
 public class CategoriaInfoResponse

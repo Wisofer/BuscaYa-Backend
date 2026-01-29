@@ -86,6 +86,14 @@ public class PublicController : ControllerBase
                     producto.Tienda.Latitud, producto.Tienda.Longitud);
             }
 
+            // Generar link de WhatsApp con mensaje personalizado para el producto
+            var whatsappUrl = WhatsAppHelper.GenerarLinkProducto(
+                producto.Tienda.WhatsApp,
+                producto.Nombre,
+                producto.Precio,
+                producto.Moneda
+            );
+
             // Mapear a ProductoResponse
             var response = new ProductoResponse
             {
@@ -105,7 +113,8 @@ public class PublicController : ControllerBase
                     Telefono = producto.Tienda.Telefono,
                     LogoUrl = producto.Tienda.LogoUrl,
                     Latitud = producto.Tienda.Latitud,
-                    Longitud = producto.Tienda.Longitud
+                    Longitud = producto.Tienda.Longitud,
+                    WhatsAppUrl = whatsappUrl // Link personalizado con mensaje del producto
                 },
                 Categoria = new CategoriaInfoResponse
                 {
