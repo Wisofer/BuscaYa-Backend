@@ -96,13 +96,27 @@ public class AuthApiController : ControllerBase
                 return BadRequest(new { error = "El nombre de usuario ya está en uso" });
             }
 
+            // Normalizar email: trim si existe
+            string? emailNormalizado = string.IsNullOrWhiteSpace(request.Email) 
+                ? null 
+                : request.Email.Trim();
+
+            // DEBUG: Verificar qué email se está recibiendo
+            // TODO: Remover después de diagnosticar
+            if (!string.IsNullOrEmpty(emailNormalizado))
+            {
+                System.Diagnostics.Debug.WriteLine($"[REGISTER DEBUG] Email recibido del frontend: '{emailNormalizado}'");
+                System.Diagnostics.Debug.WriteLine($"[REGISTER DEBUG] Longitud del email: {emailNormalizado.Length}");
+                System.Diagnostics.Debug.WriteLine($"[REGISTER DEBUG] Contiene @: {emailNormalizado.Contains("@")}");
+            }
+
             // Registrar cliente
             var usuario = _authService.RegistrarCliente(
                 request.NombreUsuario,
                 request.Contrasena,
                 request.NombreCompleto,
                 request.Telefono,
-                request.Email
+                emailNormalizado
             );
 
             if (usuario == null)
@@ -169,8 +183,15 @@ public class AuthApiController : ControllerBase
                 return BadRequest(new { error = "El nombre completo es requerido" });
             }
 
+            // Normalizar email: trim
+            string? emailNormalizado = null;
+            if (!string.IsNullOrWhiteSpace(request.Email))
+            {
+                emailNormalizado = request.Email.Trim();
+            }
+
             // Actualizar perfil
-            var actualizado = _authService.ActualizarPerfil(userId, request.NombreCompleto, request.Telefono, request.Email);
+            var actualizado = _authService.ActualizarPerfil(userId, request.NombreCompleto, request.Telefono, emailNormalizado);
             
             if (!actualizado)
             {
