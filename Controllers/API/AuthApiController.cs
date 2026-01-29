@@ -101,15 +101,6 @@ public class AuthApiController : ControllerBase
                 ? null 
                 : request.Email.Trim();
 
-            // DEBUG: Verificar qué email se está recibiendo
-            // TODO: Remover después de diagnosticar
-            if (!string.IsNullOrEmpty(emailNormalizado))
-            {
-                System.Diagnostics.Debug.WriteLine($"[REGISTER DEBUG] Email recibido del frontend: '{emailNormalizado}'");
-                System.Diagnostics.Debug.WriteLine($"[REGISTER DEBUG] Longitud del email: {emailNormalizado.Length}");
-                System.Diagnostics.Debug.WriteLine($"[REGISTER DEBUG] Contiene @: {emailNormalizado.Contains("@")}");
-            }
-
             // Registrar cliente
             var usuario = _authService.RegistrarCliente(
                 request.NombreUsuario,

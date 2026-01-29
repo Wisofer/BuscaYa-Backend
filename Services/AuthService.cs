@@ -69,14 +69,6 @@ public class AuthService : IAuthService
             return null;
         }
 
-        // DEBUG: Verificar qué email se está guardando
-        // TODO: Remover después de diagnosticar
-        if (!string.IsNullOrEmpty(email))
-        {
-            System.Diagnostics.Debug.WriteLine($"[AuthService DEBUG] Email antes de guardar: '{email}'");
-            System.Diagnostics.Debug.WriteLine($"[AuthService DEBUG] Longitud: {email.Length}");
-        }
-
         // Crear nuevo usuario cliente
         var usuario = new Usuario
         {
@@ -93,14 +85,6 @@ public class AuthService : IAuthService
 
         _context.Usuarios.Add(usuario);
         _context.SaveChanges();
-
-        // DEBUG: Verificar qué email se guardó en la BD
-        // TODO: Remover después de diagnosticar
-        if (!string.IsNullOrEmpty(usuario.Email))
-        {
-            System.Diagnostics.Debug.WriteLine($"[AuthService DEBUG] Email después de guardar: '{usuario.Email}'");
-            System.Diagnostics.Debug.WriteLine($"[AuthService DEBUG] Longitud guardada: {usuario.Email.Length}");
-        }
 
         return usuario;
     }
