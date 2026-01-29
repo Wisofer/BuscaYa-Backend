@@ -27,7 +27,8 @@ public class HomeController : ControllerBase
                 autenticacion = new[]
                 {
                     "POST /api/auth/login",
-                    "POST /api/auth/register"
+                    "POST /api/auth/register",
+                    "PUT /api/auth/user"
                 },
                 cliente = new[]
                 {

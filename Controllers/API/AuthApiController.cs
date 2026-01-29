@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using BuscaYa.Services.IServices;
 using BuscaYa.Utils;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Security.Claims;
 
 namespace BuscaYa.Controllers.API;
 
@@ -147,6 +150,61 @@ public class AuthApiController : ControllerBase
         }
     }
 
+    [HttpPut("user")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public IActionResult ActualizarPerfil([FromBody] ActualizarUsuarioRequest request)
+    {
+        try
+        {
+            // Obtener ID del usuario desde el token JWT
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { error = "Usuario no autenticado" });
+            }
+
+            // Validar que el nombre completo no esté vacío
+            if (string.IsNullOrWhiteSpace(request.NombreCompleto))
+            {
+                return BadRequest(new { error = "El nombre completo es requerido" });
+            }
+
+            // Actualizar perfil
+            var actualizado = _authService.ActualizarPerfil(userId, request.NombreCompleto, request.Telefono, request.Email);
+            
+            if (!actualizado)
+            {
+                return NotFound(new { error = "Usuario no encontrado" });
+            }
+
+            // Obtener usuario actualizado para devolverlo
+            var usuario = _authService.ObtenerUsuarioPorId(userId);
+            if (usuario == null)
+            {
+                return NotFound(new { error = "Usuario no encontrado" });
+            }
+
+            return Ok(new
+            {
+                mensaje = "Perfil actualizado correctamente",
+                usuario = new UsuarioInfoResponse
+                {
+                    Id = usuario.Id,
+                    NombreUsuario = usuario.NombreUsuario,
+                    NombreCompleto = usuario.NombreCompleto,
+                    Rol = usuario.Rol,
+                    Email = usuario.Email,
+                    Telefono = usuario.Telefono,
+                    TiendaId = usuario.TiendaId
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error al actualizar perfil", mensaje = ex.Message });
+        }
+    }
+
 }
 
 public class LoginRequest
@@ -181,4 +239,11 @@ public class UsuarioInfoResponse
     public string? Email { get; set; }
     public string? Telefono { get; set; }
     public int? TiendaId { get; set; }
+}
+
+public class ActualizarUsuarioRequest
+{
+    public string NombreCompleto { get; set; } = string.Empty;
+    public string? Telefono { get; set; }
+    public string? Email { get; set; }
 }

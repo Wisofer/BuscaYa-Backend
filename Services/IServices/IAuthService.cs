@@ -18,5 +18,8 @@ public interface IAuthService
         string? telefonoTienda, string whatsAppTienda, string? emailTienda,
         string direccionTienda, decimal latitud, decimal longitud, string ciudad, string departamento,
         TimeSpan? horarioApertura, TimeSpan? horarioCierre, string? diasAtencion, string? logoTienda, string? fotoTienda);
+    
+    // Actualizar perfil de usuario
+    bool ActualizarPerfil(int usuarioId, string nombreCompleto, string? telefono, string? email);
 }
 

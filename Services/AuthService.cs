@@ -147,4 +147,25 @@ public class AuthService : IAuthService
 
         return usuario;
     }
+
+    public bool ActualizarPerfil(int usuarioId, string nombreCompleto, string? telefono, string? email)
+    {
+        var usuario = _context.Usuarios.Find(usuarioId);
+        if (usuario == null || !usuario.Activo)
+        {
+            return false;
+        }
+
+        // Actualizar campos
+        if (!string.IsNullOrWhiteSpace(nombreCompleto))
+        {
+            usuario.NombreCompleto = nombreCompleto;
+        }
+
+        usuario.Telefono = telefono;
+        usuario.Email = email;
+
+        _context.SaveChanges();
+        return true;
+    }
 }
