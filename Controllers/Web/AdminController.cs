@@ -15,17 +15,20 @@ public class AdminController : Controller
     private readonly ITiendaService _tiendaService;
     private readonly IAnalyticsService _analyticsService;
     private readonly ICategoriaService _categoriaService;
+    private readonly IReporteService _reporteService;
 
     public AdminController(
         ApplicationDbContext context,
         ITiendaService tiendaService,
         IAnalyticsService analyticsService,
-        ICategoriaService categoriaService)
+        ICategoriaService categoriaService,
+        IReporteService reporteService)
     {
         _context = context;
         _tiendaService = tiendaService;
         _analyticsService = analyticsService;
         _categoriaService = categoriaService;
+        _reporteService = reporteService;
     }
 
     [HttpGet("/admin")]
@@ -55,6 +58,8 @@ public class AdminController : Controller
             })
             .ToList();
 
+        var totalReportesNoRevisados = _context.Reportes.Count(r => !r.Revisado);
+
         ViewBag.TotalUsuarios = totalUsuarios;
         ViewBag.TotalClientes = totalClientes;
         ViewBag.TotalTiendas = totalTiendas;
@@ -63,6 +68,7 @@ public class AdminController : Controller
         ViewBag.TiendasActivas = tiendasActivas;
         ViewBag.UsuariosConTienda = usuariosConTienda;
         ViewBag.UsuariosRecientes = usuariosRecientes;
+        ViewBag.TotalReportesNoRevisados = totalReportesNoRevisados;
 
         return View();
     }
@@ -356,5 +362,111 @@ public class AdminController : Controller
         }
 
         return RedirectToAction("Configuraciones");
+    }
+
+    [HttpGet("/admin/reportes")]
+    public async Task<IActionResult> Reportes(bool? soloNoRevisados = null, string? tipo = null, int pagina = 1, int tamanoPagina = 20)
+    {
+        var reportes = await _reporteService.ObtenerTodosAsync(soloNoRevisados);
+
+        // Filtrar por tipo si se especifica
+        if (!string.IsNullOrEmpty(tipo) && tipo != "Todos")
+        {
+            reportes = reportes.Where(r => r.Tipo.ToLower() == tipo.ToLower()).ToList();
+        }
+
+        var total = reportes.Count;
+        var reportesPaginados = reportes
+            .Skip((pagina - 1) * tamanoPagina)
+            .Take(tamanoPagina)
+            .ToList();
+
+        // Obtener información adicional de productos/tiendas reportados
+        var reportesConInfo = reportesPaginados.Select(r =>
+        {
+            string? nombreRecurso = null;
+            if (r.Tipo.ToLower() == "producto")
+            {
+                var producto = _context.Productos.Find(r.RecursoId);
+                nombreRecurso = producto?.Nombre;
+            }
+            else if (r.Tipo.ToLower() == "tienda")
+            {
+                var tienda = _context.Tiendas.Find(r.RecursoId);
+                nombreRecurso = tienda?.Nombre;
+            }
+
+            return new
+            {
+                r.Id,
+                r.Tipo,
+                r.RecursoId,
+                NombreRecurso = nombreRecurso,
+                r.Razon,
+                r.Detalle,
+                r.Revisado,
+                r.NotaAdmin,
+                r.FechaCreacion,
+                r.FechaRevisado,
+                UsuarioNombre = r.Usuario?.NombreUsuario,
+                UsuarioCompleto = r.Usuario?.NombreCompleto
+            };
+        }).ToList();
+
+        ViewBag.Reportes = reportesConInfo;
+        ViewBag.Total = total;
+        ViewBag.Pagina = pagina;
+        ViewBag.TamanoPagina = tamanoPagina;
+        ViewBag.TotalPaginas = (int)Math.Ceiling(total / (double)tamanoPagina);
+        ViewBag.SoloNoRevisados = soloNoRevisados;
+        ViewBag.TipoFiltro = tipo ?? "Todos";
+        ViewBag.TotalNoRevisados = reportes.Count(r => !r.Revisado);
+
+        return View();
+    }
+
+    [HttpPost("/admin/reportes/{id}/revisar")]
+    public async Task<IActionResult> MarcarReporteComoRevisado(int id, string? notaAdmin)
+    {
+        var revisado = await _reporteService.MarcarComoRevisadoAsync(id, notaAdmin);
+        if (!revisado)
+        {
+            TempData["Error"] = "Reporte no encontrado";
+            return RedirectToAction("Reportes");
+        }
+
+        TempData["Mensaje"] = "Reporte marcado como revisado";
+        return RedirectToAction("Reportes");
+    }
+
+    [HttpGet("/admin/reportes/{id}")]
+    public async Task<IActionResult> DetalleReporte(int id)
+    {
+        var reporte = await _reporteService.ObtenerPorIdAsync(id);
+        if (reporte == null)
+        {
+            return NotFound();
+        }
+
+        // Obtener información del recurso reportado
+        object? recurso = null;
+        if (reporte.Tipo.ToLower() == "producto")
+        {
+            recurso = _context.Productos
+                .Include(p => p.Tienda)
+                .Include(p => p.Categoria)
+                .FirstOrDefault(p => p.Id == reporte.RecursoId);
+        }
+        else if (reporte.Tipo.ToLower() == "tienda")
+        {
+            recurso = _context.Tiendas
+                .Include(t => t.Usuario)
+                .FirstOrDefault(t => t.Id == reporte.RecursoId);
+        }
+
+        ViewBag.Reporte = reporte;
+        ViewBag.Recurso = recurso;
+
+        return View();
     }
 }

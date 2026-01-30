@@ -26,6 +26,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<HistorialBusqueda> HistorialBusquedas { get; set; }
     public DbSet<DireccionGuardada> DireccionesGuardadas { get; set; }
 
+    // Reportes
+    public DbSet<Reporte> Reportes { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -183,6 +186,27 @@ public class ApplicationDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
             
             entity.HasIndex(e => e.UsuarioId);
+        });
+
+        // Reporte
+        modelBuilder.Entity<Reporte>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Tipo).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.Razon).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Detalle).HasMaxLength(1000);
+            entity.Property(e => e.NotaAdmin).HasMaxLength(500);
+            entity.Property(e => e.Revisado).HasDefaultValue(false);
+            
+            entity.HasOne(e => e.Usuario)
+                .WithMany(u => u.Reportes)
+                .HasForeignKey(e => e.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => new { e.Tipo, e.RecursoId });
+            entity.HasIndex(e => e.UsuarioId);
+            entity.HasIndex(e => e.Revisado);
+            entity.HasIndex(e => e.FechaCreacion);
         });
     }
 }

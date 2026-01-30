@@ -42,6 +42,16 @@
                         </a>
                     </li>
                     <li>
+                        <a href="/admin/reportes" class="@(ViewContext.RouteData.Values["action"]?.ToString()?.Contains("Reporte") == true ? "active" : "")">
+                            <i class="bi bi-flag"></i>
+                            Reportes
+                            @if (ViewBag.TotalNoRevisados != null && ViewBag.TotalNoRevisados > 0)
+                            {
+                                <span class="badge badge-error badge-sm">@ViewBag.TotalNoRevisados</span>
+                            }
+                        </a>
+                    </li>
+                    <li>
                         <a href="/admin/configuraciones" class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Configuraciones" ? "active" : "")">
                             <i class="bi bi-gear"></i>
                             Configuraciones

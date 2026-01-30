@@ -1,0 +1,282 @@
+@using BuscaYa.Models.Entities
+@{
+    ViewData["Title"] = "Detalle del Reporte";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    
+    var reporte = ViewBag.Reporte as Reporte;
+    var recurso = ViewBag.Recurso;
+}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Información del Reporte -->
+    <div class="card bg-base-100 shadow-lg">
+        <div class="card-body">
+            <h2 class="card-title">
+                <i class="bi bi-flag"></i>
+                Información del Reporte
+            </h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="label">
+                        <span class="label-text font-semibold">ID del Reporte</span>
+                    </label>
+                    <div class="text-lg">#@reporte.Id</div>
+                </div>
+                
+                <div>
+                    <label class="label">
+                        <span class="label-text font-semibold">Tipo</span>
+                    </label>
+                    <div>
+                        <span class="badge badge-@(reporte.Tipo == "producto" ? "info" : "warning") badge-lg">
+                            @reporte.Tipo
+                        </span>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="label">
+                        <span class="label-text font-semibold">Razón</span>
+                    </label>
+                    <div class="text-lg">@reporte.Razon</div>
+                </div>
+                
+                @if (!string.IsNullOrEmpty(reporte.Detalle))
+                {
+                    <div>
+                        <label class="label">
+                            <span class="label-text font-semibold">Detalle</span>
+                        </label>
+                        <div class="p-3 bg-base-200 rounded-lg">@reporte.Detalle</div>
+                    </div>
+                }
+                
+                <div>
+                    <label class="label">
+                        <span class="label-text font-semibold">Estado</span>
+                    </label>
+                    <div>
+                        @if (reporte.Revisado)
+                        {
+                            <span class="badge badge-success badge-lg">Revisado</span>
+                            @if (reporte.FechaRevisado.HasValue)
+                            {
+                                <div class="text-sm text-gray-500 mt-1">
+                                    Revisado el @reporte.FechaRevisado.Value.ToString("dd/MM/yyyy HH:mm")
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <span class="badge badge-warning badge-lg">Pendiente</span>
+                        }
+                    </div>
+                </div>
+                
+                @if (!string.IsNullOrEmpty(reporte.NotaAdmin))
+                {
+                    <div>
+                        <label class="label">
+                            <span class="label-text font-semibold">Nota del Administrador</span>
+                        </label>
+                        <div class="p-3 bg-info/10 rounded-lg">@reporte.NotaAdmin</div>
+                    </div>
+                }
+                
+                <div>
+                    <label class="label">
+                        <span class="label-text font-semibold">Fecha de Creación</span>
+                    </label>
+                    <div>@reporte.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+                
+                <div>
+                    <label class="label">
+                        <span class="label-text font-semibold">Reportado por</span>
+                    </label>
+                    <div>
+                        <div class="font-semibold">@reporte.Usuario.NombreCompleto</div>
+                        <div class="text-sm text-gray-500">@reporte.Usuario.NombreUsuario</div>
+                        @if (!string.IsNullOrEmpty(reporte.Usuario.Email))
+                        {
+                            <div class="text-sm text-gray-500">@reporte.Usuario.Email</div>
+                        }
+                    </div>
+                </div>
+            </div>
+            
+            @if (!reporte.Revisado)
+            {
+                <div class="card-actions justify-end mt-6">
+                    <form method="post" action="/admin/reportes/@reporte.Id/revisar" class="w-full">
+                        <div class="form-control mb-4">
+                            <label class="label">
+                                <span class="label-text">Nota (opcional)</span>
+                            </label>
+                            <textarea name="notaAdmin" class="textarea textarea-bordered" rows="3" placeholder="Agregar una nota sobre este reporte..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-full" onclick="return confirm('¿Marcar este reporte como revisado?');">
+                            <i class="bi bi-check-circle"></i>
+                            Marcar como Revisado
+                        </button>
+                    </form>
+                </div>
+            }
+        </div>
+    </div>
+    
+    <!-- Información del Recurso Reportado -->
+    <div class="card bg-base-100 shadow-lg">
+        <div class="card-body">
+            <h2 class="card-title">
+                <i class="bi bi-@(reporte.Tipo == "producto" ? "box" : "shop")"></i>
+                @(reporte.Tipo == "producto" ? "Producto Reportado" : "Tienda Reportada")
+            </h2>
+            
+            @if (recurso != null)
+            {
+                @if (reporte.Tipo == "producto" && recurso is Producto producto)
+                {
+                    <div class="space-y-4">
+                        <div>
+                            <label class="label">
+                                <span class="label-text font-semibold">Nombre</span>
+                            </label>
+                            <div class="text-lg font-bold">@producto.Nombre</div>
+                        </div>
+                        
+                        @if (!string.IsNullOrEmpty(producto.Descripcion))
+                        {
+                            <div>
+                                <label class="label">
+                                    <span class="label-text font-semibold">Descripción</span>
+                                </label>
+                                <div class="p-3 bg-base-200 rounded-lg">@producto.Descripcion</div>
+                            </div>
+                        }
+                        
+                        @if (producto.Precio.HasValue)
+                        {
+                            <div>
+                                <label class="label">
+                                    <span class="label-text font-semibold">Precio</span>
+                                </label>
+                                <div class="text-lg">@producto.Moneda @producto.Precio.Value.ToString("N2")</div>
+                            </div>
+                        }
+                        
+                        <div>
+                            <label class="label">
+                                <span class="label-text font-semibold">Categoría</span>
+                            </label>
+                            <div>@producto.Categoria?.Nombre</div>
+                        </div>
+                        
+                        <div>
+                            <label class="label">
+                                <span class="label-text font-semibold">Tienda</span>
+                            </label>
+                            <div>
+                                <a href="/admin/tiendas/@producto.TiendaId" class="link link-primary">
+                                    @producto.Tienda?.Nombre
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="label">
+                                <span class="label-text font-semibold">Estado</span>
+                            </label>
+                            <div>
+                                <span class="badge badge-@(producto.Activo ? "success" : "error")">
+                                    @(producto.Activo ? "Activo" : "Inactivo")
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else if (reporte.Tipo == "tienda" && recurso is Tienda tienda)
+                {
+                    <div class="space-y-4">
+                        <div>
+                            <label class="label">
+                                <span class="label-text font-semibold">Nombre</span>
+                            </label>
+                            <div class="text-lg font-bold">@tienda.Nombre</div>
+                        </div>
+                        
+                        @if (!string.IsNullOrEmpty(tienda.Descripcion))
+                        {
+                            <div>
+                                <label class="label">
+                                    <span class="label-text font-semibold">Descripción</span>
+                                </label>
+                                <div class="p-3 bg-base-200 rounded-lg">@tienda.Descripcion</div>
+                            </div>
+                        }
+                        
+                        <div>
+                            <label class="label">
+                                <span class="label-text font-semibold">Ubicación</span>
+                            </label>
+                            <div>
+                                <div>@tienda.Direccion</div>
+                                <div class="text-sm text-gray-500">@tienda.Ciudad, @tienda.Departamento</div>
+                            </div>
+                        </div>
+                        
+                        @if (!string.IsNullOrEmpty(tienda.Telefono))
+                        {
+                            <div>
+                                <label class="label">
+                                    <span class="label-text font-semibold">Teléfono</span>
+                                </label>
+                                <div>@tienda.Telefono</div>
+                            </div>
+                        }
+                        
+                        <div>
+                            <label class="label">
+                                <span class="label-text font-semibold">Dueño</span>
+                            </label>
+                            <div>
+                                @if (tienda.Usuario != null)
+                                {
+                                    <a href="/admin/usuarios/@tienda.Usuario.Id" class="link link-primary">
+                                        @tienda.Usuario.NombreCompleto
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="label">
+                                <span class="label-text font-semibold">Estado</span>
+                            </label>
+                            <div>
+                                <span class="badge badge-@(tienda.Activo ? "success" : "error")">
+                                    @(tienda.Activo ? "Activa" : "Inactiva")
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span>El recurso reportado (ID: @reporte.RecursoId) no existe o fue eliminado.</span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="mt-6">
+    <a href="/admin/reportes" class="btn btn-ghost">
+        <i class="bi bi-arrow-left"></i>
+        Volver a Reportes
+    </a>
+</div>

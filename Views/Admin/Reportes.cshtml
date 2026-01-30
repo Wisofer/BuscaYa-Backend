@@ -1,0 +1,176 @@
+@{
+    ViewData["Title"] = "Reportes";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="card bg-base-100 shadow-lg">
+    <div class="card-body">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="card-title">
+                <i class="bi bi-flag"></i>
+                Gestión de Reportes
+            </h2>
+            <div class="flex gap-2">
+                @if (ViewBag.TotalNoRevisados > 0)
+                {
+                    <div class="badge badge-error badge-lg">
+                        @ViewBag.TotalNoRevisados sin revisar
+                    </div>
+                }
+                <div class="badge badge-primary badge-lg">Total: @ViewBag.Total</div>
+            </div>
+        </div>
+
+        <form method="get" class="mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="label">
+                        <span class="label-text">Tipo</span>
+                    </label>
+                    <select name="tipo" class="select select-bordered w-full">
+                        <option value="Todos" selected="@(ViewBag.TipoFiltro == "Todos")">Todos</option>
+                        <option value="producto" selected="@(ViewBag.TipoFiltro == "producto")">Producto</option>
+                        <option value="tienda" selected="@(ViewBag.TipoFiltro == "tienda")">Tienda</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="label">
+                        <span class="label-text">Estado</span>
+                    </label>
+                    <select name="soloNoRevisados" class="select select-bordered w-full">
+                        <option value="">Todos</option>
+                        <option value="true" selected="@(ViewBag.SoloNoRevisados == true)">Solo no revisados</option>
+                        <option value="false" selected="@(ViewBag.SoloNoRevisados == false)">Solo revisados</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2 flex items-end">
+                    <button type="submit" class="btn btn-primary w-full">
+                        <i class="bi bi-search"></i> Filtrar
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div class="overflow-x-auto">
+            <table class="table table-zebra">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tipo</th>
+                        <th>Recurso</th>
+                        <th>Razón</th>
+                        <th>Reportado por</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (ViewBag.Reportes != null && ViewBag.Reportes.Count > 0)
+                    {
+                        @foreach (var reporte in ViewBag.Reportes)
+                        {
+                            <tr class="@(!reporte.Revisado ? "bg-warning/10" : "")">
+                                <td>@reporte.Id</td>
+                                <td>
+                                    <div class="badge badge-@(reporte.Tipo == "producto" ? "info" : "warning")">
+                                        @reporte.Tipo
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <div class="font-semibold">@(reporte.NombreRecurso ?? $"ID: {reporte.RecursoId}")</div>
+                                        <div class="text-xs text-gray-500">ID: @reporte.RecursoId</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="max-w-xs">
+                                        <div class="font-medium">@reporte.Razon</div>
+                                        @if (!string.IsNullOrEmpty(reporte.Detalle))
+                                        {
+                                            <div class="text-xs text-gray-500 mt-1">@reporte.Detalle</div>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <div class="font-medium">@reporte.UsuarioCompleto</div>
+                                        <div class="text-xs text-gray-500">@reporte.UsuarioNombre</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="text-sm">
+                                        @reporte.FechaCreacion.ToString("dd/MM/yyyy")
+                                        <div class="text-xs text-gray-500">@reporte.FechaCreacion.ToString("HH:mm")</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (reporte.Revisado)
+                                    {
+                                        <div class="badge badge-success">Revisado</div>
+                                        @if (reporte.FechaRevisado.HasValue)
+                                        {
+                                            <div class="text-xs text-gray-500 mt-1">
+                                                @reporte.FechaRevisado.Value.ToString("dd/MM/yyyy")
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="badge badge-warning">Pendiente</div>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="flex gap-2">
+                                        <a href="/admin/reportes/@reporte.Id" class="btn btn-sm btn-info">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        @if (!reporte.Revisado)
+                                        {
+                                            <form method="post" action="/admin/reportes/@reporte.Id/revisar" class="inline">
+                                                <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('¿Marcar este reporte como revisado?');">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-gray-500 py-8">
+                                No hay reportes que mostrar
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (ViewBag.TotalPaginas > 1)
+        {
+            <div class="flex justify-center gap-2 mt-6">
+                @if (ViewBag.Pagina > 1)
+                {
+                    <a href="?pagina=@(ViewBag.Pagina - 1)&tipo=@ViewBag.TipoFiltro&soloNoRevisados=@ViewBag.SoloNoRevisados" class="btn btn-sm">
+                        <i class="bi bi-chevron-left"></i> Anterior
+                    </a>
+                }
+                
+                <span class="flex items-center px-4">
+                    Página @ViewBag.Pagina de @ViewBag.TotalPaginas
+                </span>
+                
+                @if (ViewBag.Pagina < ViewBag.TotalPaginas)
+                {
+                    <a href="?pagina=@(ViewBag.Pagina + 1)&tipo=@ViewBag.TipoFiltro&soloNoRevisados=@ViewBag.SoloNoRevisados" class="btn btn-sm">
+                        Siguiente <i class="bi bi-chevron-right"></i>
+                    </a>
+                }
+            </div>
+        }
+    </div>
+</div>
