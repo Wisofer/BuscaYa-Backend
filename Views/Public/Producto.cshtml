@@ -1,0 +1,176 @@
+@using BuscaYa.Models.Entities
+@{
+    var producto = ViewData["Producto"] as Producto;
+    var whatsappUrl = ViewData["WhatsAppUrl"] as string ?? "";
+    var deepLink = ViewData["DeepLink"] as string ?? "";
+    
+    ViewData["Title"] = producto?.Nombre ?? "Producto";
+}
+
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@producto?.Nombre - BuscaYa</title>
+    
+    <!-- Meta tags para compartir en redes sociales -->
+    <meta property="og:title" content="@producto?.Nombre" />
+    <meta property="og:description" content="@producto?.Descripcion" />
+    @if (!string.IsNullOrEmpty(producto?.FotoUrl))
+    {
+        <meta property="og:image" content="@producto.FotoUrl" />
+    }
+    <meta property="og:type" content="product" />
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            background: linear-gradient(to bottom, #f3f4f6, #ffffff);
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen pb-8">
+        <!-- Header -->
+        <div class="bg-white shadow-sm">
+            <div class="max-w-4xl mx-auto px-4 py-4">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-2xl font-bold text-gray-800">BuscaYa</h1>
+                    <a href="@deepLink" class="btn btn-primary btn-sm">
+                        <i class="bi bi-phone"></i>
+                        Abrir en la app
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido del producto -->
+        <div class="max-w-4xl mx-auto px-4 mt-6">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <!-- Imagen del producto -->
+                @if (!string.IsNullOrEmpty(producto?.FotoUrl))
+                {
+                    <div class="w-full h-64 md:h-96 bg-gray-100 flex items-center justify-center">
+                        <img src="@producto.FotoUrl" alt="@producto?.Nombre" class="w-full h-full object-cover" />
+                    </div>
+                }
+                else
+                {
+                    <div class="w-full h-64 md:h-96 bg-gray-200 flex items-center justify-center">
+                        <i class="bi bi-image text-6xl text-gray-400"></i>
+                    </div>
+                }
+
+                <!-- Información del producto -->
+                <div class="p-6">
+                    <div class="mb-4">
+                        <span class="badge badge-primary">@producto?.Categoria?.Nombre</span>
+                    </div>
+                    
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">@producto?.Nombre</h2>
+                    
+                    @if (!string.IsNullOrEmpty(producto?.Descripcion))
+                    {
+                        <p class="text-gray-600 mb-4">@producto.Descripcion</p>
+                    }
+                    
+                    @if (producto?.Precio.HasValue == true)
+                    {
+                        <div class="flex items-center gap-2 mb-6">
+                            <span class="text-4xl font-bold text-primary">
+                                @(producto.Moneda ?? "C$") @producto.Precio.Value.ToString("N2")
+                            </span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="flex items-center gap-2 mb-6">
+                            <span class="text-lg text-gray-500">
+                                Precio a consultar
+                            </span>
+                        </div>
+                    }
+
+                    <!-- Información de la tienda -->
+                    @if (producto?.Tienda != null)
+                    {
+                        <div class="border-t pt-6 mb-6">
+                            <h3 class="text-xl font-semibold text-gray-800 mb-4">Información de la tienda</h3>
+                            
+                            <div class="space-y-3">
+                                <div class="flex items-start gap-3">
+                                    <i class="bi bi-shop text-primary text-xl mt-1"></i>
+                                    <div>
+                                        <p class="font-semibold text-gray-800">@producto.Tienda.Nombre</p>
+                                        @if (!string.IsNullOrEmpty(producto.Tienda.Direccion))
+                                        {
+                                            <p class="text-gray-600 text-sm">@producto.Tienda.Direccion</p>
+                                        }
+                                        @if (!string.IsNullOrEmpty(producto.Tienda.Ciudad))
+                                        {
+                                            <p class="text-gray-600 text-sm">@producto.Tienda.Ciudad, @producto.Tienda.Departamento</p>
+                                        }
+                                    </div>
+                                </div>
+                                
+                                @if (!string.IsNullOrEmpty(producto.Tienda.Telefono))
+                                {
+                                    <div class="flex items-center gap-3">
+                                        <i class="bi bi-telephone text-primary"></i>
+                                        <a href="tel:@producto.Tienda.Telefono" class="text-gray-700 hover:text-primary">
+                                            @producto.Tienda.Telefono
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Botones de acción -->
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        @if (!string.IsNullOrEmpty(whatsappUrl))
+                        {
+                            <a href="@whatsappUrl" target="_blank" class="btn btn-success flex-1">
+                                <i class="bi bi-whatsapp"></i>
+                                Contactar por WhatsApp
+                            </a>
+                        }
+                        
+                        <a href="@deepLink" class="btn btn-primary flex-1">
+                            <i class="bi bi-phone"></i>
+                            Ver en la app
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center mt-8 text-gray-500 text-sm">
+                <p>Compartido desde BuscaYa</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script para intentar abrir la app automáticamente en móviles -->
+    <script>
+        // Detectar si es móvil
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            // Intentar abrir la app después de un breve delay
+            setTimeout(function() {
+                window.location.href = '@deepLink';
+            }, 500);
+            
+            // Si después de 2 segundos no se abrió la app, mostrar mensaje opcional
+            setTimeout(function() {
+                // El usuario puede seguir viendo la página web
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
