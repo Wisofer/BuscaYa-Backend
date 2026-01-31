@@ -148,7 +148,7 @@ public class AuthService : IAuthService
         return usuario;
     }
 
-    public bool ActualizarPerfil(int usuarioId, string nombreCompleto, string? telefono, string? email)
+    public bool ActualizarPerfil(int usuarioId, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl = null)
     {
         var usuario = _context.Usuarios.Find(usuarioId);
         if (usuario == null || !usuario.Activo)
@@ -164,6 +164,8 @@ public class AuthService : IAuthService
 
         usuario.Telefono = telefono;
         usuario.Email = email;
+        if (fotoPerfilUrl != null)
+            usuario.FotoPerfilUrl = fotoPerfilUrl;
 
         _context.SaveChanges();
         return true;

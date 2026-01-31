@@ -94,6 +94,15 @@ public class PublicController : ControllerBase
                 producto.Moneda
             );
 
+            var galeriaUrls = new List<string>();
+            if (!string.IsNullOrEmpty(producto.FotoUrl))
+                galeriaUrls.Add(producto.FotoUrl);
+            if (producto.Imagenes != null)
+            {
+                var otras = producto.Imagenes.OrderBy(i => i.Orden).Select(i => i.Url).Where(u => u != producto.FotoUrl).ToList();
+                galeriaUrls.AddRange(otras);
+            }
+
             // Mapear a ProductoResponse
             var response = new ProductoResponse
             {
@@ -103,6 +112,7 @@ public class PublicController : ControllerBase
                 Precio = producto.Precio,
                 Moneda = producto.Moneda,
                 FotoUrl = producto.FotoUrl,
+                GaleriaUrls = galeriaUrls,
                 Tienda = new TiendaInfoResponse
                 {
                     Id = producto.Tienda.Id,

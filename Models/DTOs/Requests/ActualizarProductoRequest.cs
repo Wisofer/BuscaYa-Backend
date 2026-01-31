@@ -8,5 +8,7 @@ public class ActualizarProductoRequest
     public string? Moneda { get; set; }
     public int? CategoriaId { get; set; }
     public string? FotoUrl { get; set; }
+    /// <summary>Reemplaza toda la galería. La primera URL es la imagen principal si FotoUrl no se envía.</summary>
+    public List<string>? ImagenesUrls { get; set; }
     public bool? Activo { get; set; }
 }

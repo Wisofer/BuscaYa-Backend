@@ -9,6 +9,7 @@ public class Usuario
     public string NombreCompleto { get; set; } = string.Empty;
     public string? Telefono { get; set; }
     public string? Email { get; set; }
+    public string? FotoPerfilUrl { get; set; }
     public int? TiendaId { get; set; } // Si es dueño de tienda
     public bool Activo { get; set; } = true;
     public DateTime FechaCreacion { get; set; } = DateTime.Now;

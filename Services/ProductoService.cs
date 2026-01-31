@@ -31,6 +31,7 @@ public class ProductoService : IProductoService
         return _context.Productos
             .Include(p => p.Tienda)
             .Include(p => p.Categoria)
+            .Include(p => p.Imagenes.OrderBy(i => i.Orden))
             .AsNoTracking()
             .FirstOrDefault(p => p.Id == id);
     }
@@ -55,6 +56,7 @@ public class ProductoService : IProductoService
             }
         }
 
+        var imagenPrincipal = request.FotoUrl ?? request.ImagenesUrls?.FirstOrDefault();
         var producto = new Producto
         {
             TiendaId = tiendaId,
@@ -63,12 +65,27 @@ public class ProductoService : IProductoService
             Precio = request.Precio,
             Moneda = request.Moneda,
             CategoriaId = request.CategoriaId,
-            FotoUrl = request.FotoUrl,
+            FotoUrl = imagenPrincipal,
             Activo = true
         };
 
         _context.Productos.Add(producto);
         _context.SaveChanges();
+
+        if (request.ImagenesUrls != null && request.ImagenesUrls.Count > 0)
+        {
+            for (var i = 0; i < request.ImagenesUrls.Count; i++)
+            {
+                _context.ProductoImagenes.Add(new ProductoImagen
+                {
+                    ProductoId = producto.Id,
+                    Url = request.ImagenesUrls[i],
+                    Orden = i
+                });
+            }
+            _context.SaveChanges();
+        }
+
         return producto;
     }
 
@@ -84,6 +101,22 @@ public class ProductoService : IProductoService
         if (request.CategoriaId.HasValue) producto.CategoriaId = request.CategoriaId.Value;
         if (request.FotoUrl != null) producto.FotoUrl = request.FotoUrl;
         if (request.Activo.HasValue) producto.Activo = request.Activo.Value;
+
+        if (request.ImagenesUrls != null)
+        {
+            var existentes = _context.ProductoImagenes.Where(pi => pi.ProductoId == id).ToList();
+            _context.ProductoImagenes.RemoveRange(existentes);
+            producto.FotoUrl = request.FotoUrl ?? request.ImagenesUrls.FirstOrDefault();
+            for (var i = 0; i < request.ImagenesUrls.Count; i++)
+            {
+                _context.ProductoImagenes.Add(new ProductoImagen
+                {
+                    ProductoId = id,
+                    Url = request.ImagenesUrls[i],
+                    Orden = i
+                });
+            }
+        }
         
         producto.FechaActualizacion = DateTime.Now;
         _context.SaveChanges();

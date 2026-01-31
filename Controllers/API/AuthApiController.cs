@@ -14,11 +14,13 @@ public class AuthApiController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IConfiguration _configuration;
+    private readonly IS3BucketService _s3Service;
 
-    public AuthApiController(IAuthService authService, IConfiguration configuration)
+    public AuthApiController(IAuthService authService, IConfiguration configuration, IS3BucketService s3Service)
     {
         _authService = authService;
         _configuration = configuration;
+        _s3Service = s3Service;
     }
 
     [HttpPost("login")]
@@ -71,6 +73,7 @@ public class AuthApiController : ControllerBase
                 Rol = usuario.Rol,
                 Email = usuario.Email,
                 Telefono = usuario.Telefono,
+                FotoPerfilUrl = usuario.FotoPerfilUrl,
                 TiendaId = usuario.TiendaId
             },
             ExpiraEn = expirationMinutes
@@ -144,6 +147,7 @@ public class AuthApiController : ControllerBase
                     Rol = usuario.Rol,
                     Email = usuario.Email,
                     Telefono = usuario.Telefono,
+                    FotoPerfilUrl = usuario.FotoPerfilUrl,
                     TiendaId = usuario.TiendaId
                 },
                 ExpiraEn = expirationMinutes
@@ -152,6 +156,38 @@ public class AuthApiController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { error = "Error al registrar usuario", mensaje = ex.Message });
+        }
+    }
+
+    [HttpGet("user")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public IActionResult ObtenerPerfil()
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+                return Unauthorized(new { error = "Usuario no autenticado" });
+
+            var usuario = _authService.ObtenerUsuarioPorId(userId);
+            if (usuario == null)
+                return NotFound(new { error = "Usuario no encontrado" });
+
+            return Ok(new UsuarioInfoResponse
+            {
+                Id = usuario.Id,
+                NombreUsuario = usuario.NombreUsuario,
+                NombreCompleto = usuario.NombreCompleto,
+                Rol = usuario.Rol,
+                Email = usuario.Email,
+                Telefono = usuario.Telefono,
+                FotoPerfilUrl = usuario.FotoPerfilUrl,
+                TiendaId = usuario.TiendaId
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error al obtener perfil", mensaje = ex.Message });
         }
     }
 
@@ -207,6 +243,7 @@ public class AuthApiController : ControllerBase
                     Rol = usuario.Rol,
                     Email = usuario.Email,
                     Telefono = usuario.Telefono,
+                    FotoPerfilUrl = usuario.FotoPerfilUrl,
                     TiendaId = usuario.TiendaId
                 }
             });
@@ -217,6 +254,58 @@ public class AuthApiController : ControllerBase
         }
     }
 
+    /// <summary>Sube la foto de perfil del usuario (base64). Sube a S3 y actualiza el perfil en una sola llamada.</summary>
+    [HttpPost("user/foto")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> SubirFotoPerfilAsync([FromBody] SubirFotoPerfilRequest request)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+                return Unauthorized(new { error = "Usuario no autenticado" });
+
+            if (string.IsNullOrWhiteSpace(request.ImageBase64))
+                return BadRequest(new { error = "ImageBase64 es requerido" });
+
+            var usuario = _authService.ObtenerUsuarioPorId(userId);
+            if (usuario == null)
+                return NotFound(new { error = "Usuario no encontrado" });
+
+            var url = await _s3Service.UploadImageFromBase64ToJpgAsync("perfil/", request.ImageBase64, usuario.FotoPerfilUrl);
+            if (url == null)
+                return BadRequest(new { error = "No se pudo subir la imagen. Formato o tamaño no válido." });
+
+            _authService.ActualizarPerfil(userId, usuario.NombreCompleto, usuario.Telefono, usuario.Email, url);
+            var actualizado = _authService.ObtenerUsuarioPorId(userId);
+
+            return Ok(new
+            {
+                mensaje = "Foto de perfil actualizada",
+                url,
+                usuario = new UsuarioInfoResponse
+                {
+                    Id = actualizado!.Id,
+                    NombreUsuario = actualizado.NombreUsuario,
+                    NombreCompleto = actualizado.NombreCompleto,
+                    Rol = actualizado.Rol,
+                    Email = actualizado.Email,
+                    Telefono = actualizado.Telefono,
+                    FotoPerfilUrl = actualizado.FotoPerfilUrl,
+                    TiendaId = actualizado.TiendaId
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error al subir foto de perfil", mensaje = ex.Message });
+        }
+    }
+}
+
+public class SubirFotoPerfilRequest
+{
+    public string ImageBase64 { get; set; } = string.Empty;
 }
 
 public class LoginRequest
@@ -250,6 +339,7 @@ public class UsuarioInfoResponse
     public string Rol { get; set; } = string.Empty;
     public string? Email { get; set; }
     public string? Telefono { get; set; }
+    public string? FotoPerfilUrl { get; set; }
     public int? TiendaId { get; set; }
 }
 
@@ -258,4 +348,5 @@ public class ActualizarUsuarioRequest
     public string NombreCompleto { get; set; } = string.Empty;
     public string? Telefono { get; set; }
     public string? Email { get; set; }
+    public string? FotoPerfilUrl { get; set; }
 }

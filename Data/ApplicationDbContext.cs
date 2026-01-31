@@ -16,6 +16,7 @@ public class ApplicationDbContext : DbContext
     // Tiendas y Productos
     public DbSet<Tienda> Tiendas { get; set; }
     public DbSet<Producto> Productos { get; set; }
+    public DbSet<ProductoImagen> ProductoImagenes { get; set; }
     public DbSet<Categoria> Categorias { get; set; }
 
     // Analytics
@@ -43,6 +44,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.NombreCompleto).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Telefono).HasMaxLength(20);
             entity.Property(e => e.Email).HasMaxLength(200);
+            entity.Property(e => e.FotoPerfilUrl).HasMaxLength(500);
             entity.HasIndex(e => e.NombreUsuario).IsUnique();
             
             entity.HasOne(e => e.Tienda)
@@ -100,6 +102,19 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.CategoriaId);
             entity.HasIndex(e => e.Activo);
             entity.HasIndex(e => e.Nombre); // Para full-text search
+        });
+
+        // ProductoImagen
+        modelBuilder.Entity<ProductoImagen>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Url).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.Orden).HasDefaultValue(0);
+            entity.HasOne(e => e.Producto)
+                .WithMany(p => p.Imagenes)
+                .HasForeignKey(e => e.ProductoId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => e.ProductoId);
         });
 
         // Categoria

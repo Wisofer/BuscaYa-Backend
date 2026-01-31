@@ -18,4 +18,5 @@ public class Producto
     public virtual Tienda Tienda { get; set; } = null!;
     public virtual Categoria Categoria { get; set; } = null!;
     public virtual ICollection<Favorito> Favoritos { get; set; } = new List<Favorito>();
+    public virtual ICollection<ProductoImagen> Imagenes { get; set; } = new List<ProductoImagen>();
 }

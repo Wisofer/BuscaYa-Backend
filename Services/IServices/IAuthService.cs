@@ -20,6 +20,6 @@ public interface IAuthService
         TimeSpan? horarioApertura, TimeSpan? horarioCierre, string? diasAtencion, string? logoTienda, string? fotoTienda);
     
     // Actualizar perfil de usuario
-    bool ActualizarPerfil(int usuarioId, string nombreCompleto, string? telefono, string? email);
+    bool ActualizarPerfil(int usuarioId, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl = null);
 }
 

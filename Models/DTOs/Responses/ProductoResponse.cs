@@ -8,6 +8,8 @@ public class ProductoResponse
     public decimal? Precio { get; set; }
     public string Moneda { get; set; } = "C$";
     public string? FotoUrl { get; set; }
+    /// <summary>Galería completa: imagen principal + resto en orden.</summary>
+    public List<string> GaleriaUrls { get; set; } = new();
     public TiendaInfoResponse Tienda { get; set; } = null!;
     public CategoriaInfoResponse Categoria { get; set; } = null!;
     public double? DistanciaKm { get; set; }
