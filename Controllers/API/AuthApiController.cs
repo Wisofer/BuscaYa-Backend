@@ -160,6 +160,7 @@ public class AuthApiController : ControllerBase
     }
 
     [HttpGet("user")]
+    [HttpGet("profile")] // Alias para compatibilidad con frontend
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public IActionResult ObtenerPerfil()
     {
@@ -192,6 +193,7 @@ public class AuthApiController : ControllerBase
     }
 
     [HttpPut("user")]
+    [HttpPut("profile")] // Alias para compatibilidad con frontend
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public IActionResult ActualizarPerfil([FromBody] ActualizarUsuarioRequest request)
     {
@@ -217,8 +219,8 @@ public class AuthApiController : ControllerBase
                 emailNormalizado = request.Email.Trim();
             }
 
-            // Actualizar perfil
-            var actualizado = _authService.ActualizarPerfil(userId, request.NombreCompleto, request.Telefono, emailNormalizado);
+            // Actualizar perfil (incl. fotoPerfilUrl si viene)
+            var actualizado = _authService.ActualizarPerfil(userId, request.NombreCompleto, request.Telefono, emailNormalizado, request.FotoPerfilUrl);
             
             if (!actualizado)
             {
