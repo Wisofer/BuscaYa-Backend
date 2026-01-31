@@ -14,6 +14,7 @@ public class S3BucketService : IS3BucketService
     private readonly IAmazonS3 _s3Client;
     private readonly string _bucketName;
     private readonly string _baseUrl;
+    private readonly string _publicBaseUrl;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly string? _cloudflareZoneId;
     private readonly string? _cloudflareApiToken;
@@ -28,6 +29,8 @@ public class S3BucketService : IS3BucketService
         _bucketName = r2Settings["BucketName"] ?? throw new InvalidOperationException("R2 BucketName no configurado");
         var accountId = r2Settings["AccountId"] ?? throw new InvalidOperationException("R2 AccountId no configurado");
         _baseUrl = $"{accountId}.r2.cloudflarestorage.com";
+        _publicBaseUrl = r2Settings["PublicBaseUrl"]
+            ?? "https://pub-94253f5fce9049b0accf419de3178334.r2.dev";
         _httpClientFactory = httpClientFactory;
         _cloudflareZoneId = configuration["Cloudflare:ZoneId"];
         _cloudflareApiToken = configuration["Cloudflare:ApiToken"];
@@ -76,8 +79,8 @@ public class S3BucketService : IS3BucketService
             var response = await _s3Client.PutObjectAsync(request);
             Console.WriteLine($"[S3] ✅ Imagen subida exitosamente. ETag: {response.ETag}");
 
-            // Construir URL pública (R2 usa path-style URLs)
-            var publicUrl = $"https://{_baseUrl}/{_bucketName}/{filePath}";
+            // Construir URL pública (R2 dev URLs públicas r2.dev)
+            var publicUrl = $"{_publicBaseUrl}/{filePath}";
             Console.WriteLine($"[S3] 🔗 URL pública: {publicUrl}");
             
             return publicUrl;
@@ -143,7 +146,7 @@ public class S3BucketService : IS3BucketService
 
             await _s3Client.PutObjectAsync(request);
 
-            return $"https://{_baseUrl}/{_bucketName}/{filePath}";
+            return $"{_publicBaseUrl}/{filePath}";
         }
         catch (Exception)
         {
@@ -181,7 +184,7 @@ public class S3BucketService : IS3BucketService
 
             await _s3Client.PutObjectAsync(request);
 
-            return $"https://{_baseUrl}/{_bucketName}/{filePath}";
+            return $"{_publicBaseUrl}/{filePath}";
         }
         catch (Exception)
         {
@@ -228,7 +231,7 @@ public class S3BucketService : IS3BucketService
 
             await _s3Client.PutObjectAsync(request);
 
-            return $"https://{_baseUrl}/{_bucketName}/{filePath}";
+            return $"{_publicBaseUrl}/{filePath}";
         }
         catch (Exception)
         {
@@ -288,7 +291,7 @@ public class S3BucketService : IS3BucketService
 
             await _s3Client.PutObjectAsync(request);
 
-            return $"https://{_baseUrl}/{_bucketName}/{filePath}";
+            return $"{_publicBaseUrl}/{filePath}";
         }
         catch (Exception)
         {
@@ -300,19 +303,31 @@ public class S3BucketService : IS3BucketService
     {
         if (string.IsNullOrWhiteSpace(fileUrl)) return;
 
-        var expectedPrefix = $"https://{_baseUrl}/{_bucketName}/";
-        if (fileUrl.StartsWith(expectedPrefix, StringComparison.OrdinalIgnoreCase))
+        // 1) URL privada S3
+        var privatePrefix = $"https://{_baseUrl}/{_bucketName}/";
+
+        // 2) URL pública r2.dev
+        var publicPrefix = _publicBaseUrl.EndsWith("/")
+            ? _publicBaseUrl
+            : _publicBaseUrl + "/";
+
+        string? key = null;
+
+        if (fileUrl.StartsWith(privatePrefix, StringComparison.OrdinalIgnoreCase))
+            key = fileUrl.Substring(privatePrefix.Length);
+        else if (fileUrl.StartsWith(publicPrefix, StringComparison.OrdinalIgnoreCase))
+            key = fileUrl.Substring(publicPrefix.Length);
+
+        if (string.IsNullOrWhiteSpace(key)) return;
+
+        try
         {
-            var previousImageKey = fileUrl.Substring(expectedPrefix.Length);
-            try
-            {
-                await _s3Client.DeleteObjectAsync(_bucketName, previousImageKey);
-                await PurgeCloudflareCacheAsync(fileUrl);
-            }
-            catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-            {
-                // El archivo no existe, no hay problema
-            }
+            await _s3Client.DeleteObjectAsync(_bucketName, key);
+            await PurgeCloudflareCacheAsync(fileUrl);
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            // ok
         }
     }
 
