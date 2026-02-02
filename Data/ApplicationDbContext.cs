@@ -30,6 +30,9 @@ public class ApplicationDbContext : DbContext
     // Reportes
     public DbSet<Reporte> Reportes { get; set; }
 
+    // Calificaciones
+    public DbSet<CalificacionTienda> CalificacionesTiendas { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -167,6 +170,25 @@ public class ApplicationDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
             
             entity.HasIndex(e => new { e.UsuarioId, e.TiendaId, e.ProductoId });
+        });
+
+        // CalificacionTienda
+        modelBuilder.Entity<CalificacionTienda>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Valor).IsRequired();
+
+            entity.HasOne(e => e.Tienda)
+                .WithMany(t => t.Calificaciones)
+                .HasForeignKey(e => e.TiendaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Usuario)
+                .WithMany(u => u.CalificacionesTiendas)
+                .HasForeignKey(e => e.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => new { e.TiendaId, e.UsuarioId }).IsUnique();
         });
 
         // HistorialBusqueda

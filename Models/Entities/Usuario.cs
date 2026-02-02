@@ -20,5 +20,6 @@ public class Usuario
     public virtual ICollection<HistorialBusqueda> HistorialBusquedas { get; set; } = new List<HistorialBusqueda>();
     public virtual ICollection<DireccionGuardada> DireccionesGuardadas { get; set; } = new List<DireccionGuardada>();
     public virtual ICollection<Reporte> Reportes { get; set; } = new List<Reporte>();
+    public virtual ICollection<CalificacionTienda> CalificacionesTiendas { get; set; } = new List<CalificacionTienda>();
 }
 

@@ -17,4 +17,8 @@ public interface ITiendaService
     bool Desactivar(int id);
     bool CambiarPlan(int tiendaId, string plan);
     bool VerificarLimiteProductos(int tiendaId);
+
+    // Calificaciones
+    void CalificarTienda(int tiendaId, int usuarioId, int valor);
+    int? ObtenerCalificacionUsuario(int tiendaId, int usuarioId);
 }

@@ -3,6 +3,9 @@ using BuscaYa.Models.DTOs.Requests;
 using BuscaYa.Models.DTOs.Responses;
 using BuscaYa.Services.IServices;
 using BuscaYa.Utils;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Security.Claims;
 
 namespace BuscaYa.Controllers.API;
 
@@ -28,6 +31,12 @@ public class PublicController : ControllerBase
         _categoriaService = categoriaService;
         _analyticsService = analyticsService;
         _productoService = productoService;
+    }
+
+    private int? GetUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return int.TryParse(userIdClaim, out var userId) ? userId : null;
     }
 
     [HttpGet("buscar")]
@@ -61,6 +70,53 @@ public class PublicController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { error = "Error al obtener la tienda", mensaje = ex.Message });
+        }
+    }
+
+    [HttpPost("tienda/{id}/calificar")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public IActionResult CalificarTienda(int id, [FromBody] CalificarTiendaRequest request)
+    {
+        try
+        {
+            var userId = GetUserId();
+            if (!userId.HasValue)
+                return Unauthorized(new { error = "Usuario no autenticado" });
+
+            _tiendaService.CalificarTienda(id, userId.Value, request.Valor);
+
+            return Ok(new { mensaje = "Calificación registrada correctamente" });
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error al calificar la tienda", mensaje = ex.Message });
+        }
+    }
+
+    [HttpGet("tienda/{id}/calificacion")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public IActionResult ObtenerCalificacionUsuario(int id)
+    {
+        try
+        {
+            var userId = GetUserId();
+            if (!userId.HasValue)
+                return Unauthorized(new { error = "Usuario no autenticado" });
+
+            var valor = _tiendaService.ObtenerCalificacionUsuario(id, userId.Value);
+            return Ok(new { valor });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error al obtener la calificación", mensaje = ex.Message });
         }
     }
 

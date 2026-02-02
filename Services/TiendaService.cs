@@ -83,6 +83,8 @@ public class TiendaService : ITiendaService
             LogoUrl = tienda.LogoUrl,
             FotoUrl = tienda.FotoUrl,
             Plan = tienda.Plan,
+            CalificacionPromedio = tienda.CalificacionPromedio,
+            TotalCalificaciones = tienda.TotalCalificaciones,
             Productos = tienda.Productos.Select(p => new ProductoSimpleResponse
             {
                 Id = p.Id,
@@ -199,5 +201,60 @@ public class TiendaService : ITiendaService
             .Count(p => p.TiendaId == tiendaId && p.Activo);
 
         return cantidadProductos < SD.LimiteProductosPlanFree;
+    }
+
+    public void CalificarTienda(int tiendaId, int usuarioId, int valor)
+    {
+        if (valor < 1 || valor > 5)
+        {
+            throw new ArgumentOutOfRangeException(nameof(valor), "La calificación debe ser entre 1 y 5.");
+        }
+
+        var tienda = _context.Tiendas.Find(tiendaId);
+        if (tienda == null || !tienda.Activo)
+        {
+            throw new InvalidOperationException("Tienda no encontrada o inactiva.");
+        }
+
+        var calificacion = _context.CalificacionesTiendas
+            .FirstOrDefault(c => c.TiendaId == tiendaId && c.UsuarioId == usuarioId);
+
+        if (calificacion == null)
+        {
+            calificacion = new CalificacionTienda
+            {
+                TiendaId = tiendaId,
+                UsuarioId = usuarioId,
+                Valor = valor
+            };
+            _context.CalificacionesTiendas.Add(calificacion);
+        }
+        else
+        {
+            calificacion.Valor = valor;
+            calificacion.FechaActualizacion = DateTime.Now;
+        }
+
+        _context.SaveChanges();
+
+        // Recalcular promedio y total
+        var calificaciones = _context.CalificacionesTiendas
+            .Where(c => c.TiendaId == tiendaId)
+            .ToList();
+
+        tienda.TotalCalificaciones = calificaciones.Count;
+        tienda.CalificacionPromedio = tienda.TotalCalificaciones > 0
+            ? calificaciones.Average(c => c.Valor)
+            : 0;
+
+        _context.SaveChanges();
+    }
+
+    public int? ObtenerCalificacionUsuario(int tiendaId, int usuarioId)
+    {
+        var calificacion = _context.CalificacionesTiendas
+            .FirstOrDefault(c => c.TiendaId == tiendaId && c.UsuarioId == usuarioId);
+
+        return calificacion?.Valor;
     }
 }

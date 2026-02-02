@@ -24,9 +24,14 @@ public class Tienda
     public DateTime FechaCreacion { get; set; } = DateTime.Now;
     public DateTime? FechaActualizacion { get; set; }
 
+    // Calificaciones
+    public double CalificacionPromedio { get; set; }
+    public int TotalCalificaciones { get; set; }
+
     // Relaciones
     public virtual Usuario? Usuario { get; set; }
     public virtual ICollection<Producto> Productos { get; set; } = new List<Producto>();
     public virtual ICollection<Estadistica> Estadisticas { get; set; } = new List<Estadistica>();
     public virtual ICollection<Favorito> Favoritos { get; set; } = new List<Favorito>();
+    public virtual ICollection<CalificacionTienda> Calificaciones { get; set; } = new List<CalificacionTienda>();
 }
