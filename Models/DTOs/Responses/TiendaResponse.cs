@@ -20,6 +20,7 @@ public class TiendaResponse
     public string? FotoUrl { get; set; }
     public string Plan { get; set; } = "Free";
     public double? DistanciaKm { get; set; }
+    public bool EstaAbierta { get; set; }
     public double CalificacionPromedio { get; set; }
     public int TotalCalificaciones { get; set; }
     public List<ProductoSimpleResponse> Productos { get; set; } = new();

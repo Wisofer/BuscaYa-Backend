@@ -19,6 +19,29 @@ public class TiendaService : ITiendaService
         _productoService = productoService;
     }
 
+        private static bool CalcularEstaAbierta(Tienda tienda)
+        {
+            if (!tienda.HorarioApertura.HasValue || !tienda.HorarioCierre.HasValue)
+            {
+                // Si no hay horario configurado, por defecto se considera cerrada
+                return false;
+            }
+
+            var ahora = DateTime.Now.TimeOfDay;
+            var apertura = tienda.HorarioApertura.Value;
+            var cierre = tienda.HorarioCierre.Value;
+
+            // Caso normal: abre y cierra el mismo día (ej. 08:00–18:00)
+            if (apertura < cierre)
+            {
+                return ahora >= apertura && ahora < cierre;
+            }
+
+            // Caso horario nocturno cruzando medianoche (ej. 20:00–02:00)
+            // Se considera abierta si es después de la apertura O antes del cierre
+            return ahora >= apertura || ahora < cierre;
+        }
+
     public List<Tienda> ObtenerTodas()
     {
         return _context.Tiendas
@@ -83,6 +106,7 @@ public class TiendaService : ITiendaService
             LogoUrl = tienda.LogoUrl,
             FotoUrl = tienda.FotoUrl,
             Plan = tienda.Plan,
+                EstaAbierta = CalcularEstaAbierta(tienda),
             CalificacionPromedio = tienda.CalificacionPromedio,
             TotalCalificaciones = tienda.TotalCalificaciones,
             Productos = tienda.Productos.Select(p => new ProductoSimpleResponse
