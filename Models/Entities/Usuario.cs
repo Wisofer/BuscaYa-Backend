@@ -10,6 +10,8 @@ public class Usuario
     public string? Telefono { get; set; }
     public string? Email { get; set; }
     public string? FotoPerfilUrl { get; set; }
+    /// <summary>Identificador único de Google (sub del idToken). Null si el usuario no se registró con Google.</summary>
+    public string? GoogleId { get; set; }
     public int? TiendaId { get; set; } // Si es dueño de tienda
     public bool Activo { get; set; } = true;
     public DateTime FechaCreacion { get; set; } = DateTime.Now;

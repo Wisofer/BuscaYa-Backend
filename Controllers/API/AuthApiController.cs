@@ -13,12 +13,14 @@ namespace BuscaYa.Controllers.API;
 public class AuthApiController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IGoogleAuthService _googleAuthService;
     private readonly IConfiguration _configuration;
     private readonly IS3BucketService _s3Service;
 
-    public AuthApiController(IAuthService authService, IConfiguration configuration, IS3BucketService s3Service)
+    public AuthApiController(IAuthService authService, IGoogleAuthService googleAuthService, IConfiguration configuration, IS3BucketService s3Service)
     {
         _authService = authService;
+        _googleAuthService = googleAuthService;
         _configuration = configuration;
         _s3Service = s3Service;
     }
@@ -65,19 +67,131 @@ public class AuthApiController : ControllerBase
         return Ok(new LoginResponse
         {
             Token = token,
-            Usuario = new UsuarioInfoResponse
-            {
-                Id = usuario.Id,
-                NombreUsuario = usuario.NombreUsuario,
-                NombreCompleto = usuario.NombreCompleto,
-                Rol = usuario.Rol,
-                Email = usuario.Email,
-                Telefono = usuario.Telefono,
-                FotoPerfilUrl = usuario.FotoPerfilUrl,
-                TiendaId = usuario.TiendaId
-            },
+            Usuario = MapToUsuarioInfo(usuario),
             ExpiraEn = expirationMinutes
         });
+    }
+
+    [HttpPost("google")]
+    public async Task<IActionResult> GoogleAsync([FromBody] GoogleLoginRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request?.IdToken))
+            return BadRequest(new { error = "El idToken es requerido" });
+
+        try
+        {
+            var payload = await _googleAuthService.VerifyIdTokenAsync(request.IdToken, cancellationToken).ConfigureAwait(false);
+            var usuario = _authService.ObtenerUsuarioPorGoogleIdOEmail(payload.GoogleId, payload.Email);
+
+            if (usuario != null)
+            {
+                if (!usuario.Activo)
+                    return Unauthorized(new { error = "Usuario inactivo" });
+
+                var jwtSettings = _configuration.GetSection("JwtSettings");
+                var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey no configurada");
+                var issuer = jwtSettings["Issuer"] ?? "BuscaYa";
+                var audience = jwtSettings["Audience"] ?? "BuscaYaUsers";
+                var expirationMinutes = int.Parse(jwtSettings["ExpirationInMinutes"] ?? "60");
+
+                var token = JwtHelper.GenerateToken(usuario.Id, usuario.NombreUsuario, usuario.Rol, usuario.NombreCompleto, secretKey, issuer, audience, expirationMinutes);
+
+                return Ok(new LoginResponse
+                {
+                    Token = token,
+                    Usuario = MapToUsuarioInfo(usuario),
+                    ExpiraEn = expirationMinutes
+                });
+            }
+
+            return Ok(new GoogleNeedsCompletionResponse
+            {
+                NeedsCompletion = true,
+                Email = payload.Email ?? string.Empty,
+                Nombre = payload.Name ?? string.Empty,
+                FotoPerfilUrl = payload.PictureUrl
+            });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { error = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("google/complete")]
+    public async Task<IActionResult> GoogleCompleteAsync([FromBody] GoogleCompleteRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request?.IdToken))
+            return BadRequest(new { error = "El idToken es requerido" });
+        if (string.IsNullOrWhiteSpace(request.NombreUsuario) || string.IsNullOrWhiteSpace(request.Contrasena) || string.IsNullOrWhiteSpace(request.NombreCompleto))
+            return BadRequest(new { error = "Nombre de usuario, contraseña y nombre completo son requeridos" });
+
+        try
+        {
+            var payload = await _googleAuthService.VerifyIdTokenAsync(request.IdToken, cancellationToken).ConfigureAwait(false);
+            var usuarioExistente = _authService.ObtenerUsuarioPorGoogleIdOEmail(payload.GoogleId, payload.Email);
+            if (usuarioExistente != null)
+                return BadRequest(new { error = "Este usuario de Google ya tiene una cuenta. Use Iniciar sesión con Google." });
+
+            if (_authService.ExisteNombreUsuario(request.NombreUsuario))
+                return BadRequest(new { error = "El nombre de usuario ya está en uso" });
+
+            string? emailNormalizado = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
+            var usuario = _authService.RegistrarClienteConGoogle(
+                payload.GoogleId,
+                request.NombreUsuario,
+                request.Contrasena,
+                request.NombreCompleto,
+                request.Telefono,
+                emailNormalizado,
+                payload.PictureUrl
+            );
+
+            if (usuario == null)
+                return BadRequest(new { error = "No se pudo crear la cuenta" });
+
+            var jwtSettings = _configuration.GetSection("JwtSettings");
+            var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey no configurada");
+            var issuer = jwtSettings["Issuer"] ?? "BuscaYa";
+            var audience = jwtSettings["Audience"] ?? "BuscaYaUsers";
+            var expirationMinutes = int.Parse(jwtSettings["ExpirationInMinutes"] ?? "60");
+
+            var token = JwtHelper.GenerateToken(usuario.Id, usuario.NombreUsuario, usuario.Rol, usuario.NombreCompleto, secretKey, issuer, audience, expirationMinutes);
+
+            return Ok(new LoginResponse
+            {
+                Token = token,
+                Usuario = MapToUsuarioInfo(usuario),
+                ExpiraEn = expirationMinutes
+            });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { error = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    private static UsuarioInfoResponse MapToUsuarioInfo(Models.Entities.Usuario u)
+    {
+        return new UsuarioInfoResponse
+        {
+            Id = u.Id,
+            NombreUsuario = u.NombreUsuario,
+            NombreCompleto = u.NombreCompleto,
+            Rol = u.Rol,
+            Email = u.Email,
+            Telefono = u.Telefono,
+            FotoPerfilUrl = u.FotoPerfilUrl,
+            TiendaId = u.TiendaId
+        };
     }
 
     [HttpPost("register")]
@@ -139,17 +253,7 @@ public class AuthApiController : ControllerBase
             return Ok(new LoginResponse
             {
                 Token = token,
-                Usuario = new UsuarioInfoResponse
-                {
-                    Id = usuario.Id,
-                    NombreUsuario = usuario.NombreUsuario,
-                    NombreCompleto = usuario.NombreCompleto,
-                    Rol = usuario.Rol,
-                    Email = usuario.Email,
-                    Telefono = usuario.Telefono,
-                    FotoPerfilUrl = usuario.FotoPerfilUrl,
-                    TiendaId = usuario.TiendaId
-                },
+                Usuario = MapToUsuarioInfo(usuario),
                 ExpiraEn = expirationMinutes
             });
         }
@@ -174,17 +278,7 @@ public class AuthApiController : ControllerBase
             if (usuario == null)
                 return NotFound(new { error = "Usuario no encontrado" });
 
-            return Ok(new UsuarioInfoResponse
-            {
-                Id = usuario.Id,
-                NombreUsuario = usuario.NombreUsuario,
-                NombreCompleto = usuario.NombreCompleto,
-                Rol = usuario.Rol,
-                Email = usuario.Email,
-                Telefono = usuario.Telefono,
-                FotoPerfilUrl = usuario.FotoPerfilUrl,
-                TiendaId = usuario.TiendaId
-            });
+            return Ok(MapToUsuarioInfo(usuario));
         }
         catch (Exception ex)
         {
@@ -237,17 +331,7 @@ public class AuthApiController : ControllerBase
             return Ok(new
             {
                 mensaje = "Perfil actualizado correctamente",
-                usuario = new UsuarioInfoResponse
-                {
-                    Id = usuario.Id,
-                    NombreUsuario = usuario.NombreUsuario,
-                    NombreCompleto = usuario.NombreCompleto,
-                    Rol = usuario.Rol,
-                    Email = usuario.Email,
-                    Telefono = usuario.Telefono,
-                    FotoPerfilUrl = usuario.FotoPerfilUrl,
-                    TiendaId = usuario.TiendaId
-                }
+                usuario = MapToUsuarioInfo(usuario)
             });
         }
         catch (Exception ex)
@@ -285,17 +369,7 @@ public class AuthApiController : ControllerBase
             {
                 mensaje = "Foto de perfil actualizada",
                 url,
-                usuario = new UsuarioInfoResponse
-                {
-                    Id = actualizado!.Id,
-                    NombreUsuario = actualizado.NombreUsuario,
-                    NombreCompleto = actualizado.NombreCompleto,
-                    Rol = actualizado.Rol,
-                    Email = actualizado.Email,
-                    Telefono = actualizado.Telefono,
-                    FotoPerfilUrl = actualizado.FotoPerfilUrl,
-                    TiendaId = actualizado.TiendaId
-                }
+                usuario = MapToUsuarioInfo(actualizado!)
             });
         }
         catch (Exception ex)
@@ -351,4 +425,29 @@ public class ActualizarUsuarioRequest
     public string? Telefono { get; set; }
     public string? Email { get; set; }
     public string? FotoPerfilUrl { get; set; }
+}
+
+// ——— Google Auth ———
+
+public class GoogleLoginRequest
+{
+    public string IdToken { get; set; } = string.Empty;
+}
+
+public class GoogleNeedsCompletionResponse
+{
+    public bool NeedsCompletion { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string Nombre { get; set; } = string.Empty;
+    public string? FotoPerfilUrl { get; set; }
+}
+
+public class GoogleCompleteRequest
+{
+    public string IdToken { get; set; } = string.Empty;
+    public string NombreUsuario { get; set; } = string.Empty;
+    public string Contrasena { get; set; } = string.Empty;
+    public string NombreCompleto { get; set; } = string.Empty;
+    public string? Telefono { get; set; }
+    public string? Email { get; set; }
 }

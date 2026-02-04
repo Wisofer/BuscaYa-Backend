@@ -48,7 +48,9 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Telefono).HasMaxLength(20);
             entity.Property(e => e.Email).HasMaxLength(200);
             entity.Property(e => e.FotoPerfilUrl).HasMaxLength(500);
+            entity.Property(e => e.GoogleId).HasMaxLength(128);
             entity.HasIndex(e => e.NombreUsuario).IsUnique();
+            entity.HasIndex(e => e.GoogleId).IsUnique().HasFilter("\"GoogleId\" IS NOT NULL");
             
             entity.HasOne(e => e.Tienda)
                 .WithOne(t => t.Usuario)

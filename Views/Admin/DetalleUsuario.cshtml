@@ -56,6 +56,20 @@
                                 <th>Teléfono:</th>
                                 <td>@(usuario.Telefono ?? "-")</td>
                             </tr>
+                            <tr>
+                                <th>Inicio de sesión:</th>
+                                <td>
+                                    @if (usuario.GoogleId != null)
+                                    {
+                                        <div class="badge badge-info badge-lg">Google</div>
+                                        <span class="text-sm text-base-content/70 ml-2">Cuenta vinculada a Google</span>
+                                    }
+                                    else
+                                    {
+                                        <div class="badge badge-ghost badge-lg">Usuario / Contraseña</div>
+                                    }
+                                </td>
+                            </tr>
                             @if (usuario.Tienda != null)
                             {
                                 <tr>

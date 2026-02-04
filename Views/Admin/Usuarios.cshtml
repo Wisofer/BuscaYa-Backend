@@ -51,6 +51,7 @@
                         <th>Email</th>
                         <th>Teléfono</th>
                         <th>Tienda</th>
+                        <th>Login</th>
                         <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
@@ -77,6 +78,16 @@
                                 else
                                 {
                                     <div class="badge badge-ghost">Sin tienda</div>
+                                }
+                            </td>
+                            <td>
+                                @if (usuario.LoginConGoogle)
+                                {
+                                    <div class="badge badge-info" title="Cuenta vinculada a Google">Google</div>
+                                }
+                                else
+                                {
+                                    <div class="badge badge-ghost">Email/Usuario</div>
                                 }
                             </td>
                             <td>

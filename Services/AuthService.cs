@@ -24,7 +24,7 @@ public class AuthService : IAuthService
 
         // Buscar usuario en la base de datos
         var usuario = _context.Usuarios
-            .FirstOrDefault(u => u.NombreUsuario.ToLower() == nombreUsuario.ToLower() && u.Activo);
+            .FirstOrDefault(u => u.NombreUsuario.Equals(nombreUsuario, StringComparison.OrdinalIgnoreCase) && u.Activo);
 
         if (usuario == null)
         {
@@ -58,34 +58,76 @@ public class AuthService : IAuthService
     public bool ExisteNombreUsuario(string nombreUsuario)
     {
         return _context.Usuarios
-            .Any(u => u.NombreUsuario.ToLower() == nombreUsuario.ToLower());
+            .Any(u => u.NombreUsuario.Equals(nombreUsuario, StringComparison.OrdinalIgnoreCase));
     }
 
     public Usuario? RegistrarCliente(string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email)
     {
-        // Validar que el nombre de usuario no exista
         if (ExisteNombreUsuario(nombreUsuario))
-        {
             return null;
-        }
 
-        // Crear nuevo usuario cliente
         var usuario = new Usuario
         {
             NombreUsuario = nombreUsuario,
             Contrasena = PasswordHelper.HashPassword(contrasena),
             NombreCompleto = nombreCompleto,
             Telefono = telefono,
-            Email = email, // Se guarda tal cual viene
+            Email = email,
             Rol = SD.RolCliente,
             Activo = true,
             FechaCreacion = DateTime.Now,
-            TiendaId = null // Cliente no tiene tienda
+            TiendaId = null
         };
 
         _context.Usuarios.Add(usuario);
         _context.SaveChanges();
+        return usuario;
+    }
 
+    public Usuario? ObtenerUsuarioPorGoogleIdOEmail(string? googleId, string? email)
+    {
+        if (string.IsNullOrWhiteSpace(googleId) && string.IsNullOrWhiteSpace(email))
+            return null;
+
+        var query = _context.Usuarios.Where(u => u.Activo);
+
+        if (!string.IsNullOrWhiteSpace(googleId))
+        {
+            var byGoogle = query.FirstOrDefault(u => u.GoogleId == googleId);
+            if (byGoogle != null) return byGoogle;
+        }
+
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            var emailNorm = email.Trim().ToLowerInvariant();
+            return query.FirstOrDefault(u => u.Email != null && u.Email.Trim().ToLowerInvariant() == emailNorm);
+        }
+
+        return null;
+    }
+
+    public Usuario? RegistrarClienteConGoogle(string googleId, string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl)
+    {
+        if (ExisteNombreUsuario(nombreUsuario))
+            return null;
+
+        var usuario = new Usuario
+        {
+            GoogleId = googleId,
+            NombreUsuario = nombreUsuario,
+            Contrasena = PasswordHelper.HashPassword(contrasena),
+            NombreCompleto = nombreCompleto,
+            Telefono = telefono,
+            Email = email,
+            FotoPerfilUrl = fotoPerfilUrl,
+            Rol = SD.RolCliente,
+            Activo = true,
+            FechaCreacion = DateTime.Now,
+            TiendaId = null
+        };
+
+        _context.Usuarios.Add(usuario);
+        _context.SaveChanges();
         return usuario;
     }
 

@@ -132,6 +132,7 @@ builder.Services.AddAuthorization(options =>
 
 // Registrar servicios
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddHttpClient<IGoogleAuthService, GoogleAuthService>();
 builder.Services.AddScoped<ITiendaService, TiendaService>();
 builder.Services.AddScoped<IProductoService, ProductoService>();
 builder.Services.AddScoped<IBusquedaService, BusquedaService>();
