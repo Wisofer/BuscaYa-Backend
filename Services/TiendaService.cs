@@ -128,8 +128,7 @@ public class TiendaService : ITiendaService
             EstaAbiertaManual = request.EstaAbiertaManual,
             Plan = SD.PlanFree,
             Activo = true,
-            UsuarioId = usuarioId,
-            EstaAbiertaManual = request.EstaAbiertaManual
+            UsuarioId = usuarioId
         };
 
         _context.Tiendas.Add(tienda);
