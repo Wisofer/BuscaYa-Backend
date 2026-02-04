@@ -49,7 +49,13 @@ public class PublicController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = "Error al realizar la búsqueda", mensaje = ex.Message });
+            // El frontend móvil espera un arreglo "errorMessages" para mostrar el mensaje al usuario.
+            return StatusCode(500, new
+            {
+                errorMessages = new[] { "Error al realizar la búsqueda" },
+                error = "Error al realizar la búsqueda",
+                mensaje = ex.Message
+            });
         }
     }
 
@@ -60,7 +66,13 @@ public class PublicController : ControllerBase
         {
             var tienda = _tiendaService.ObtenerDetalle(id, lat, lng);
             if (tienda == null)
-                return NotFound(new { error = "Tienda no encontrada" });
+            {
+                return NotFound(new
+                {
+                    errorMessages = new[] { "Tienda no encontrada" },
+                    error = "Tienda no encontrada"
+                });
+            }
 
             // Registrar vista
             _analyticsService.RegistrarEvento(id, SD.EventoVistaTienda);
@@ -69,7 +81,13 @@ public class PublicController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = "Error al obtener la tienda", mensaje = ex.Message });
+            // Estructura de error compatible con el frontend móvil
+            return StatusCode(500, new
+            {
+                errorMessages = new[] { "Error al obtener la tienda" },
+                error = "Error al obtener la tienda",
+                mensaje = ex.Message
+            });
         }
     }
 

@@ -7,10 +7,12 @@ namespace BuscaYa.Controllers.Web;
 public class PublicController : Controller
 {
     private readonly IProductoService _productoService;
+    private readonly ITiendaService _tiendaService;
 
-    public PublicController(IProductoService productoService)
+    public PublicController(IProductoService productoService, ITiendaService tiendaService)
     {
         _productoService = productoService;
+        _tiendaService = tiendaService;
     }
 
     [HttpGet("/producto/{id}")]
@@ -49,6 +51,33 @@ public class PublicController : Controller
         {
             // Log del error (puedes agregar ILogger si quieres)
             return View("ProductoNoEncontrado");
+        }
+    }
+
+    /// <summary>
+    /// Detalle público de tienda para compartir:
+    /// GET /tienda/{id}
+    /// </summary>
+    [HttpGet("/tienda/{id}")]
+    public IActionResult VerTienda(int id)
+    {
+        try
+        {
+            var tienda = _tiendaService.ObtenerDetalle(id);
+            if (tienda == null)
+            {
+                return View("TiendaNoEncontrada");
+            }
+
+            ViewData["Tienda"] = tienda;
+            ViewData["DeepLink"] = $"buscaya://tienda/{id}";
+
+            return View("Tienda");
+        }
+        catch
+        {
+            // Si ocurre algún error, mostramos una página amigable
+            return View("TiendaNoEncontrada");
         }
     }
 }

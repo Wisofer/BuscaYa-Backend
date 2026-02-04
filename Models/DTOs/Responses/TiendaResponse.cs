@@ -25,6 +25,47 @@ public class TiendaResponse
     public double CalificacionPromedio { get; set; }
     public int TotalCalificaciones { get; set; }
     public List<ProductoSimpleResponse> Productos { get; set; } = new();
+
+    /// <summary>
+    /// Dirección completa en un solo campo, pensada para el frontend móvil.
+    /// Ejemplo: "Dirección..., Ciudad, Departamento".
+    /// </summary>
+    public string DireccionCompleta
+    {
+        get
+        {
+            var partes = new List<string>();
+            if (!string.IsNullOrWhiteSpace(Direccion)) partes.Add(Direccion);
+            if (!string.IsNullOrWhiteSpace(Ciudad)) partes.Add(Ciudad);
+            if (!string.IsNullOrWhiteSpace(Departamento)) partes.Add(Departamento);
+            return string.Join(", ", partes);
+        }
+    }
+
+    /// <summary>
+    /// Horario formateado para mostrar en el detalle público y compartir tienda.
+    /// Ejemplo: "Lun-Dom 08:00-17:00".
+    /// </summary>
+    public string HorarioFormateado
+    {
+        get
+        {
+            if (!HorarioApertura.HasValue || !HorarioCierre.HasValue)
+            {
+                return DiasAtencion ?? string.Empty;
+            }
+
+            var inicio = HorarioApertura.Value.ToString(@"hh\:mm");
+            var fin = HorarioCierre.Value.ToString(@"hh\:mm");
+
+            if (!string.IsNullOrWhiteSpace(DiasAtencion))
+            {
+                return $"{DiasAtencion} {inicio}-{fin}";
+            }
+
+            return $"{inicio}-{fin}";
+        }
+    }
 }
 
 public class ProductoSimpleResponse
