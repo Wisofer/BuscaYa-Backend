@@ -94,8 +94,18 @@
                                 </td>
                                 <td>
                                     <div>
-                                        <div class="font-medium">@reporte.UsuarioCompleto</div>
-                                        <div class="text-xs text-gray-500">@reporte.UsuarioNombre</div>
+                                        @if (!string.IsNullOrEmpty(reporte.UsuarioCompleto))
+                                        {
+                                            <div class="font-medium">@reporte.UsuarioCompleto</div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(reporte.UsuarioNombre))
+                                        {
+                                            <div class="text-xs text-gray-500">@reporte.UsuarioNombre</div>
+                                        }
+                                        @if (string.IsNullOrEmpty(reporte.UsuarioCompleto) && string.IsNullOrEmpty(reporte.UsuarioNombre))
+                                        {
+                                            <div class="text-xs text-gray-500">Usuario eliminado</div>
+                                        }
                                     </div>
                                 </td>
                                 <td>

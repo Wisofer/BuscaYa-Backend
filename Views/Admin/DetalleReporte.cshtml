@@ -16,6 +16,15 @@
                 Información del Reporte
             </h2>
             
+            @if (reporte == null)
+            {
+                <div class="alert alert-error">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span>Reporte no encontrado</span>
+                </div>
+            }
+            else
+            {
             <div class="space-y-4">
                 <div>
                     <label class="label">
@@ -96,11 +105,18 @@
                         <span class="label-text font-semibold">Reportado por</span>
                     </label>
                     <div>
-                        <div class="font-semibold">@reporte.Usuario.NombreCompleto</div>
-                        <div class="text-sm text-gray-500">@reporte.Usuario.NombreUsuario</div>
-                        @if (!string.IsNullOrEmpty(reporte.Usuario.Email))
+                        @if (reporte.Usuario != null)
                         {
-                            <div class="text-sm text-gray-500">@reporte.Usuario.Email</div>
+                            <div class="font-semibold">@reporte.Usuario.NombreCompleto</div>
+                            <div class="text-sm text-gray-500">@reporte.Usuario.NombreUsuario</div>
+                            @if (!string.IsNullOrEmpty(reporte.Usuario.Email))
+                            {
+                                <div class="text-sm text-gray-500">@reporte.Usuario.Email</div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-sm text-gray-500">Usuario eliminado (ID: @reporte.UsuarioId)</div>
                         }
                     </div>
                 </div>
@@ -123,6 +139,7 @@
                     </form>
                 </div>
             }
+            }
         </div>
     </div>
     
@@ -130,11 +147,18 @@
     <div class="card bg-base-100 shadow-lg">
         <div class="card-body">
             <h2 class="card-title">
-                <i class="bi bi-@(reporte.Tipo == "producto" ? "box" : "shop")"></i>
-                @(reporte.Tipo == "producto" ? "Producto Reportado" : "Tienda Reportada")
+                <i class="bi bi-@(reporte?.Tipo == "producto" ? "box" : "shop")"></i>
+                @(reporte?.Tipo == "producto" ? "Producto Reportado" : "Tienda Reportada")
             </h2>
             
-            @if (recurso != null)
+            @if (reporte == null)
+            {
+                <div class="alert alert-error">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span>Reporte no encontrado</span>
+                </div>
+            }
+            else if (recurso != null)
             {
                 @if (reporte.Tipo == "producto" && recurso is Producto producto)
                 {
@@ -267,7 +291,7 @@
             {
                 <div class="alert alert-warning">
                     <i class="bi bi-exclamation-triangle"></i>
-                    <span>El recurso reportado (ID: @reporte.RecursoId) no existe o fue eliminado.</span>
+                    <span>El recurso reportado (ID: @(reporte?.RecursoId ?? 0)) no existe o fue eliminado.</span>
                 </div>
             }
         </div>
