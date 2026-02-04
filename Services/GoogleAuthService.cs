@@ -1,6 +1,7 @@
 using System.Text.Json;
 using BuscaYa.Services.IServices;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace BuscaYa.Services;
 
@@ -12,12 +13,17 @@ public class GoogleAuthService : IGoogleAuthService
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<GoogleAuthService> _logger;
     private const string TokenInfoUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=";
 
-    public GoogleAuthService(HttpClient httpClient, IConfiguration configuration)
+    /// <summary>Project number de Firebase BuscaYa (buscaya-993cd). Algunos tokens Android envían esto como aud.</summary>
+    private const string FirebaseProjectNumber = "576243727810";
+
+    public GoogleAuthService(HttpClient httpClient, IConfiguration configuration, ILogger<GoogleAuthService> logger)
     {
         _httpClient = httpClient;
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task<GoogleTokenPayload> VerifyIdTokenAsync(string idToken, CancellationToken cancellationToken = default)
@@ -44,13 +50,22 @@ public class GoogleAuthService : IGoogleAuthService
         if (string.IsNullOrEmpty(sub))
             throw new UnauthorizedAccessException("Token de Google no contiene 'sub'.");
 
-        // Validar que el token sea para nuestra app (aud debe ser uno de nuestros client IDs)
+        var aud = GetString(root, "aud");
         var allowedAudiences = GetAllowedAudiences();
+
         if (allowedAudiences.Count > 0)
         {
-            var aud = GetString(root, "aud");
-            if (string.IsNullOrEmpty(aud) || !allowedAudiences.Contains(aud))
+            bool audValid = !string.IsNullOrEmpty(aud) &&
+                (allowedAudiences.Contains(aud) || aud == FirebaseProjectNumber);
+
+            if (!audValid)
+            {
+                _logger.LogWarning(
+                    "Google token rechazado: aud={Aud} no está en la lista de ClientIds configurados ({Count} IDs). " +
+                    "Si despliegas con Docker, reconstruye la imagen para que cargue appsettings.json actualizado.",
+                    aud, allowedAudiences.Count);
                 throw new UnauthorizedAccessException("Token de Google no es válido para esta aplicación.");
+            }
         }
 
         string? email = GetString(root, "email");
@@ -70,7 +85,6 @@ public class GoogleAuthService : IGoogleAuthService
             if (!string.IsNullOrWhiteSpace(value))
                 list.Add(value.Trim());
         }
-        // Si no hay configuración, aceptamos cualquier aud (útil en dev)
         return list;
     }
 
