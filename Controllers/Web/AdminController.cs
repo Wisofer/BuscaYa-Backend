@@ -407,7 +407,7 @@ public class AdminController : Controller
                 r.Revisado,
                 r.NotaAdmin,
                 r.FechaCreacion,
-                r.FechaRevisado,
+                FechaRevisadoTexto = r.FechaRevisado.HasValue ? r.FechaRevisado.Value.ToString("dd/MM/yyyy") : (string?)null,
                 UsuarioNombre = r.Usuario?.NombreUsuario,
                 UsuarioCompleto = r.Usuario?.NombreCompleto
             };

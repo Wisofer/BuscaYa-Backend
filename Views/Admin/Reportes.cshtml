@@ -118,10 +118,10 @@
                                     @if (reporte.Revisado)
                                     {
                                         <div class="badge badge-success">Revisado</div>
-                                        @if (reporte.FechaRevisado.HasValue)
+                                        @if (!string.IsNullOrEmpty(reporte.FechaRevisadoTexto))
                                         {
                                             <div class="text-xs text-gray-500 mt-1">
-                                                @reporte.FechaRevisado.Value.ToString("dd/MM/yyyy")
+                                                @reporte.FechaRevisadoTexto
                                             </div>
                                         }
                                     }
