@@ -17,4 +17,6 @@ public class ActualizarTiendaRequest
     public string? DiasAtencion { get; set; }
     public string? LogoUrl { get; set; }
     public string? FotoUrl { get; set; }
+    /// <summary>Estado manual: true = Abierto, false = Cerrado.</summary>
+    public bool? EstaAbiertaManual { get; set; }
 }

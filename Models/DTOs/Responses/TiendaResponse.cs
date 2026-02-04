@@ -20,6 +20,7 @@ public class TiendaResponse
     public string? FotoUrl { get; set; }
     public string Plan { get; set; } = "Free";
     public double? DistanciaKm { get; set; }
+    /// <summary>Estado manual del dueño (Abierto/Cerrado). No depende del horario.</summary>
     public bool EstaAbierta { get; set; }
     public double CalificacionPromedio { get; set; }
     public int TotalCalificaciones { get; set; }

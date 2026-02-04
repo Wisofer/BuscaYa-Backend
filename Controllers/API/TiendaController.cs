@@ -88,6 +88,31 @@ public class TiendaController : ControllerBase
         }
     }
 
+    [HttpPatch("estado")]
+    public IActionResult ActualizarEstado([FromBody] ActualizarEstadoTiendaRequest request)
+    {
+        try
+        {
+            var tiendaId = GetTiendaId();
+            if (!tiendaId.HasValue)
+                return Unauthorized(new { error = "No tienes una tienda asociada" });
+
+            var actualizado = _tiendaService.ActualizarEstado(tiendaId.Value, request.EstaAbiertaManual);
+            if (!actualizado)
+                return NotFound(new { error = "Tienda no encontrada" });
+
+            return Ok(new
+            {
+                mensaje = "Estado actualizado correctamente",
+                estaAbierta = request.EstaAbiertaManual
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error al actualizar estado", mensaje = ex.Message });
+        }
+    }
+
     [HttpGet("productos")]
     public IActionResult ObtenerProductos()
     {

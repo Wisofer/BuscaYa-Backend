@@ -19,29 +19,6 @@ public class TiendaService : ITiendaService
         _productoService = productoService;
     }
 
-        private static bool CalcularEstaAbierta(Tienda tienda)
-        {
-            if (!tienda.HorarioApertura.HasValue || !tienda.HorarioCierre.HasValue)
-            {
-                // Si no hay horario configurado, por defecto se considera cerrada
-                return false;
-            }
-
-            var ahora = DateTime.Now.TimeOfDay;
-            var apertura = tienda.HorarioApertura.Value;
-            var cierre = tienda.HorarioCierre.Value;
-
-            // Caso normal: abre y cierra el mismo día (ej. 08:00–18:00)
-            if (apertura < cierre)
-            {
-                return ahora >= apertura && ahora < cierre;
-            }
-
-            // Caso horario nocturno cruzando medianoche (ej. 20:00–02:00)
-            // Se considera abierta si es después de la apertura O antes del cierre
-            return ahora >= apertura || ahora < cierre;
-        }
-
     public List<Tienda> ObtenerTodas()
     {
         return _context.Tiendas
@@ -106,7 +83,7 @@ public class TiendaService : ITiendaService
             LogoUrl = tienda.LogoUrl,
             FotoUrl = tienda.FotoUrl,
             Plan = tienda.Plan,
-                EstaAbierta = CalcularEstaAbierta(tienda),
+            EstaAbierta = tienda.EstaAbiertaManual,
             CalificacionPromedio = tienda.CalificacionPromedio,
             TotalCalificaciones = tienda.TotalCalificaciones,
             Productos = tienda.Productos.Select(p => new ProductoSimpleResponse
@@ -148,9 +125,11 @@ public class TiendaService : ITiendaService
             DiasAtencion = request.DiasAtencion,
             LogoUrl = request.LogoUrl,
             FotoUrl = request.FotoUrl,
+            EstaAbiertaManual = request.EstaAbiertaManual,
             Plan = SD.PlanFree,
             Activo = true,
-            UsuarioId = usuarioId
+            UsuarioId = usuarioId,
+            EstaAbiertaManual = request.EstaAbiertaManual
         };
 
         _context.Tiendas.Add(tienda);
@@ -178,7 +157,19 @@ public class TiendaService : ITiendaService
         if (request.DiasAtencion != null) tienda.DiasAtencion = request.DiasAtencion;
         if (request.LogoUrl != null) tienda.LogoUrl = request.LogoUrl;
         if (request.FotoUrl != null) tienda.FotoUrl = request.FotoUrl;
+        if (request.EstaAbiertaManual.HasValue) tienda.EstaAbiertaManual = request.EstaAbiertaManual.Value;
 
+        tienda.FechaActualizacion = DateTime.Now;
+        _context.SaveChanges();
+        return true;
+    }
+
+    public bool ActualizarEstado(int id, bool estaAbiertaManual)
+    {
+        var tienda = _context.Tiendas.Find(id);
+        if (tienda == null) return false;
+
+        tienda.EstaAbiertaManual = estaAbiertaManual;
         tienda.FechaActualizacion = DateTime.Now;
         _context.SaveChanges();
         return true;

@@ -18,6 +18,8 @@ public class Tienda
     public string? DiasAtencion { get; set; }
     public string? LogoUrl { get; set; }
     public string? FotoUrl { get; set; }
+    /// <summary>Control manual del dueño: true = Abierto, false = Cerrado. No depende del horario.</summary>
+    public bool EstaAbiertaManual { get; set; } = true;
     public string Plan { get; set; } = "Free"; // Free, Pro
     public bool Activo { get; set; } = true;
     public int? UsuarioId { get; set; }

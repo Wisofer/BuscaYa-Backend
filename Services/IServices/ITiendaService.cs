@@ -13,6 +13,7 @@ public interface ITiendaService
     TiendaResponse? ObtenerDetalle(int id, decimal? latUsuario = null, decimal? lngUsuario = null);
     Tienda Crear(CrearTiendaRequest request, int? usuarioId = null);
     bool Actualizar(int id, ActualizarTiendaRequest request);
+    bool ActualizarEstado(int id, bool estaAbiertaManual);
     bool Activar(int id);
     bool Desactivar(int id);
     bool CambiarPlan(int tiendaId, string plan);
