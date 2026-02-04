@@ -2,7 +2,8 @@ namespace BuscaYa.Models.DTOs.Requests;
 
 public class BuscarRequest
 {
-    public string Termino { get; set; } = string.Empty;
+    // Termino es opcional: si viene vacío o null, se interpreta como búsqueda amplia (Destacados)
+    public string? Termino { get; set; }
     public decimal? Latitud { get; set; }
     public decimal? Longitud { get; set; }
     public double? RadioKm { get; set; } = 5.0;
