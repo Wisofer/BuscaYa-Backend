@@ -22,9 +22,10 @@ public class AuthService : IAuthService
             return null;
         }
 
-        // Buscar usuario en la base de datos
+        // Buscar usuario en la base de datos (comparación case-insensitive traducible a SQL)
+        var nombreLower = nombreUsuario.Trim().ToLower();
         var usuario = _context.Usuarios
-            .FirstOrDefault(u => u.NombreUsuario.Equals(nombreUsuario, StringComparison.OrdinalIgnoreCase) && u.Activo);
+            .FirstOrDefault(u => u.NombreUsuario.ToLower() == nombreLower && u.Activo);
 
         if (usuario == null)
         {
@@ -57,8 +58,10 @@ public class AuthService : IAuthService
 
     public bool ExisteNombreUsuario(string nombreUsuario)
     {
+        if (string.IsNullOrWhiteSpace(nombreUsuario)) return false;
+        var nombreLower = nombreUsuario.Trim().ToLower();
         return _context.Usuarios
-            .Any(u => u.NombreUsuario.Equals(nombreUsuario, StringComparison.OrdinalIgnoreCase));
+            .Any(u => u.NombreUsuario.ToLower() == nombreLower);
     }
 
     public Usuario? RegistrarCliente(string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email)
@@ -99,8 +102,8 @@ public class AuthService : IAuthService
 
         if (!string.IsNullOrWhiteSpace(email))
         {
-            var emailNorm = email.Trim().ToLowerInvariant();
-            return query.FirstOrDefault(u => u.Email != null && u.Email.Trim().ToLowerInvariant() == emailNorm);
+            var emailNorm = email.Trim().ToLower();
+            return query.FirstOrDefault(u => u.Email != null && u.Email.ToLower() == emailNorm);
         }
 
         return null;
