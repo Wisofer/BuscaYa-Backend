@@ -4,6 +4,8 @@ using BuscaYa.Data;
 using BuscaYa.Services;
 using BuscaYa.Services.IServices;
 using BuscaYa.Utils;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -139,6 +141,30 @@ builder.Services.AddScoped<IBusquedaService, BusquedaService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<IReporteService, ReporteService>();
+builder.Services.AddScoped<IPushNotificationService, PushNotificationService>();
+
+// Inicializar Firebase (credenciales desde env o archivo Secrets)
+void InitializeFirebase()
+{
+    try
+    {
+        if (FirebaseApp.DefaultInstance != null) return;
+        GoogleCredential? credential = null;
+        var firebaseCredentialsJson = Environment.GetEnvironmentVariable("FIREBASE_CREDENTIALS_JSON");
+        if (!string.IsNullOrEmpty(firebaseCredentialsJson))
+            credential = GoogleCredential.FromJson(firebaseCredentialsJson);
+        else
+        {
+            var path = Path.Combine(builder.Environment.ContentRootPath, "Secrets", "firebase_credentials.json");
+            if (File.Exists(path))
+                credential = GoogleCredential.FromFile(path);
+        }
+        if (credential != null)
+            FirebaseApp.Create(new AppOptions { Credential = credential });
+    }
+    catch (Exception) { /* no fallar el arranque si Firebase no está configurado */ }
+}
+InitializeFirebase();
 
 var app = builder.Build();
 

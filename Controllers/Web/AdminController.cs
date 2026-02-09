@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BuscaYa.Data;
+using BuscaYa.Models.Entities;
 using BuscaYa.Services.IServices;
 using BuscaYa.Utils;
 using BuscaYa.Attributes;
@@ -16,19 +17,22 @@ public class AdminController : Controller
     private readonly IAnalyticsService _analyticsService;
     private readonly ICategoriaService _categoriaService;
     private readonly IReporteService _reporteService;
+    private readonly IPushNotificationService _pushNotificationService;
 
     public AdminController(
         ApplicationDbContext context,
         ITiendaService tiendaService,
         IAnalyticsService analyticsService,
         ICategoriaService categoriaService,
-        IReporteService reporteService)
+        IReporteService reporteService,
+        IPushNotificationService pushNotificationService)
     {
         _context = context;
         _tiendaService = tiendaService;
         _analyticsService = analyticsService;
         _categoriaService = categoriaService;
         _reporteService = reporteService;
+        _pushNotificationService = pushNotificationService;
     }
 
     [HttpGet("/admin")]
@@ -469,5 +473,137 @@ public class AdminController : Controller
         ViewBag.Recurso = recurso;
 
         return View();
+    }
+
+    // --- Notificaciones push ---
+    [HttpGet("/admin/notifications")]
+    public async Task<IActionResult> Notifications()
+    {
+        var templates = await _context.NotificationTemplates
+            .OrderByDescending(t => t.Id)
+            .ToListAsync();
+        var devicesByUser = await _context.Devices
+            .Include(d => d.Usuario)
+            .GroupBy(d => d.UsuarioId)
+            .Select(g => new
+            {
+                UsuarioId = g.Key,
+                UsuarioNombre = g.First().Usuario != null ? g.First().Usuario.NombreCompleto : "",
+                UsuarioRol = g.First().Usuario != null ? g.First().Usuario.Rol : "",
+                Count = g.Count()
+            })
+            .OrderByDescending(x => x.Count)
+            .ToListAsync();
+        var totalDevices = await _context.Devices.CountAsync();
+        ViewBag.Templates = templates;
+        ViewBag.DevicesByUser = devicesByUser;
+        ViewBag.TotalDevices = totalDevices;
+        ViewBag.Usuarios = await _context.Usuarios
+            .OrderBy(u => u.NombreCompleto)
+            .Select(u => new { u.Id, u.NombreCompleto, u.NombreUsuario, u.Rol })
+            .ToListAsync();
+        return View("Notificaciones");
+    }
+
+    [HttpPost("/admin/notifications/create-template")]
+    public async Task<IActionResult> CreateNotificationTemplate(string title, string body, string? imageUrl, string? name)
+    {
+        if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(body))
+        {
+            TempData["Error"] = "Título y cuerpo son requeridos";
+            return RedirectToAction("Notifications");
+        }
+        var template = new NotificationTemplate
+        {
+            Title = title.Trim(),
+            Body = body.Trim(),
+            ImageUrl = string.IsNullOrWhiteSpace(imageUrl) ? null : imageUrl.Trim(),
+            Name = string.IsNullOrWhiteSpace(name) ? null : name.Trim()
+        };
+        _context.NotificationTemplates.Add(template);
+        await _context.SaveChangesAsync();
+        TempData["Mensaje"] = "Plantilla creada correctamente";
+        return RedirectToAction("Notifications");
+    }
+
+    [HttpPost("/admin/notifications/update-template/{id:int}")]
+    public async Task<IActionResult> UpdateNotificationTemplate(int id, string title, string body, string? imageUrl, string? name)
+    {
+        var template = await _context.NotificationTemplates.FindAsync(id);
+        if (template == null)
+        {
+            TempData["Error"] = "Plantilla no encontrada";
+            return RedirectToAction("Notifications");
+        }
+        if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(body))
+        {
+            TempData["Error"] = "Título y cuerpo son requeridos";
+            return RedirectToAction("Notifications");
+        }
+        template.Title = title.Trim();
+        template.Body = body.Trim();
+        template.ImageUrl = string.IsNullOrWhiteSpace(imageUrl) ? null : imageUrl.Trim();
+        template.Name = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
+        template.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        TempData["Mensaje"] = "Plantilla actualizada";
+        return RedirectToAction("Notifications");
+    }
+
+    [HttpPost("/admin/notifications/delete-template/{id:int}")]
+    public async Task<IActionResult> DeleteNotificationTemplate(int id)
+    {
+        var template = await _context.NotificationTemplates.FindAsync(id);
+        if (template == null)
+        {
+            TempData["Error"] = "Plantilla no encontrada";
+            return RedirectToAction("Notifications");
+        }
+        _context.NotificationTemplates.Remove(template);
+        await _context.SaveChangesAsync();
+        TempData["Mensaje"] = "Plantilla eliminada";
+        return RedirectToAction("Notifications");
+    }
+
+    [HttpPost("/admin/notifications/send")]
+    public async Task<IActionResult> SendNotification(int templateId, string? userIds, bool dataOnly = false)
+    {
+        var template = await _context.NotificationTemplates.FindAsync(templateId);
+        if (template == null)
+        {
+            TempData["Error"] = "Plantilla no encontrada";
+            return RedirectToAction("Notifications");
+        }
+        List<int>? userIdList = null;
+        if (!string.IsNullOrWhiteSpace(userIds))
+        {
+            userIdList = userIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => int.TryParse(s.Trim(), out var id) ? id : -1)
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+            if (userIdList.Count == 0) userIdList = null;
+        }
+        List<Device> devices;
+        if (userIdList != null && userIdList.Count > 0)
+            devices = await _context.Devices.Where(d => userIdList.Contains(d.UsuarioId) && !string.IsNullOrEmpty(d.FcmToken)).ToListAsync();
+        else
+            devices = await _context.Devices.Where(d => !string.IsNullOrEmpty(d.FcmToken)).ToListAsync();
+
+        if (devices.Count == 0)
+        {
+            TempData["Error"] = "No hay dispositivos registrados para enviar la notificación";
+            return RedirectToAction("Notifications");
+        }
+        try
+        {
+            await _pushNotificationService.SendPushNotificationAsync(template, devices, null, dataOnly);
+            TempData["Mensaje"] = $"Notificación enviada a {devices.Count} dispositivo(s).";
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = "Error al enviar: " + ex.Message;
+        }
+        return RedirectToAction("Notifications");
     }
 }

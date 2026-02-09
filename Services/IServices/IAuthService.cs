@@ -6,8 +6,8 @@ public interface IAuthService
 {
     Usuario? ValidarUsuario(string nombreUsuario, string contrasena);
     Usuario? ObtenerUsuarioPorId(int id);
-    bool EsAdministrador(Usuario usuario);
-    bool EsUsuarioNormal(Usuario usuario);
+    bool EsAdministrador(Usuario? usuario);
+    bool EsUsuarioNormal(Usuario? usuario);
 
     // Registro
     Usuario? RegistrarCliente(string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email);

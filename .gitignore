@@ -404,6 +404,11 @@ appsettings.*.json
 secrets.json
 secrets.*.json
 
+# Firebase Credentials (NO SUBIR A GIT)
+Secrets/
+**/Secrets/
+**/firebase_credentials.json
+
 # Database files
 *.db
 *.sqlite

@@ -23,5 +23,7 @@ public class Usuario
     public virtual ICollection<DireccionGuardada> DireccionesGuardadas { get; set; } = new List<DireccionGuardada>();
     public virtual ICollection<Reporte> Reportes { get; set; } = new List<Reporte>();
     public virtual ICollection<CalificacionTienda> CalificacionesTiendas { get; set; } = new List<CalificacionTienda>();
+    public virtual ICollection<Device> Dispositivos { get; set; } = new List<Device>();
+    public virtual ICollection<NotificationLog> NotificationLogs { get; set; } = new List<NotificationLog>();
 }
 

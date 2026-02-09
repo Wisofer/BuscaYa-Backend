@@ -22,10 +22,10 @@ public class AuthService : IAuthService
             return null;
         }
 
-        // Buscar usuario en la base de datos (comparación case-insensitive traducible a SQL)
-        var nombreLower = nombreUsuario.Trim().ToLower();
+        // Buscar usuario (ToLower para que EF Core traduzca a SQL; OrdinalIgnoreCase no se traduce)
+        var nombreNorm = nombreUsuario.Trim().ToLowerInvariant();
         var usuario = _context.Usuarios
-            .FirstOrDefault(u => u.NombreUsuario.ToLower() == nombreLower && u.Activo);
+            .FirstOrDefault(u => u.NombreUsuario.ToLower() == nombreNorm && u.Activo);
 
         if (usuario == null)
         {
@@ -41,14 +41,14 @@ public class AuthService : IAuthService
         return usuario;
     }
 
-    public bool EsAdministrador(Usuario usuario)
+    public bool EsAdministrador(Usuario? usuario)
     {
-        return usuario.Rol == SD.RolAdministrador;
+        return usuario?.Rol == SD.RolAdministrador;
     }
 
-    public bool EsUsuarioNormal(Usuario usuario)
+    public bool EsUsuarioNormal(Usuario? usuario)
     {
-        return usuario.Rol == SD.RolTiendaOwner || usuario.Rol == SD.RolCliente;
+        return usuario != null && (usuario.Rol == SD.RolTiendaOwner || usuario.Rol == SD.RolCliente);
     }
 
     public Usuario? ObtenerUsuarioPorId(int id)
@@ -59,9 +59,9 @@ public class AuthService : IAuthService
     public bool ExisteNombreUsuario(string nombreUsuario)
     {
         if (string.IsNullOrWhiteSpace(nombreUsuario)) return false;
-        var nombreLower = nombreUsuario.Trim().ToLower();
+        var nombreNorm = nombreUsuario.Trim().ToLowerInvariant();
         return _context.Usuarios
-            .Any(u => u.NombreUsuario.ToLower() == nombreLower);
+            .Any(u => u.NombreUsuario.ToLower() == nombreNorm);
     }
 
     public Usuario? RegistrarCliente(string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email)
@@ -71,11 +71,11 @@ public class AuthService : IAuthService
 
         var usuario = new Usuario
         {
-            NombreUsuario = nombreUsuario,
+            NombreUsuario = nombreUsuario.Trim(),
             Contrasena = PasswordHelper.HashPassword(contrasena),
-            NombreCompleto = nombreCompleto,
-            Telefono = telefono,
-            Email = email,
+            NombreCompleto = (nombreCompleto ?? "").Trim(),
+            Telefono = telefono?.Trim(),
+            Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim(),
             Rol = SD.RolCliente,
             Activo = true,
             FechaCreacion = DateTime.Now,
@@ -102,7 +102,8 @@ public class AuthService : IAuthService
 
         if (!string.IsNullOrWhiteSpace(email))
         {
-            var emailNorm = email.Trim().ToLower();
+            var emailNorm = email.Trim().ToLowerInvariant();
+            // ToLower() en columna para que EF Core traduzca a SQL (LOWER); no usar StringComparison
             return query.FirstOrDefault(u => u.Email != null && u.Email.ToLower() == emailNorm);
         }
 
@@ -117,11 +118,11 @@ public class AuthService : IAuthService
         var usuario = new Usuario
         {
             GoogleId = googleId,
-            NombreUsuario = nombreUsuario,
+            NombreUsuario = nombreUsuario.Trim(),
             Contrasena = PasswordHelper.HashPassword(contrasena),
-            NombreCompleto = nombreCompleto,
-            Telefono = telefono,
-            Email = email,
+            NombreCompleto = (nombreCompleto ?? "").Trim(),
+            Telefono = telefono?.Trim(),
+            Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim(),
             FotoPerfilUrl = fotoPerfilUrl,
             Rol = SD.RolCliente,
             Activo = true,
@@ -204,11 +205,11 @@ public class AuthService : IAuthService
         // Actualizar campos
         if (!string.IsNullOrWhiteSpace(nombreCompleto))
         {
-            usuario.NombreCompleto = nombreCompleto;
+            usuario.NombreCompleto = nombreCompleto.Trim();
         }
 
-        usuario.Telefono = telefono;
-        usuario.Email = email;
+        usuario.Telefono = string.IsNullOrWhiteSpace(telefono) ? null : telefono.Trim();
+        usuario.Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim();
         if (fotoPerfilUrl != null)
             usuario.FotoPerfilUrl = fotoPerfilUrl;
 

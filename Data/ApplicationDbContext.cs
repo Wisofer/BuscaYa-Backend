@@ -33,6 +33,11 @@ public class ApplicationDbContext : DbContext
     // Calificaciones
     public DbSet<CalificacionTienda> CalificacionesTiendas { get; set; }
 
+    // Notificaciones push
+    public DbSet<NotificationTemplate> NotificationTemplates { get; set; }
+    public DbSet<Device> Devices { get; set; }
+    public DbSet<NotificationLog> NotificationLogs { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -246,6 +251,53 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.UsuarioId);
             entity.HasIndex(e => e.Revisado);
             entity.HasIndex(e => e.FechaCreacion);
+        });
+
+        // NotificationTemplate
+        modelBuilder.Entity<NotificationTemplate>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Body).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.ImageUrl).HasMaxLength(500);
+            entity.Property(e => e.Name).HasMaxLength(200);
+        });
+
+        // Device
+        modelBuilder.Entity<Device>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FcmToken).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.Platform).IsRequired().HasMaxLength(50);
+            entity.HasIndex(e => e.FcmToken).IsUnique();
+            entity.HasIndex(e => e.UsuarioId);
+            entity.HasOne(e => e.Usuario)
+                .WithMany(u => u.Dispositivos)
+                .HasForeignKey(e => e.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // NotificationLog
+        modelBuilder.Entity<NotificationLog>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Payload).HasColumnType("text");
+            entity.HasIndex(e => e.UsuarioId);
+            entity.HasIndex(e => e.DeviceId);
+            entity.HasIndex(e => e.TemplateId);
+            entity.HasOne(e => e.Usuario)
+                .WithMany(u => u.NotificationLogs)
+                .HasForeignKey(e => e.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Device)
+                .WithMany()
+                .HasForeignKey(e => e.DeviceId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.Template)
+                .WithMany()
+                .HasForeignKey(e => e.TemplateId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

@@ -1,0 +1,243 @@
+@{
+    ViewData["Title"] = "Notificaciones Push";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var templates = ViewBag.Templates as IEnumerable<dynamic> ?? new List<dynamic>();
+    var devicesByUser = ViewBag.DevicesByUser as IEnumerable<dynamic> ?? new List<dynamic>();
+    var usuarios = ViewBag.Usuarios as IEnumerable<dynamic> ?? new List<dynamic>();
+}
+
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold flex items-center gap-2">
+            <i class="bi bi-bell"></i>
+            Notificaciones Push (FCM)
+        </h2>
+        <div class="badge badge-primary badge-lg">@(ViewBag.TotalDevices ?? 0) dispositivos registrados</div>
+    </div>
+
+    <!-- Plantillas -->
+    <div class="card bg-base-100 shadow-lg">
+        <div class="card-body">
+            <h3 class="card-title">
+                <i class="bi bi-file-text"></i>
+                Plantillas
+            </h3>
+            <form method="post" action="/admin/notifications/create-template" class="mb-6 p-4 bg-base-200 rounded-lg">
+                @Html.AntiForgeryToken()
+                <h4 class="font-semibold mb-3">Nueva plantilla</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="label"><span class="label-text">Título</span></label>
+                        <input type="text" name="title" class="input input-bordered w-full" placeholder="Título" required maxlength="200" />
+                    </div>
+                    <div>
+                        <label class="label"><span class="label-text">Nombre (opcional)</span></label>
+                        <input type="text" name="name" class="input input-bordered w-full" placeholder="Ej: Aviso general" maxlength="200" />
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="label"><span class="label-text">Cuerpo</span></label>
+                        <textarea name="body" class="textarea textarea-bordered w-full" rows="2" placeholder="Mensaje" required maxlength="500"></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="label"><span class="label-text">URL imagen (opcional)</span></label>
+                        <input type="url" name="imageUrl" class="input input-bordered w-full" placeholder="https://..." maxlength="500" />
+                    </div>
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-lg"></i> Crear plantilla
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Título</th>
+                            <th>Nombre</th>
+                            <th>Cuerpo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (templates != null && templates.Any())
+                        {
+                            @foreach (var t in templates)
+                            {
+                                <tr>
+                                    <td>@t.Id</td>
+                                    <td class="font-medium">@t.Title</td>
+                                    <td>@(t.Name ?? "-")</td>
+                                    <td class="max-w-xs truncate">@t.Body</td>
+                                    <td class="flex gap-2">
+                                        <button type="button" class="btn btn-sm btn-ghost" onclick="editTemplate(@t.Id, '@(t.Title?.Replace("'", "\\'"))', '@(t.Body?.Replace("'", "\\'"))', '@(t.ImageUrl ?? "")', '@(t.Name ?? "")')">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <form method="post" action="/admin/notifications/delete-template/@t.Id" class="inline" onsubmit="return confirm('¿Eliminar esta plantilla?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-error btn-outline">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="5" class="text-center text-base-content/60">No hay plantillas. Crea una arriba.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enviar notificación -->
+    <div class="card bg-base-100 shadow-lg">
+        <div class="card-body">
+            <h3 class="card-title">
+                <i class="bi bi-send"></i>
+                Enviar notificación
+            </h3>
+            <form method="post" action="/admin/notifications/send" class="p-4 bg-base-200 rounded-lg">
+                @Html.AntiForgeryToken()
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="label"><span class="label-text">Plantilla</span></label>
+                        <select name="templateId" class="select select-bordered w-full" required>
+                            <option value="">-- Seleccionar --</option>
+                            @if (templates != null)
+                            {
+                                @foreach (var t in templates)
+                                {
+                                    <option value="@t.Id">@t.Title</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label"><span class="label-text">Usuarios (opcional, vacío = todos)</span></label>
+                        <input type="hidden" name="userIds" id="userIdsValue" />
+                        <select id="userIds" class="select select-bordered w-full" multiple>
+                            @if (usuarios != null)
+                            {
+                                @foreach (var u in usuarios)
+                                {
+                                    <option value="@u.Id">@u.NombreCompleto (@u.Rol)</option>
+                                }
+                            }
+                        </select>
+                        <p class="text-sm text-base-content/60 mt-1">Mantén Ctrl/Cmd para seleccionar varios. Vacío = enviar a todos los dispositivos.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" name="dataOnly" value="true" id="dataOnly" class="checkbox checkbox-sm" />
+                        <label for="dataOnly" class="label cursor-pointer">Solo datos (sin notificación visible)</label>
+                    </div>
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i> Enviar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dispositivos por usuario -->
+    <div class="card bg-base-100 shadow-lg">
+        <div class="card-body">
+            <h3 class="card-title">
+                <i class="bi bi-phone"></i>
+                Dispositivos por usuario
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Rol</th>
+                            <th>Dispositivos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (devicesByUser != null && devicesByUser.Any())
+                        {
+                            @foreach (var row in devicesByUser)
+                            {
+                                <tr>
+                                    <td>@row.UsuarioNombre</td>
+                                    <td><span class="badge badge-ghost">@row.UsuarioRol</span></td>
+                                    <td>@row.Count</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="3" class="text-center text-base-content/60">Ningún dispositivo registrado aún.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal editar plantilla -->
+<dialog id="editModal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Editar plantilla</h3>
+        <form method="post" id="editForm" action="">
+            @Html.AntiForgeryToken()
+            <div class="form-control mt-2">
+                <label class="label"><span class="label-text">Título</span></label>
+                <input type="text" name="title" id="editTitle" class="input input-bordered w-full" required />
+            </div>
+            <div class="form-control mt-2">
+                <label class="label"><span class="label-text">Nombre (opcional)</span></label>
+                <input type="text" name="name" id="editName" class="input input-bordered w-full" />
+            </div>
+            <div class="form-control mt-2">
+                <label class="label"><span class="label-text">Cuerpo</span></label>
+                <textarea name="body" id="editBody" class="textarea textarea-bordered w-full" rows="3" required></textarea>
+            </div>
+            <div class="form-control mt-2">
+                <label class="label"><span class="label-text">URL imagen (opcional)</span></label>
+                <input type="url" name="imageUrl" id="editImageUrl" class="input input-bordered w-full" />
+            </div>
+            <div class="modal-action">
+                <button type="button" class="btn btn-ghost" onclick="editModal.close()">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button type="submit">cerrar</button></form>
+</dialog>
+
+@section Scripts {
+<script>
+    const editModal = document.getElementById('editModal');
+    const editForm = document.getElementById('editForm');
+    function editTemplate(id, title, body, imageUrl, name) {
+        document.getElementById('editId').value = id;
+        document.getElementById('editTitle').value = title || '';
+        document.getElementById('editBody').value = body || '';
+        document.getElementById('editImageUrl').value = imageUrl || '';
+        document.getElementById('editName').value = name || '';
+        editForm.action = '/admin/notifications/update-template/' + id;
+        editModal.showModal();
+    }
+    document.querySelector('form[action="/admin/notifications/send"]').addEventListener('submit', function() {
+        var sel = document.getElementById('userIds');
+        var hidden = document.getElementById('userIdsValue');
+        if (sel.selectedOptions.length > 0) {
+            var vals = Array.from(sel.selectedOptions).map(function(o) { return o.value; });
+            hidden.value = vals.join(',');
+        } else {
+            hidden.value = '';
+        }
+    });
+</script>
+}
