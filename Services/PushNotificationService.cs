@@ -160,12 +160,13 @@ public class PushNotificationService : IPushNotificationService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending FCM multicast batch");
+                var failedPayload = JsonSerializer.Serialize(new { title, body, error = ex.Message });
                 foreach (var dev in batchDevices)
                 {
                     _context.NotificationLogs.Add(new NotificationLog
                     {
                         Status = "failed",
-                        Payload = ex.Message,
+                        Payload = failedPayload,
                         SentAt = sentAt,
                         DeviceId = dev.Id,
                         TemplateId = template?.Id,
@@ -182,11 +183,9 @@ public class PushNotificationService : IPushNotificationService
                 var device = batchDevices[i];
                 var sendResponse = responses[i];
                 string status = sendResponse.IsSuccess ? "sent" : "failed";
-                string? payload = null;
-                if (sendResponse.IsSuccess && !string.IsNullOrEmpty(sendResponse.MessageId))
-                    payload = JsonSerializer.Serialize(new { messageId = sendResponse.MessageId });
-                else if (!sendResponse.IsSuccess && sendResponse.Exception != null)
-                    payload = sendResponse.Exception.Message;
+                string payload = sendResponse.IsSuccess && !string.IsNullOrEmpty(sendResponse.MessageId)
+                    ? JsonSerializer.Serialize(new { messageId = sendResponse.MessageId, title, body })
+                    : JsonSerializer.Serialize(new { title, body, error = sendResponse.Exception?.Message ?? "unknown" });
 
                 _context.NotificationLogs.Add(new NotificationLog
                 {

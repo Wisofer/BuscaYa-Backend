@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -352,6 +353,25 @@ public class PushNotificationController : ControllerBase
                 CreatedAt = l.CreatedAt
             })
             .ToListAsync();
+
+        // Rellenar title y body desde payload (formato: {"messageId":"...", "title":"...", "body":"..."})
+        foreach (var item in list)
+        {
+            if (!string.IsNullOrEmpty(item.Payload))
+            {
+                try
+                {
+                    using var doc = JsonDocument.Parse(item.Payload);
+                    var root = doc.RootElement;
+                    if (root.TryGetProperty("title", out var titleEl))
+                        item.Title = titleEl.GetString();
+                    if (root.TryGetProperty("body", out var bodyEl))
+                        item.Body = bodyEl.GetString();
+                }
+                catch { /* logs antiguos pueden tener otro formato; title/body quedan null */ }
+            }
+        }
+
         return Ok(new { total, page, pageSize, items = list });
     }
 
