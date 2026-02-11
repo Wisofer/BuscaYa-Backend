@@ -135,6 +135,53 @@ public class AuthService : IAuthService
         return usuario;
     }
 
+    public Usuario? ObtenerUsuarioPorAppleIdOEmail(string? appleId, string? email)
+    {
+        if (string.IsNullOrWhiteSpace(appleId) && string.IsNullOrWhiteSpace(email))
+            return null;
+
+        var query = _context.Usuarios.Where(u => u.Activo);
+
+        if (!string.IsNullOrWhiteSpace(appleId))
+        {
+            var byApple = query.FirstOrDefault(u => u.AppleId == appleId);
+            if (byApple != null) return byApple;
+        }
+
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            var emailNorm = email.Trim().ToLowerInvariant();
+            return query.FirstOrDefault(u => u.Email != null && u.Email.ToLower() == emailNorm);
+        }
+
+        return null;
+    }
+
+    public Usuario? RegistrarClienteConApple(string appleId, string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl)
+    {
+        if (ExisteNombreUsuario(nombreUsuario))
+            return null;
+
+        var usuario = new Usuario
+        {
+            AppleId = appleId,
+            NombreUsuario = nombreUsuario.Trim(),
+            Contrasena = PasswordHelper.HashPassword(contrasena),
+            NombreCompleto = (nombreCompleto ?? "").Trim(),
+            Telefono = telefono?.Trim(),
+            Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim(),
+            FotoPerfilUrl = fotoPerfilUrl,
+            Rol = SD.RolCliente,
+            Activo = true,
+            FechaCreacion = DateTime.Now,
+            TiendaId = null
+        };
+
+        _context.Usuarios.Add(usuario);
+        _context.SaveChanges();
+        return usuario;
+    }
+
     public Usuario? ConvertirClienteATienda(int usuarioId, string nombreTienda, string? descripcionTienda,
         string? telefonoTienda, string whatsAppTienda, string? emailTienda,
         string direccionTienda, decimal latitud, decimal longitud, string ciudad, string departamento,

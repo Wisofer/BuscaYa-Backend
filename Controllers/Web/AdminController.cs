@@ -114,7 +114,8 @@ public class AdminController : Controller
                 u.Activo,
                 TiendaId = u.TiendaId,
                 TiendaNombre = u.Tienda != null ? u.Tienda.Nombre : null,
-                LoginConGoogle = u.GoogleId != null
+                LoginConGoogle = u.GoogleId != null,
+                LoginConApple = u.AppleId != null
             })
             .ToList();
 

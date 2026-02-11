@@ -19,6 +19,12 @@ public interface IAuthService
     /// <summary>Registra cliente vinculado a Google (googleId, contraseña hasheada, etc.).</summary>
     Usuario? RegistrarClienteConGoogle(string googleId, string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl);
 
+    // Apple
+    /// <summary>Busca usuario por AppleId o por email (de Apple).</summary>
+    Usuario? ObtenerUsuarioPorAppleIdOEmail(string? appleId, string? email);
+    /// <summary>Registra cliente vinculado a Apple (appleId, contraseña hasheada, etc.).</summary>
+    Usuario? RegistrarClienteConApple(string appleId, string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl);
+
     // Convertir Cliente a TiendaOwner
     Usuario? ConvertirClienteATienda(int usuarioId, string nombreTienda, string? descripcionTienda,
         string? telefonoTienda, string whatsAppTienda, string? emailTienda,

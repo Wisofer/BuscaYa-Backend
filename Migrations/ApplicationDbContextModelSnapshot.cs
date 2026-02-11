@@ -663,6 +663,10 @@ namespace BuscaYa.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
+                    b.Property<string>("AppleId")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
                     b.Property<string>("NombreCompleto")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -690,6 +694,10 @@ namespace BuscaYa.Migrations
                     b.HasIndex("GoogleId")
                         .IsUnique()
                         .HasFilter("\"GoogleId\" IS NOT NULL");
+
+                    b.HasIndex("AppleId")
+                        .IsUnique()
+                        .HasFilter("\"AppleId\" IS NOT NULL");
 
                     b.HasIndex("NombreUsuario")
                         .IsUnique();

@@ -14,13 +14,15 @@ public class AuthApiController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IGoogleAuthService _googleAuthService;
+    private readonly IAppleAuthService _appleAuthService;
     private readonly IConfiguration _configuration;
     private readonly IS3BucketService _s3Service;
 
-    public AuthApiController(IAuthService authService, IGoogleAuthService googleAuthService, IConfiguration configuration, IS3BucketService s3Service)
+    public AuthApiController(IAuthService authService, IGoogleAuthService googleAuthService, IAppleAuthService appleAuthService, IConfiguration configuration, IS3BucketService s3Service)
     {
         _authService = authService;
         _googleAuthService = googleAuthService;
+        _appleAuthService = appleAuthService;
         _configuration = configuration;
         _s3Service = s3Service;
     }
@@ -110,6 +112,112 @@ public class AuthApiController : ControllerBase
                 Email = payload.Email ?? string.Empty,
                 Nombre = payload.Name ?? string.Empty,
                 FotoPerfilUrl = payload.PictureUrl
+            });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { error = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("apple")]
+    public async Task<IActionResult> AppleAsync([FromBody] AppleLoginRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request?.IdentityToken))
+            return BadRequest(new { error = "El identityToken es requerido" });
+
+        try
+        {
+            var payload = await _appleAuthService.VerifyIdentityTokenAsync(request.IdentityToken, cancellationToken).ConfigureAwait(false);
+            var usuario = _authService.ObtenerUsuarioPorAppleIdOEmail(payload.AppleId, payload.Email);
+
+            if (usuario != null)
+            {
+                if (!usuario.Activo)
+                    return Unauthorized(new { error = "Usuario inactivo" });
+
+                var jwtSettings = _configuration.GetSection("JwtSettings");
+                var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey no configurada");
+                var issuer = jwtSettings["Issuer"] ?? "BuscaYa";
+                var audience = jwtSettings["Audience"] ?? "BuscaYaUsers";
+                var expirationMinutes = int.Parse(jwtSettings["ExpirationInMinutes"] ?? "60");
+
+                var token = JwtHelper.GenerateToken(usuario.Id, usuario.NombreUsuario, usuario.Rol, usuario.NombreCompleto, secretKey, issuer, audience, expirationMinutes);
+
+                return Ok(new LoginResponse
+                {
+                    Token = token,
+                    Usuario = MapToUsuarioInfo(usuario),
+                    ExpiraEn = expirationMinutes
+                });
+            }
+
+            return Ok(new AppleNeedsCompletionResponse
+            {
+                NeedsCompletion = true,
+                Email = payload.Email ?? string.Empty,
+                Nombre = payload.Name ?? string.Empty
+            });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { error = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("apple/complete")]
+    public async Task<IActionResult> AppleCompleteAsync([FromBody] AppleCompleteRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request?.IdentityToken))
+            return BadRequest(new { error = "El identityToken es requerido" });
+        if (string.IsNullOrWhiteSpace(request.NombreUsuario) || string.IsNullOrWhiteSpace(request.Contrasena) || string.IsNullOrWhiteSpace(request.NombreCompleto))
+            return BadRequest(new { error = "Nombre de usuario, contraseña y nombre completo son requeridos" });
+
+        try
+        {
+            var payload = await _appleAuthService.VerifyIdentityTokenAsync(request.IdentityToken, cancellationToken).ConfigureAwait(false);
+            var usuarioExistente = _authService.ObtenerUsuarioPorAppleIdOEmail(payload.AppleId, payload.Email);
+            if (usuarioExistente != null)
+                return BadRequest(new { error = "Este usuario de Apple ya tiene una cuenta. Use Iniciar sesión con Apple." });
+
+            if (_authService.ExisteNombreUsuario(request.NombreUsuario))
+                return BadRequest(new { error = "El nombre de usuario ya está en uso" });
+
+            string? emailNormalizado = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
+            var usuario = _authService.RegistrarClienteConApple(
+                payload.AppleId,
+                request.NombreUsuario,
+                request.Contrasena,
+                request.NombreCompleto,
+                request.Telefono,
+                emailNormalizado,
+                null
+            );
+
+            if (usuario == null)
+                return BadRequest(new { error = "No se pudo crear la cuenta" });
+
+            var jwtSettings = _configuration.GetSection("JwtSettings");
+            var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey no configurada");
+            var issuer = jwtSettings["Issuer"] ?? "BuscaYa";
+            var audience = jwtSettings["Audience"] ?? "BuscaYaUsers";
+            var expirationMinutes = int.Parse(jwtSettings["ExpirationInMinutes"] ?? "60");
+
+            var token = JwtHelper.GenerateToken(usuario.Id, usuario.NombreUsuario, usuario.Rol, usuario.NombreCompleto, secretKey, issuer, audience, expirationMinutes);
+
+            return Ok(new LoginResponse
+            {
+                Token = token,
+                Usuario = MapToUsuarioInfo(usuario),
+                ExpiraEn = expirationMinutes
             });
         }
         catch (UnauthorizedAccessException ex)
@@ -445,6 +553,30 @@ public class GoogleNeedsCompletionResponse
 public class GoogleCompleteRequest
 {
     public string IdToken { get; set; } = string.Empty;
+    public string NombreUsuario { get; set; } = string.Empty;
+    public string Contrasena { get; set; } = string.Empty;
+    public string NombreCompleto { get; set; } = string.Empty;
+    public string? Telefono { get; set; }
+    public string? Email { get; set; }
+}
+
+// ——— Apple Auth ———
+
+public class AppleLoginRequest
+{
+    public string IdentityToken { get; set; } = string.Empty;
+}
+
+public class AppleNeedsCompletionResponse
+{
+    public bool NeedsCompletion { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string Nombre { get; set; } = string.Empty;
+}
+
+public class AppleCompleteRequest
+{
+    public string IdentityToken { get; set; } = string.Empty;
     public string NombreUsuario { get; set; } = string.Empty;
     public string Contrasena { get; set; } = string.Empty;
     public string NombreCompleto { get; set; } = string.Empty;
