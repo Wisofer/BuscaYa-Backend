@@ -96,6 +96,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Precio).HasColumnType("decimal(18,2)");
             entity.Property(e => e.PrecioAnterior).HasColumnType("decimal(18,2)");
             entity.Property(e => e.EnOferta).HasDefaultValue(false);
+            entity.Property(e => e.Stock);
             entity.Property(e => e.Moneda).IsRequired().HasMaxLength(10).HasDefaultValue("C$");
             entity.Property(e => e.FotoUrl).HasMaxLength(500);
             entity.Property(e => e.Activo).HasDefaultValue(true);
@@ -285,7 +286,9 @@ public class ApplicationDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
             entity.Property(e => e.Payload).HasColumnType("text");
+            entity.Property(e => e.NotificationType).HasMaxLength(50);
             entity.HasIndex(e => e.UsuarioId);
+            entity.HasIndex(e => new { e.UsuarioId, e.NotificationType, e.EntityId });
             entity.HasIndex(e => e.DeviceId);
             entity.HasIndex(e => e.TemplateId);
             entity.HasOne(e => e.Usuario)

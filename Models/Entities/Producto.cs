@@ -14,6 +14,8 @@ public class Producto
     public string Moneda { get; set; } = "C$"; // C$ o $
     public int CategoriaId { get; set; }
     public string? FotoUrl { get; set; }
+    /// <summary>Stock disponible. Null = no controlado. Para notificación "volvió a haber stock" cuando pasa de 0 a &gt;0.</summary>
+    public int? Stock { get; set; }
     public bool Activo { get; set; } = true;
     public DateTime FechaCreacion { get; set; } = DateTime.Now;
     public DateTime? FechaActualizacion { get; set; }

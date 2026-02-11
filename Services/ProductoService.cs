@@ -4,16 +4,21 @@ using BuscaYa.Models.DTOs.Requests;
 using BuscaYa.Services.IServices;
 using BuscaYa.Utils;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BuscaYa.Services;
 
 public class ProductoService : IProductoService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ILogger<ProductoService> _logger;
 
-    public ProductoService(ApplicationDbContext context)
+    public ProductoService(ApplicationDbContext context, IServiceScopeFactory scopeFactory, ILogger<ProductoService> logger)
     {
         _context = context;
+        _scopeFactory = scopeFactory;
+        _logger = logger;
     }
 
     public List<Producto> ObtenerPorTienda(int tiendaId)
@@ -96,6 +101,9 @@ public class ProductoService : IProductoService
         var producto = _context.Productos.Find(id);
         if (producto == null) return false;
 
+        var precioAnterior = producto.Precio;
+        var stockAnterior = producto.Stock;
+
         if (request.Nombre != null) producto.Nombre = request.Nombre;
         if (request.Descripcion != null) producto.Descripcion = request.Descripcion;
         if (request.Precio.HasValue) producto.Precio = request.Precio;
@@ -110,6 +118,7 @@ public class ProductoService : IProductoService
         if (request.CategoriaId.HasValue) producto.CategoriaId = request.CategoriaId.Value;
         if (request.FotoUrl != null) producto.FotoUrl = request.FotoUrl;
         if (request.Activo.HasValue) producto.Activo = request.Activo.Value;
+        if (request.Stock.HasValue) producto.Stock = request.Stock.Value;
 
         if (request.ImagenesUrls != null)
         {
@@ -126,10 +135,48 @@ public class ProductoService : IProductoService
                 });
             }
         }
-        
+
         producto.FechaActualizacion = DateTime.Now;
         _context.SaveChanges();
+
+        if (request.Precio.HasValue && precioAnterior.HasValue && request.Precio.Value < precioAnterior.Value)
+            FireAndForgetNotifyPriceDrop(id, precioAnterior.Value, request.Precio.Value);
+        if (request.Stock.HasValue && (stockAnterior == null || stockAnterior == 0) && request.Stock.Value > 0)
+            FireAndForgetNotifyBackInStock(id);
+
         return true;
+    }
+
+    private void FireAndForgetNotifyPriceDrop(int productoId, decimal precioAnterior, decimal precioNuevo)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                await scope.ServiceProvider.GetRequiredService<INotificationTriggerService>().NotifyPriceDropAsync(productoId, precioAnterior, precioNuevo);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error en disparo NotifyPriceDrop para producto {ProductoId}", productoId);
+            }
+        });
+    }
+
+    private void FireAndForgetNotifyBackInStock(int productoId)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                await scope.ServiceProvider.GetRequiredService<INotificationTriggerService>().NotifyBackInStockAsync(productoId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error en disparo NotifyBackInStock para producto {ProductoId}", productoId);
+            }
+        });
     }
 
     public bool Eliminar(int id)

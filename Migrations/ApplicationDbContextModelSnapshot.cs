@@ -287,6 +287,9 @@ namespace BuscaYa.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
+                    b.Property<int?>("Stock")
+                        .HasColumnType("integer");
+
                     b.Property<int>("TiendaId")
                         .HasColumnType("integer");
 
@@ -566,6 +569,13 @@ namespace BuscaYa.Migrations
                     b.Property<int?>("TemplateId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("NotificationType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int?>("EntityId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp without time zone");
 
@@ -579,6 +589,8 @@ namespace BuscaYa.Migrations
                     b.HasIndex("TemplateId");
 
                     b.HasIndex("UsuarioId");
+
+                    b.HasIndex("UsuarioId", "NotificationType", "EntityId");
 
                     b.ToTable("NotificationLogs");
                 });

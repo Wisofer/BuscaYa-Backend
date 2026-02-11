@@ -15,4 +15,6 @@ public class ActualizarProductoRequest
     /// <summary>Reemplaza toda la galería. La primera URL es la imagen principal si FotoUrl no se envía.</summary>
     public List<string>? ImagenesUrls { get; set; }
     public bool? Activo { get; set; }
+    /// <summary>Stock disponible. Si se envía y pasa de 0 a &gt;0, se dispara notificación "volvió a haber stock".</summary>
+    public int? Stock { get; set; }
 }

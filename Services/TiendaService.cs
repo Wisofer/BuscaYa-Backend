@@ -5,6 +5,7 @@ using BuscaYa.Models.DTOs.Responses;
 using BuscaYa.Services.IServices;
 using BuscaYa.Utils;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BuscaYa.Services;
 
@@ -12,11 +13,15 @@ public class TiendaService : ITiendaService
 {
     private readonly ApplicationDbContext _context;
     private readonly IProductoService _productoService;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ILogger<TiendaService> _logger;
 
-    public TiendaService(ApplicationDbContext context, IProductoService productoService)
+    public TiendaService(ApplicationDbContext context, IProductoService productoService, IServiceScopeFactory scopeFactory, ILogger<TiendaService> logger)
     {
         _context = context;
         _productoService = productoService;
+        _scopeFactory = scopeFactory;
+        _logger = logger;
     }
 
     public List<Tienda> ObtenerTodas()
@@ -136,7 +141,24 @@ public class TiendaService : ITiendaService
 
         _context.Tiendas.Add(tienda);
         _context.SaveChanges();
+        FireAndForgetNotifyNewStoreNearby(tienda.Id);
         return tienda;
+    }
+
+    private void FireAndForgetNotifyNewStoreNearby(int tiendaId)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                await scope.ServiceProvider.GetRequiredService<INotificationTriggerService>().NotifyNewStoreNearbyAsync(tiendaId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error en disparo NotifyNewStoreNearby para tienda {TiendaId}", tiendaId);
+            }
+        });
     }
 
     public bool Actualizar(int id, ActualizarTiendaRequest request)

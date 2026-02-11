@@ -1,10 +1,13 @@
+using BuscaYa.Data;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace BuscaYa.Migrations
 {
-    /// <inheritdoc />
+    [DbContext(typeof(ApplicationDbContext))]
+    [Migration("20260209180000_AddProductoOferta")]
     public partial class AddProductoOferta : Migration
     {
         /// <inheritdoc />

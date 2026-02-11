@@ -142,6 +142,7 @@ builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<IReporteService, ReporteService>();
 builder.Services.AddScoped<IPushNotificationService, PushNotificationService>();
+builder.Services.AddScoped<INotificationTriggerService, NotificationTriggerService>();
 
 // Inicializar Firebase (credenciales desde env o archivo Secrets)
 void InitializeFirebase()
