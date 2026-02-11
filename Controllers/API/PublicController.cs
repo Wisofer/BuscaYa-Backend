@@ -185,6 +185,9 @@ public class PublicController : ControllerBase
                 Descripcion = producto.Descripcion,
                 Precio = producto.Precio,
                 Moneda = producto.Moneda,
+                EnOferta = producto.EnOferta,
+                PrecioAnterior = producto.PrecioAnterior,
+                PorcentajeDescuento = ProductoHelper.CalcularPorcentajeDescuento(producto.Precio, producto.PrecioAnterior),
                 FotoUrl = producto.FotoUrl,
                 GaleriaUrls = galeriaUrls,
                 Tienda = new TiendaInfoResponse

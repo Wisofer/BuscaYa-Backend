@@ -63,6 +63,8 @@ public class ProductoService : IProductoService
             Nombre = request.Nombre,
             Descripcion = request.Descripcion,
             Precio = request.Precio,
+            PrecioAnterior = request.EnOferta ? request.PrecioAnterior : null,
+            EnOferta = request.EnOferta,
             Moneda = request.Moneda,
             CategoriaId = request.CategoriaId,
             FotoUrl = imagenPrincipal,
@@ -97,6 +99,13 @@ public class ProductoService : IProductoService
         if (request.Nombre != null) producto.Nombre = request.Nombre;
         if (request.Descripcion != null) producto.Descripcion = request.Descripcion;
         if (request.Precio.HasValue) producto.Precio = request.Precio;
+        if (request.EnOferta.HasValue)
+        {
+            producto.EnOferta = request.EnOferta.Value;
+            producto.PrecioAnterior = request.EnOferta.Value ? request.PrecioAnterior : null;
+        }
+        else if (request.PrecioAnterior.HasValue)
+            producto.PrecioAnterior = request.PrecioAnterior;
         if (request.Moneda != null) producto.Moneda = request.Moneda;
         if (request.CategoriaId.HasValue) producto.CategoriaId = request.CategoriaId.Value;
         if (request.FotoUrl != null) producto.FotoUrl = request.FotoUrl;

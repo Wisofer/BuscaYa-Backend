@@ -7,6 +7,12 @@ public class ProductoResponse
     public string? Descripcion { get; set; }
     public decimal? Precio { get; set; }
     public string Moneda { get; set; } = "C$";
+    /// <summary>Producto en oferta (badge, tachado de precio anterior).</summary>
+    public bool EnOferta { get; set; }
+    /// <summary>Precio anterior cuando EnOferta es true (mostrar tachado).</summary>
+    public decimal? PrecioAnterior { get; set; }
+    /// <summary>Porcentaje de descuento cuando EnOferta y PrecioAnterior tienen valor. Ej: 15.</summary>
+    public int? PorcentajeDescuento { get; set; }
     public string? FotoUrl { get; set; }
     /// <summary>Galería completa: imagen principal + resto en orden.</summary>
     public List<string> GaleriaUrls { get; set; } = new();

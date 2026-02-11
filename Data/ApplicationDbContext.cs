@@ -94,6 +94,8 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Nombre).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Descripcion).HasMaxLength(1000);
             entity.Property(e => e.Precio).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.PrecioAnterior).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.EnOferta).HasDefaultValue(false);
             entity.Property(e => e.Moneda).IsRequired().HasMaxLength(10).HasDefaultValue("C$");
             entity.Property(e => e.FotoUrl).HasMaxLength(500);
             entity.Property(e => e.Activo).HasDefaultValue(true);

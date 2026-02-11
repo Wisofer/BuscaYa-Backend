@@ -104,6 +104,9 @@ public class BusquedaService : IBusquedaService
                 Descripcion = p.Descripcion,
                 Precio = p.Precio,
                 Moneda = p.Moneda,
+                EnOferta = p.EnOferta,
+                PrecioAnterior = p.PrecioAnterior,
+                PorcentajeDescuento = ProductoHelper.CalcularPorcentajeDescuento(p.Precio, p.PrecioAnterior),
                 FotoUrl = p.FotoUrl,
                 Tienda = new TiendaInfoResponse
                 {

@@ -279,6 +279,14 @@ namespace BuscaYa.Migrations
                     b.Property<decimal?>("Precio")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<decimal?>("PrecioAnterior")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("EnOferta")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<int>("TiendaId")
                         .HasColumnType("integer");
 

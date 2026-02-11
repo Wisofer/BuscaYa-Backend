@@ -5,6 +5,10 @@ public class ActualizarProductoRequest
     public string? Nombre { get; set; }
     public string? Descripcion { get; set; }
     public decimal? Precio { get; set; }
+    /// <summary>Activar o desactivar oferta.</summary>
+    public bool? EnOferta { get; set; }
+    /// <summary>Precio anterior cuando está en oferta (opcional).</summary>
+    public decimal? PrecioAnterior { get; set; }
     public string? Moneda { get; set; }
     public int? CategoriaId { get; set; }
     public string? FotoUrl { get; set; }

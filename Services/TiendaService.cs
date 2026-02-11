@@ -92,6 +92,9 @@ public class TiendaService : ITiendaService
                 Nombre = p.Nombre,
                 Precio = p.Precio,
                 Moneda = p.Moneda,
+                EnOferta = p.EnOferta,
+                PrecioAnterior = p.PrecioAnterior,
+                PorcentajeDescuento = ProductoHelper.CalcularPorcentajeDescuento(p.Precio, p.PrecioAnterior),
                 FotoUrl = p.FotoUrl
             }).ToList()
         };

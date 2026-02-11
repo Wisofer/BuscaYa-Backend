@@ -74,5 +74,8 @@ public class ProductoSimpleResponse
     public string Nombre { get; set; } = string.Empty;
     public decimal? Precio { get; set; }
     public string Moneda { get; set; } = "C$";
+    public bool EnOferta { get; set; }
+    public decimal? PrecioAnterior { get; set; }
+    public int? PorcentajeDescuento { get; set; }
     public string? FotoUrl { get; set; }
 }
