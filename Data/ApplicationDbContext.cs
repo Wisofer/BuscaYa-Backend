@@ -58,6 +58,8 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.NombreUsuario).IsUnique();
             entity.HasIndex(e => e.GoogleId).IsUnique().HasFilter("\"GoogleId\" IS NOT NULL");
             entity.HasIndex(e => e.AppleId).IsUnique().HasFilter("\"AppleId\" IS NOT NULL");
+
+            entity.HasIndex(e => e.AccountDeletionScheduledAt);
             
             entity.HasOne(e => e.Tienda)
                 .WithOne(t => t.Usuario)

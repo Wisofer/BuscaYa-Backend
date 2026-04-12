@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace BuscaYa.Models.Entities;
 
 public class Usuario
@@ -17,6 +19,12 @@ public class Usuario
     public int? TiendaId { get; set; } // Si es dueño de tienda
     public bool Activo { get; set; } = true;
     public DateTime FechaCreacion { get; set; } = DateTime.Now;
+
+    [Column("account_deletion_requested_at")]
+    public DateTime? AccountDeletionRequestedAt { get; set; }
+
+    [Column("account_deletion_scheduled_at")]
+    public DateTime? AccountDeletionScheduledAt { get; set; }
 
     // Relaciones
     public virtual Tienda? Tienda { get; set; }

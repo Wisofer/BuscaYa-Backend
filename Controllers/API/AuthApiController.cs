@@ -17,14 +17,22 @@ public class AuthApiController : ControllerBase
     private readonly IAppleAuthService _appleAuthService;
     private readonly IConfiguration _configuration;
     private readonly IS3BucketService _s3Service;
+    private readonly IAccountDeletionService _accountDeletion;
 
-    public AuthApiController(IAuthService authService, IGoogleAuthService googleAuthService, IAppleAuthService appleAuthService, IConfiguration configuration, IS3BucketService s3Service)
+    public AuthApiController(
+        IAuthService authService,
+        IGoogleAuthService googleAuthService,
+        IAppleAuthService appleAuthService,
+        IConfiguration configuration,
+        IS3BucketService s3Service,
+        IAccountDeletionService accountDeletion)
     {
         _authService = authService;
         _googleAuthService = googleAuthService;
         _appleAuthService = appleAuthService;
         _configuration = configuration;
         _s3Service = s3Service;
+        _accountDeletion = accountDeletion;
     }
 
     [HttpPost("login")]
@@ -287,8 +295,9 @@ public class AuthApiController : ControllerBase
         }
     }
 
-    private static UsuarioInfoResponse MapToUsuarioInfo(Models.Entities.Usuario u)
+    private UsuarioInfoResponse MapToUsuarioInfo(Models.Entities.Usuario u, AccountDeletionStatusDto? del = null)
     {
+        del ??= _accountDeletion.GetStatus(u.Id);
         return new UsuarioInfoResponse
         {
             Id = u.Id,
@@ -298,7 +307,10 @@ public class AuthApiController : ControllerBase
             Email = u.Email,
             Telefono = u.Telefono,
             FotoPerfilUrl = u.FotoPerfilUrl,
-            TiendaId = u.TiendaId
+            TiendaId = u.TiendaId,
+            AccountDeletionPending = del.pending,
+            AccountDeletionScheduledAt = del.scheduled_deletion_at,
+            AccountDeletionDaysRemaining = del.days_remaining
         };
     }
 
@@ -448,6 +460,43 @@ public class AuthApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Programa la eliminación definitiva de la cuenta y de todos los datos en 10 días (UTC).
+    /// Con contraseña local: envía <c>password</c>. Solo red social sin contraseña almacenada: <c>confirm_without_password: true</c>.
+    /// </summary>
+    [HttpPost("me/account-deletion")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> RequestAccountDeletion([FromBody] AccountDeletionRequestDto? body)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+            return Unauthorized(new { error = "Usuario no autenticado" });
+
+        body ??= new AccountDeletionRequestDto();
+        var result = await _accountDeletion.RequestDeletionAsync(userId, body.password, body.confirm_without_password);
+        if (!result.ok)
+            return BadRequest(new { error = result.error });
+        return Ok(new
+        {
+            success = true,
+            scheduled_deletion_at = result.scheduled_deletion_at,
+            message = "Tu cuenta y todos tus datos se eliminarán de forma permanente en 10 días. Puedes cancelar antes desde la app."
+        });
+    }
+
+    /// <summary>Cancela la eliminación programada si aún no se ha ejecutado.</summary>
+    [HttpDelete("me/account-deletion")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> CancelAccountDeletion()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+            return Unauthorized(new { error = "Usuario no autenticado" });
+
+        await _accountDeletion.CancelDeletionAsync(userId);
+        return Ok(new { success = true, message = "Eliminación cancelada." });
+    }
+
     /// <summary>Sube la foto de perfil del usuario (base64). Sube a S3 y actualiza el perfil en una sola llamada.</summary>
     [HttpPost("user/foto")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -525,6 +574,24 @@ public class UsuarioInfoResponse
     public string? Telefono { get; set; }
     public string? FotoPerfilUrl { get; set; }
     public int? TiendaId { get; set; }
+
+    /// <summary>True si hay una eliminación programada pendiente.</summary>
+    public bool AccountDeletionPending { get; set; }
+
+    /// <summary>Fecha UTC efectiva de borrado definitivo.</summary>
+    public DateTime? AccountDeletionScheduledAt { get; set; }
+
+    /// <summary>Días hasta la eliminación (redondeo hacia arriba).</summary>
+    public int? AccountDeletionDaysRemaining { get; set; }
+}
+
+public class AccountDeletionRequestDto
+{
+    /// <summary>Contraseña del usuario (obligatoria si la cuenta tiene contraseña almacenada).</summary>
+    public string? password { get; set; }
+
+    /// <summary>Solo cuentas sin contraseña: debe ser true para confirmar.</summary>
+    public bool confirm_without_password { get; set; }
 }
 
 public class ActualizarUsuarioRequest
