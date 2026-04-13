@@ -101,9 +101,19 @@
                                 }
                             </td>
                             <td>
-                                <a href="/admin/usuarios/@usuario.Id" class="btn btn-sm btn-primary">
-                                    <i class="bi bi-eye"></i> Ver
-                                </a>
+                                <div class="flex gap-2 flex-wrap">
+                                    <a href="/admin/usuarios/@usuario.Id" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-eye"></i> Ver
+                                    </a>
+                                    @if (usuario.Rol != "Administrador")
+                                    {
+                                        <form method="post" action="/admin/usuarios/@usuario.Id/eliminar" class="inline">
+                                            <button type="submit" class="btn btn-sm btn-error" onclick="return confirm('¿Eliminar este usuario y todos sus datos? Esta acción es irreversible.');">
+                                                <i class="bi bi-trash"></i> Eliminar
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }

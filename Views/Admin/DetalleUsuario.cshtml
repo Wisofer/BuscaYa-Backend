@@ -108,6 +108,14 @@
                         <a href="/admin/usuarios" class="btn btn-ghost">
                             <i class="bi bi-arrow-left"></i> Volver
                         </a>
+                        @if (usuario.Rol != "Administrador")
+                        {
+                            <form method="post" action="/admin/usuarios/@usuario.Id/eliminar" class="inline">
+                                <button type="submit" class="btn btn-error" onclick="return confirm('¿Eliminar este usuario y todos sus datos? Esta acción es irreversible.');">
+                                    <i class="bi bi-trash"></i> Eliminar usuario
+                                </button>
+                            </form>
+                        }
                     </div>
                 </div>
             </div>

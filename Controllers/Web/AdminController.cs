@@ -18,6 +18,7 @@ public class AdminController : Controller
     private readonly ICategoriaService _categoriaService;
     private readonly IReporteService _reporteService;
     private readonly IPushNotificationService _pushNotificationService;
+    private readonly IUserDeletionService _userDeletionService;
 
     public AdminController(
         ApplicationDbContext context,
@@ -25,7 +26,8 @@ public class AdminController : Controller
         IAnalyticsService analyticsService,
         ICategoriaService categoriaService,
         IReporteService reporteService,
-        IPushNotificationService pushNotificationService)
+        IPushNotificationService pushNotificationService,
+        IUserDeletionService userDeletionService)
     {
         _context = context;
         _tiendaService = tiendaService;
@@ -33,6 +35,7 @@ public class AdminController : Controller
         _categoriaService = categoriaService;
         _reporteService = reporteService;
         _pushNotificationService = pushNotificationService;
+        _userDeletionService = userDeletionService;
     }
 
     [HttpGet("/admin")]
@@ -179,6 +182,34 @@ public class AdminController : Controller
 
         TempData["Mensaje"] = "Usuario desactivado correctamente";
         return RedirectToAction("DetalleUsuario", new { id });
+    }
+
+    [HttpPost("/admin/usuarios/{id}/eliminar")]
+    public async Task<IActionResult> EliminarUsuario(int id, CancellationToken cancellationToken)
+    {
+        var usuario = await _context.Usuarios.AsNoTracking()
+            .Where(u => u.Id == id)
+            .Select(u => new { u.Id, u.Rol, u.NombreUsuario })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (usuario == null)
+            return NotFound();
+
+        if (usuario.Rol == SD.RolAdministrador)
+        {
+            TempData["Error"] = "No se puede eliminar un usuario Administrador.";
+            return RedirectToAction("DetalleUsuario", new { id });
+        }
+
+        var ok = await _userDeletionService.DeleteUserAndAllDataAsync(id, cancellationToken);
+        if (!ok)
+        {
+            TempData["Error"] = "No se pudo eliminar el usuario (no existe).";
+            return RedirectToAction("Usuarios");
+        }
+
+        TempData["Mensaje"] = $"Usuario eliminado correctamente: {usuario.NombreUsuario}";
+        return RedirectToAction("Usuarios");
     }
 
     [HttpGet("/admin/tiendas")]
