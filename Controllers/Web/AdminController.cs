@@ -511,6 +511,7 @@ public class AdminController : Controller
     [HttpGet("/admin/notifications")]
     public async Task<IActionResult> Notifications()
     {
+        var since = DateTime.UtcNow.AddDays(-7);
         var templates = await _context.NotificationTemplates
             .OrderByDescending(t => t.Id)
             .ToListAsync();
@@ -527,9 +528,35 @@ public class AdminController : Controller
             .OrderByDescending(x => x.Count)
             .ToListAsync();
         var totalDevices = await _context.Devices.CountAsync();
+        var logsSince = _context.NotificationLogs.AsNoTracking().Where(l => l.SentAt >= since);
+        var totalSent = await logsSince.CountAsync(l => l.Status == "sent");
+        var totalOpened = await logsSince.CountAsync(l => l.Status == "opened");
+        var totalFailed = await logsSince.CountAsync(l => l.Status == "failed");
+        var openRate = totalSent > 0 ? Math.Round((double)totalOpened * 100d / totalSent, 1) : 0d;
+        var byType = await logsSince
+            .GroupBy(l => l.NotificationType ?? "MANUAL_TEMPLATE")
+            .Select(g => new
+            {
+                Type = g.Key,
+                Sent = g.Count(x => x.Status == "sent"),
+                Opened = g.Count(x => x.Status == "opened"),
+                Failed = g.Count(x => x.Status == "failed")
+            })
+            .OrderByDescending(x => x.Sent + x.Opened + x.Failed)
+            .ToListAsync();
+
         ViewBag.Templates = templates;
         ViewBag.DevicesByUser = devicesByUser;
         ViewBag.TotalDevices = totalDevices;
+        ViewBag.NotificationMetrics = new
+        {
+            Since = since,
+            TotalSent = totalSent,
+            TotalOpened = totalOpened,
+            TotalFailed = totalFailed,
+            OpenRate = openRate
+        };
+        ViewBag.NotificationMetricsByType = byType;
         ViewBag.Usuarios = await _context.Usuarios
             .OrderBy(u => u.NombreCompleto)
             .Select(u => new { u.Id, u.NombreCompleto, u.NombreUsuario, u.Rol })

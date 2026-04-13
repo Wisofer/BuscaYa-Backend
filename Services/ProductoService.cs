@@ -103,6 +103,7 @@ public class ProductoService : IProductoService
 
         var precioAnterior = producto.Precio;
         var stockAnterior = producto.Stock;
+        var enOfertaAnterior = producto.EnOferta;
 
         if (request.Nombre != null) producto.Nombre = request.Nombre;
         if (request.Descripcion != null) producto.Descripcion = request.Descripcion;
@@ -143,6 +144,8 @@ public class ProductoService : IProductoService
             FireAndForgetNotifyPriceDrop(id, precioAnterior.Value, request.Precio.Value);
         if (request.Stock.HasValue && (stockAnterior == null || stockAnterior == 0) && request.Stock.Value > 0)
             FireAndForgetNotifyBackInStock(id);
+        if (request.EnOferta.HasValue && request.EnOferta.Value && !enOfertaAnterior)
+            FireAndForgetNotifyFavoriteOnOffer(id, producto.Precio, precioAnterior);
 
         return true;
     }
@@ -175,6 +178,23 @@ public class ProductoService : IProductoService
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Error en disparo NotifyBackInStock para producto {ProductoId}", productoId);
+            }
+        });
+    }
+
+    private void FireAndForgetNotifyFavoriteOnOffer(int productoId, decimal? precioOferta, decimal? precioAnterior)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                await scope.ServiceProvider.GetRequiredService<INotificationTriggerService>()
+                    .NotifyFavoriteOnOfferAsync(productoId, precioOferta, precioAnterior);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error en disparo NotifyFavoriteOnOffer para producto {ProductoId}", productoId);
             }
         });
     }

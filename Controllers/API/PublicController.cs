@@ -18,19 +18,22 @@ public class PublicController : ControllerBase
     private readonly ICategoriaService _categoriaService;
     private readonly IAnalyticsService _analyticsService;
     private readonly IProductoService _productoService;
+    private readonly INotificationTriggerService _notificationTriggerService;
 
     public PublicController(
         IBusquedaService busquedaService,
         ITiendaService tiendaService,
         ICategoriaService categoriaService,
         IAnalyticsService analyticsService,
-        IProductoService productoService)
+        IProductoService productoService,
+        INotificationTriggerService notificationTriggerService)
     {
         _busquedaService = busquedaService;
         _tiendaService = tiendaService;
         _categoriaService = categoriaService;
         _analyticsService = analyticsService;
         _productoService = productoService;
+        _notificationTriggerService = notificationTriggerService;
     }
 
     private int? GetUserId()
@@ -211,6 +214,16 @@ public class PublicController : ControllerBase
                 },
                 DistanciaKm = distancia
             };
+
+            var interestedUserId = GetUserId();
+            if (interestedUserId.HasValue)
+            {
+                _ = Task.Run(async () =>
+                {
+                    try { await _notificationTriggerService.NotifyProductInterestAsync(id, interestedUserId.Value); }
+                    catch { /* no bloquear respuesta al cliente por fallas de notificación */ }
+                });
+            }
 
             return Ok(response);
         }

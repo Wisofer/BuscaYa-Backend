@@ -13,6 +13,9 @@ public class NotificationTriggerService : INotificationTriggerService
     private const string TypeNewStoreNearby = "NEW_STORE_NEARBY";
     private const string TypePriceDrop = "PRICE_DROP";
     private const string TypeBackInStock = "BACK_IN_STOCK";
+    private const string TypeFavoriteOnOffer = "FAVORITE_ON_OFFER";
+    private const string TypeProductInterest = "PRODUCT_INTEREST";
+    private const string TypeDailyFavoritesReminder = "DAILY_FAVORITES_REMINDER";
 
     private readonly ApplicationDbContext _context;
     private readonly IPushNotificationService _push;
@@ -70,8 +73,8 @@ public class NotificationTriggerService : INotificationTriggerService
 
         if (devices.Count == 0) return;
 
-        var title = "Nueva tienda cerca de ti";
-        var body = $"Nueva tienda cerca: {tienda.Nombre}";
+        var title = "🏪 Nueva tienda cerca de ti";
+        var body = $"✨ Descubrimos una tienda nueva cerca: {tienda.Nombre}";
         var extraData = new Dictionary<string, string>
         {
             ["type"] = TypeNewStoreNearby,
@@ -105,8 +108,8 @@ public class NotificationTriggerService : INotificationTriggerService
             .ToListAsync();
         if (devices.Count == 0) return;
 
-        var title = "Bajó de precio";
-        var body = $"{producto.Nombre} ahora {producto.Moneda}{precioNuevo:N0}";
+        var title = "📉 ¡Bajó de precio!";
+        var body = $"🔥 {producto.Nombre} ahora está en {producto.Moneda}{precioNuevo:N0}";
         var extraData = new Dictionary<string, string>
         {
             ["type"] = TypePriceDrop,
@@ -144,8 +147,8 @@ public class NotificationTriggerService : INotificationTriggerService
             .ToListAsync();
         if (devices.Count == 0) return;
 
-        var title = "Volvió a haber stock";
-        var body = $"{producto.Nombre} ya está disponible en {producto.Tienda.Nombre}";
+        var title = "📦 ¡Volvió a haber stock!";
+        var body = $"✅ {producto.Nombre} ya está disponible en {producto.Tienda.Nombre}";
         var extraData = new Dictionary<string, string>
         {
             ["type"] = TypeBackInStock,
@@ -156,6 +159,144 @@ public class NotificationTriggerService : INotificationTriggerService
         };
         await _push.SendPushNotificationAsync(devices, title, body, extraData, TypeBackInStock, productoId);
         _logger.LogInformation("Notificación BACK_IN_STOCK enviada a {Count} dispositivos por producto {ProductoId}", devices.Count, productoId);
+    }
+
+    public async Task NotifyFavoriteOnOfferAsync(int productoId, decimal? precioOferta, decimal? precioAnterior)
+    {
+        var producto = await _context.Productos
+            .AsNoTracking()
+            .Include(p => p.Tienda)
+            .FirstOrDefaultAsync(p => p.Id == productoId);
+        if (producto == null) return;
+
+        var userIds = await _context.Favoritos
+            .Where(f => f.ProductoId == productoId)
+            .Select(f => f.UsuarioId)
+            .Distinct()
+            .ToListAsync();
+        if (userIds.Count == 0) return;
+
+        var filtered = await FilterByAntiSpamAsync(userIds, TypeFavoriteOnOffer, productoId);
+        if (filtered.Count == 0) return;
+
+        var devices = await _context.Devices
+            .Where(d => filtered.Contains(d.UsuarioId) && !string.IsNullOrWhiteSpace(d.FcmToken))
+            .ToListAsync();
+        if (devices.Count == 0) return;
+
+        var title = "🏷️ Tu favorito entró en oferta";
+        var body = precioOferta.HasValue
+            ? $"💸 {producto.Nombre} ahora está en {producto.Moneda}{precioOferta.Value:N0}"
+            : $"💸 {producto.Nombre} está en oferta en {producto.Tienda.Nombre}";
+        var extraData = new Dictionary<string, string>
+        {
+            ["type"] = TypeFavoriteOnOffer,
+            ["productId"] = productoId.ToString(),
+            ["storeId"] = producto.TiendaId.ToString(),
+            ["productName"] = producto.Nombre,
+            ["storeName"] = producto.Tienda.Nombre
+        };
+        if (precioOferta.HasValue) extraData["newPrice"] = precioOferta.Value.ToString("F2");
+        if (precioAnterior.HasValue) extraData["oldPrice"] = precioAnterior.Value.ToString("F2");
+
+        await _push.SendPushNotificationAsync(devices, title, body, extraData, TypeFavoriteOnOffer, productoId);
+        _logger.LogInformation("Notificación FAVORITE_ON_OFFER enviada a {Count} dispositivos por producto {ProductoId}", devices.Count, productoId);
+    }
+
+    public async Task NotifyProductInterestAsync(int productoId, int interestedUserId)
+    {
+        var producto = await _context.Productos
+            .AsNoTracking()
+            .Include(p => p.Tienda)
+            .FirstOrDefaultAsync(p => p.Id == productoId);
+        if (producto == null || producto.Tienda?.UsuarioId == null) return;
+        if (producto.Tienda.UsuarioId == interestedUserId) return;
+
+        var ownerUserId = producto.Tienda.UsuarioId.Value;
+        var since = DateTime.UtcNow.AddHours(-24);
+        var alreadySent = await _context.NotificationLogs.AsNoTracking()
+            .AnyAsync(l =>
+                l.UsuarioId == ownerUserId &&
+                l.NotificationType == TypeProductInterest &&
+                l.EntityId == productoId &&
+                l.SentAt >= since);
+        if (alreadySent) return;
+
+        var devices = await _context.Devices
+            .Where(d => d.UsuarioId == ownerUserId && !string.IsNullOrWhiteSpace(d.FcmToken))
+            .ToListAsync();
+        if (devices.Count == 0) return;
+
+        var title = "👀 Tu producto está llamando la atención";
+        var body = $"Alguien abrió {producto.Nombre}. ¡Buen momento para destacarlo!";
+        var extraData = new Dictionary<string, string>
+        {
+            ["type"] = TypeProductInterest,
+            ["productId"] = productoId.ToString(),
+            ["storeId"] = producto.TiendaId.ToString(),
+            ["productName"] = producto.Nombre
+        };
+        await _push.SendPushNotificationAsync(devices, title, body, extraData, TypeProductInterest, productoId);
+    }
+
+    public async Task SendDailyFavoritesReminderAsync(CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        var dayKey = int.Parse(now.ToString("yyyyMMdd"));
+
+        var favoriteOffers = await _context.Favoritos.AsNoTracking()
+            .Join(_context.Productos.AsNoTracking().Where(p => p.Activo && p.EnOferta),
+                f => f.ProductoId,
+                p => p.Id,
+                (f, p) => new { f.UsuarioId, p.Nombre })
+            .ToListAsync(cancellationToken);
+        if (favoriteOffers.Count == 0) return;
+
+        var grouped = favoriteOffers.GroupBy(x => x.UsuarioId)
+            .Select(g => new
+            {
+                UsuarioId = g.Key,
+                Total = g.Count(),
+                PrimerProducto = g.Select(x => x.Nombre).FirstOrDefault() ?? "un producto"
+            })
+            .ToList();
+        var groupedUserIds = grouped.Select(g => g.UsuarioId).ToList();
+
+        var alreadySentUserIds = await _context.NotificationLogs.AsNoTracking()
+            .Where(l =>
+                l.NotificationType == TypeDailyFavoritesReminder &&
+                l.EntityId == dayKey &&
+                groupedUserIds.Contains(l.UsuarioId))
+            .Select(l => l.UsuarioId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var targetUsers = grouped.Where(g => !alreadySentUserIds.Contains(g.UsuarioId)).ToList();
+        if (targetUsers.Count == 0) return;
+
+        var targetIds = targetUsers.Select(x => x.UsuarioId).ToList();
+        var devices = await _context.Devices
+            .Where(d => targetIds.Contains(d.UsuarioId) && !string.IsNullOrWhiteSpace(d.FcmToken))
+            .ToListAsync(cancellationToken);
+        if (devices.Count == 0) return;
+
+        foreach (var user in targetUsers)
+        {
+            var userDevices = devices.Where(d => d.UsuarioId == user.UsuarioId).ToList();
+            if (userDevices.Count == 0) continue;
+
+            var title = "⏰ Recordatorio de tus favoritos";
+            var body = user.Total == 1
+                ? $"💛 {user.PrimerProducto} sigue en oferta. ¡No lo dejes pasar!"
+                : $"💛 Tienes {user.Total} favoritos en oferta ahora mismo. ¡Revísalos!";
+            var extraData = new Dictionary<string, string>
+            {
+                ["type"] = TypeDailyFavoritesReminder,
+                ["offersCount"] = user.Total.ToString()
+            };
+
+            await _push.SendPushNotificationAsync(userDevices, title, body, extraData, TypeDailyFavoritesReminder, dayKey);
+        }
     }
 
     private async Task<List<int>> FilterByAntiSpamAsync(List<int> userIds, string notificationType, int entityId)
