@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using BuscaYa.Options;
 using BuscaYa.Services.IServices;
 using BuscaYa.Utils;
 
@@ -8,12 +10,46 @@ public class PublicController : Controller
 {
     private readonly IProductoService _productoService;
     private readonly ITiendaService _tiendaService;
+    private readonly AppDownloadOptions _appDownload;
 
-    public PublicController(IProductoService productoService, ITiendaService tiendaService)
+    public PublicController(
+        IProductoService productoService,
+        ITiendaService tiendaService,
+        IOptions<AppDownloadOptions> appDownload)
     {
         _productoService = productoService;
         _tiendaService = tiendaService;
+        _appDownload = appDownload.Value;
     }
+
+    private void SetAppDownloadViewData()
+    {
+        ViewData["GooglePlayUrl"] = _appDownload.GooglePlayUrl;
+        ViewData["AppStoreUrl"] = _appDownload.AppStoreUrl;
+        ViewData["AppleAppId"] = _appDownload.AppleAppId;
+    }
+
+    /// <summary>Página de descarga: en móvil redirige a la tienda correcta; en escritorio muestra ambos enlaces.</summary>
+    [HttpGet("/descargar")]
+    public IActionResult Descargar()
+    {
+        var ua = Request.Headers.UserAgent.ToString();
+        if (LooksLikeIos(ua) && !string.IsNullOrEmpty(_appDownload.AppStoreUrl))
+            return Redirect(_appDownload.AppStoreUrl);
+        if (LooksLikeAndroid(ua) && !string.IsNullOrEmpty(_appDownload.GooglePlayUrl))
+            return Redirect(_appDownload.GooglePlayUrl);
+
+        SetAppDownloadViewData();
+        return View("DescargarApp");
+    }
+
+    private static bool LooksLikeIos(string ua) =>
+        ua.Contains("iPhone", StringComparison.OrdinalIgnoreCase)
+        || ua.Contains("iPad", StringComparison.OrdinalIgnoreCase)
+        || ua.Contains("iPod", StringComparison.OrdinalIgnoreCase);
+
+    private static bool LooksLikeAndroid(string ua) =>
+        ua.Contains("Android", StringComparison.OrdinalIgnoreCase);
 
     [HttpGet("/producto/{id}")]
     public IActionResult VerProducto(int id)
@@ -44,6 +80,7 @@ public class PublicController : Controller
             ViewData["Producto"] = producto;
             ViewData["WhatsAppUrl"] = whatsappUrl;
             ViewData["DeepLink"] = $"buscaya://producto/{id}";
+            SetAppDownloadViewData();
 
             return View("Producto");
         }
@@ -71,6 +108,7 @@ public class PublicController : Controller
 
             ViewData["Tienda"] = tienda;
             ViewData["DeepLink"] = $"buscaya://tienda/{id}";
+            SetAppDownloadViewData();
 
             return View("Tienda");
         }

@@ -1,0 +1,25 @@
+@{
+    var play = ViewData["GooglePlayUrl"] as string ?? "";
+    var store = ViewData["AppStoreUrl"] as string ?? "";
+}
+@if (!string.IsNullOrEmpty(play) || !string.IsNullOrEmpty(store))
+{
+    <div class="rounded-xl border border-base-300 bg-base-100 p-4 shadow-sm">
+        <p class="mb-3 text-center text-sm font-semibold text-gray-700">📲 Descargar BuscaYa</p>
+        <div class="flex flex-col gap-2 sm:flex-row sm:justify-center">
+            @if (!string.IsNullOrEmpty(store))
+            {
+                <a href="@store" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm gap-2">
+                    <i class="bi bi-apple"></i> App Store
+                </a>
+            }
+            @if (!string.IsNullOrEmpty(play))
+            {
+                <a href="@play" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm gap-2">
+                    <i class="bi bi-google"></i> Google Play
+                </a>
+            }
+        </div>
+        <p class="mt-2 text-center text-xs text-gray-500">Abre la tienda según tu celular o elige manualmente.</p>
+    </div>
+}

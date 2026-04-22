@@ -1,0 +1,44 @@
+@{
+    ViewData["Title"] = "Descargar BuscaYa";
+    var play = ViewData["GooglePlayUrl"] as string ?? "";
+    var store = ViewData["AppStoreUrl"] as string ?? "";
+}
+
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Descargar BuscaYa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body class="min-h-screen bg-gradient-to-b from-base-200 to-base-100">
+    <div class="mx-auto max-w-lg px-4 py-12 text-center">
+        <h1 class="mb-2 text-3xl font-bold text-gray-800">BuscaYa</h1>
+        <p class="mb-8 text-gray-600">Encuentra productos en tiendas cerca de ti.</p>
+        <div class="card bg-base-100 shadow-lg">
+            <div class="card-body gap-4">
+                <p class="text-sm text-gray-600">En la mayoría de móviles te redirigimos automáticamente a la tienda correcta. Si no, elige abajo.</p>
+                @await Html.PartialAsync("_AppDownloadLinks")
+            </div>
+        </div>
+        <a href="/" class="btn btn-ghost btn-sm mt-6">Volver</a>
+    </div>
+    <script>
+        (function () {
+            const play = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(play));
+            const appStore = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(store));
+            const ua = navigator.userAgent || "";
+            if (/iPhone|iPad|iPod/i.test(ua) && appStore) {
+                window.location.replace(appStore);
+                return;
+            }
+            if (/Android/i.test(ua) && play) {
+                window.location.replace(play);
+            }
+        })();
+    </script>
+</body>
+</html>

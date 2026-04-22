@@ -1,6 +1,7 @@
 using Amazon.S3;
 using Amazon;
 using BuscaYa.Data;
+using BuscaYa.Options;
 using BuscaYa.Services;
 using BuscaYa.Services.IServices;
 using BuscaYa.Utils;
@@ -17,6 +18,9 @@ using System.Text;
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<AppDownloadOptions>(
+    builder.Configuration.GetSection(AppDownloadOptions.SectionName));
 
 // Agregar servicios al contenedor
 builder.Services.AddControllers()

@@ -3,7 +3,8 @@
     var producto = ViewData["Producto"] as Producto;
     var whatsappUrl = ViewData["WhatsAppUrl"] as string ?? "";
     var deepLink = ViewData["DeepLink"] as string ?? "";
-    
+    var appleAppId = ViewData["AppleAppId"] as string;
+
     ViewData["Title"] = producto?.Nombre ?? "Producto";
 }
 
@@ -22,6 +23,10 @@
         <meta property="og:image" content="@producto.FotoUrl" />
     }
     <meta property="og:type" content="product" />
+    @if (!string.IsNullOrEmpty(appleAppId))
+    {
+        <meta name="apple-itunes-app" content="app-id=@appleAppId" />
+    }
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.min.css" rel="stylesheet" type="text/css" />
@@ -38,12 +43,15 @@
         <!-- Header -->
         <div class="bg-white shadow-sm">
             <div class="max-w-4xl mx-auto px-4 py-4">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between gap-2 flex-wrap">
                     <h1 class="text-2xl font-bold text-gray-800">BuscaYa</h1>
-                    <a href="@deepLink" class="btn btn-primary btn-sm">
-                        <i class="bi bi-phone"></i>
-                        Abrir en la app
-                    </a>
+                    <div class="flex gap-2">
+                        <a href="/descargar" class="btn btn-ghost btn-sm">Descargar app</a>
+                        <a href="@deepLink" class="btn btn-primary btn-sm">
+                            <i class="bi bi-phone"></i>
+                            Abrir en la app
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -144,6 +152,10 @@
                             <i class="bi bi-phone"></i>
                             Ver en la app
                         </a>
+                    </div>
+
+                    <div class="mt-6">
+                        @await Html.PartialAsync("_AppDownloadLinks")
                     </div>
                 </div>
             </div>

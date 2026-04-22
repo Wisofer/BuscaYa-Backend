@@ -2,6 +2,7 @@
 @{
     var tienda = ViewData["Tienda"] as TiendaResponse;
     var deepLink = ViewData["DeepLink"] as string ?? "";
+    var appleAppId = ViewData["AppleAppId"] as string;
 
     ViewData["Title"] = tienda?.Nombre ?? "Tienda";
 }
@@ -21,6 +22,10 @@
         <meta property="og:image" content="@(tienda?.FotoUrl ?? tienda?.LogoUrl)" />
     }
     <meta property="og:type" content="business.business" />
+    @if (!string.IsNullOrEmpty(appleAppId))
+    {
+        <meta name="apple-itunes-app" content="app-id=@appleAppId" />
+    }
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.min.css" rel="stylesheet" type="text/css" />
@@ -36,12 +41,15 @@
     <div class="min-h-screen pb-8">
         <!-- Header -->
         <div class="bg-white shadow-sm">
-            <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-2 flex-wrap">
                 <h1 class="text-2xl font-bold text-gray-800">BuscaYa</h1>
-                <a href="@deepLink" class="btn btn-primary btn-sm">
-                    <i class="bi bi-phone"></i>
-                    Abrir en la app
-                </a>
+                <div class="flex gap-2">
+                    <a href="/descargar" class="btn btn-ghost btn-sm">Descargar app</a>
+                    <a href="@deepLink" class="btn btn-primary btn-sm">
+                        <i class="bi bi-phone"></i>
+                        Abrir en la app
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -220,6 +228,10 @@
                     </div>
                 }
             }
+
+            <div class="mx-auto mt-8 max-w-xl">
+                @await Html.PartialAsync("_AppDownloadLinks")
+            </div>
 
             <!-- Footer -->
             <div class="text-center mt-10 text-gray-500 text-sm">
