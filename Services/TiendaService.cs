@@ -231,15 +231,16 @@ public class TiendaService : ITiendaService
 
     public bool VerificarLimiteProductos(int tiendaId)
     {
-        var tienda = _context.Tiendas.Find(tiendaId);
-        if (tienda == null) return false;
-
-        if (tienda.Plan == SD.PlanPro) return true;
-
-        var cantidadProductos = _context.Productos
-            .Count(p => p.TiendaId == tiendaId && p.Activo);
-
-        return cantidadProductos < SD.LimiteProductosPlanFree;
+        // [Plan desactivado temporalmente] Mientras BuscaYa sea gratis, no hay tope lógico.
+        // Código original comentado para reactivar límite Free/Pro:
+        // var tienda = _context.Tiendas.Find(tiendaId);
+        // if (tienda == null) return false;
+        // if (tienda.Plan == SD.PlanPro) return true;
+        // var cantidadProductos = _context.Productos
+        //     .Count(p => p.TiendaId == tiendaId && p.Activo);
+        // return cantidadProductos < SD.LimiteProductosPlanFree;
+        _ = tiendaId;
+        return true;
     }
 
     public void CalificarTienda(int tiendaId, int usuarioId, int valor)

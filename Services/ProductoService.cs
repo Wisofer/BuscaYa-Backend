@@ -50,16 +50,17 @@ public class ProductoService : IProductoService
             throw new InvalidOperationException("Tienda no encontrada");
         }
 
-        if (tienda.Plan != SD.PlanPro)
-        {
-            var cantidadProductos = _context.Productos
-                .Count(p => p.TiendaId == tiendaId && p.Activo);
-
-            if (cantidadProductos >= SD.LimiteProductosPlanFree)
-            {
-                throw new InvalidOperationException("Has alcanzado el límite de productos para tu plan. Actualiza a Plan Pro.");
-            }
-        }
+        // [Plan desactivado temporalmente] BuscaYa es gratis: sin tope de productos por ahora.
+        // Cuando se monetice / crezca la app, descomentar y restaurar límite Free vs Pro.
+        // if (tienda.Plan != SD.PlanPro)
+        // {
+        //     var cantidadProductos = _context.Productos
+        //         .Count(p => p.TiendaId == tiendaId && p.Activo);
+        //     if (cantidadProductos >= SD.LimiteProductosPlanFree)
+        //     {
+        //         throw new InvalidOperationException("Has alcanzado el límite de productos para tu plan. Actualiza a Plan Pro.");
+        //     }
+        // }
 
         var imagenPrincipal = request.FotoUrl ?? request.ImagenesUrls?.FirstOrDefault();
         var producto = new Producto

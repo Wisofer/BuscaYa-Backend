@@ -23,6 +23,7 @@ public static class SD
     public const string MonedaDolar = "$";
 
     // Límites
+    /// <summary>Usado cuando se reactive el límite por plan. Hoy el borde en Crear() está comentado.</summary>
     public const int LimiteProductosPlanFree = 10;
     public const int TamanoPaginaDefault = 20;
     public const int TamanoPaginaMaximo = 50;
