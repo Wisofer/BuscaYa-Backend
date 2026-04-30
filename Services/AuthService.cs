@@ -3,16 +3,28 @@ using BuscaYa.Models.Entities;
 using BuscaYa.Services.IServices;
 using BuscaYa.Utils;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace BuscaYa.Services;
 
 public class AuthService : IAuthService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IConfiguration _configuration;
+    private readonly IBrevoEmailService _brevoEmailService;
+    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(ApplicationDbContext context)
+    public AuthService(
+        ApplicationDbContext context,
+        IConfiguration configuration,
+        IBrevoEmailService brevoEmailService,
+        ILogger<AuthService> logger)
     {
         _context = context;
+        _configuration = configuration;
+        _brevoEmailService = brevoEmailService;
+        _logger = logger;
     }
 
     public Usuario? ValidarUsuario(string nombreUsuario, string contrasena)
@@ -262,5 +274,120 @@ public class AuthService : IAuthService
 
         _context.SaveChanges();
         return true;
+    }
+
+    public async Task RequestPasswordResetAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var normalizedEmail = (email ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(normalizedEmail))
+            return;
+
+        var usuario = await _context.Usuarios.FirstOrDefaultAsync(
+            u => u.Email != null && u.Email.ToLower() == normalizedEmail.ToLower(),
+            cancellationToken);
+
+        if (usuario == null || !usuario.Activo)
+            return; // Respuesta genérica para no revelar si existe la cuenta
+
+        var rawToken = GenerateSecureToken();
+        usuario.PasswordResetTokenHash = ComputeSha256(rawToken);
+        usuario.PasswordResetTokenExpiresAt = DateTime.UtcNow.AddMinutes(30);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var resetUrl = _configuration["PasswordRecovery:ResetPasswordUrl"]?.Trim();
+        if (string.IsNullOrWhiteSpace(resetUrl))
+            resetUrl = "https://buscaya.app/reset-password";
+
+        var link = $"{resetUrl}?email={Uri.EscapeDataString(usuario.Email!)}&token={Uri.EscapeDataString(rawToken)}";
+        var subject = "Recupera tu contraseña de BuscaYa";
+        var html = $"""
+            <!doctype html>
+            <html lang="es">
+            <body style="margin:0;padding:0;background:#f6f8ff;font-family:Arial,sans-serif;color:#1f2937;">
+              <div style="max-width:620px;margin:28px auto;padding:0 12px;">
+                <div style="background:#ffffff;border:1px solid #dbe4ff;border-radius:16px;overflow:hidden;">
+                  <div style="background:#eef2ff;padding:22px 24px 14px;text-align:center;">
+                    <h1 style="margin:0;font-size:24px;color:#1d4ed8;">Restablecer contraseña</h1>
+                    <p style="margin:10px 0 0;font-size:14px;color:#334155;">
+                      Recibimos una solicitud para cambiar tu contraseña en BuscaYa.
+                    </p>
+                  </div>
+                  <div style="padding:24px;">
+                    <p style="margin:0 0 14px;font-size:15px;line-height:1.55;">
+                      Haz clic en el siguiente botón para crear una nueva contraseña:
+                    </p>
+                    <p style="margin:0 0 18px;text-align:center;">
+                      <a href="{link}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:13px 24px;border-radius:10px;font-weight:700;">
+                        Restablecer contraseña
+                      </a>
+                    </p>
+                    <p style="margin:0 0 8px;color:#475569;font-size:13px;">Este enlace expira en 30 minutos.</p>
+                    <p style="margin:0;color:#64748b;font-size:13px;">Si no solicitaste este cambio, ignora este correo.</p>
+                    <hr style="border:none;border-top:1px solid #e2e8f0;margin:18px 0;" />
+                    <p style="margin:0;color:#64748b;font-size:12px;word-break:break-all;">
+                      Si el botón no abre, copia y pega este enlace:<br />{link}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </body>
+            </html>
+            """;
+        var text = $"Restablece tu contraseña: {link} (expira en 30 minutos)";
+
+        try
+        {
+            await _brevoEmailService.SendAsync(usuario.Email!, subject, html, text, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error enviando correo de recuperación para usuario {UsuarioId}", usuario.Id);
+        }
+    }
+
+    public async Task<bool> ResetPasswordByTokenAsync(string email, string token, string nuevaContrasena, CancellationToken cancellationToken = default)
+    {
+        var normalizedEmail = (email ?? string.Empty).Trim();
+        var rawToken = (token ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(normalizedEmail) || string.IsNullOrWhiteSpace(rawToken) || string.IsNullOrWhiteSpace(nuevaContrasena))
+            return false;
+
+        var usuario = await _context.Usuarios.FirstOrDefaultAsync(
+            u => u.Email != null && u.Email.ToLower() == normalizedEmail.ToLower(),
+            cancellationToken);
+
+        if (usuario == null || !usuario.Activo)
+            return false;
+        if (string.IsNullOrWhiteSpace(usuario.PasswordResetTokenHash) || !usuario.PasswordResetTokenExpiresAt.HasValue)
+            return false;
+        if (usuario.PasswordResetTokenExpiresAt.Value < DateTime.UtcNow)
+            return false;
+
+        var tokenHash = ComputeSha256(rawToken);
+        if (!string.Equals(usuario.PasswordResetTokenHash, tokenHash, StringComparison.Ordinal))
+            return false;
+
+        usuario.Contrasena = PasswordHelper.HashPassword(nuevaContrasena);
+        usuario.PasswordResetTokenHash = null;
+        usuario.PasswordResetTokenExpiresAt = null;
+        await _context.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    private static string GenerateSecureToken()
+    {
+        Span<byte> bytes = stackalloc byte[32];
+        RandomNumberGenerator.Fill(bytes);
+        return Convert.ToBase64String(bytes)
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+    }
+
+    private static string ComputeSha256(string value)
+    {
+        var data = Encoding.UTF8.GetBytes(value);
+        var hash = SHA256.HashData(data);
+        return Convert.ToHexString(hash);
     }
 }

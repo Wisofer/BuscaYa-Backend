@@ -33,5 +33,9 @@ public interface IAuthService
 
     // Actualizar perfil de usuario
     bool ActualizarPerfil(int usuarioId, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl = null);
+
+    // Recuperación de contraseña
+    Task RequestPasswordResetAsync(string email, CancellationToken cancellationToken = default);
+    Task<bool> ResetPasswordByTokenAsync(string email, string token, string nuevaContrasena, CancellationToken cancellationToken = default);
 }
 

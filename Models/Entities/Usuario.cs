@@ -26,6 +26,12 @@ public class Usuario
     [Column("account_deletion_scheduled_at")]
     public DateTime? AccountDeletionScheduledAt { get; set; }
 
+    [Column("password_reset_token_hash")]
+    public string? PasswordResetTokenHash { get; set; }
+
+    [Column("password_reset_token_expires_at")]
+    public DateTime? PasswordResetTokenExpiresAt { get; set; }
+
     // Relaciones
     public virtual Tienda? Tienda { get; set; }
     public virtual ICollection<Favorito> Favoritos { get; set; } = new List<Favorito>();

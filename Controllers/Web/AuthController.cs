@@ -36,6 +36,15 @@ public class AuthController : Controller
         return View();
     }
 
+    [HttpGet("/reset-password")]
+    [AllowAnonymous]
+    public IActionResult ResetPassword([FromQuery] string? email = null, [FromQuery] string? token = null)
+    {
+        ViewBag.Email = email ?? string.Empty;
+        ViewBag.Token = token ?? string.Empty;
+        return View();
+    }
+
     [HttpPost("/login")]
     public async Task<IActionResult> Login(string NombreUsuario, string Contrasena, string? returnUrl = null)
     {

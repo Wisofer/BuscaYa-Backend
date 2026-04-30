@@ -139,6 +139,7 @@ builder.Services.AddAuthorization(options =>
 // Registrar servicios
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IBrevoEmailService, BrevoEmailService>();
 builder.Services.AddScoped<IUserDeletionService, UserDeletionService>();
 builder.Services.AddScoped<IAccountDeletionService, AccountDeletionService>();
 builder.Services.AddHostedService<AccountDeletionBackgroundService>();

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Security.Claims;
+using System.ComponentModel.DataAnnotations;
 
 namespace BuscaYa.Controllers.API;
 
@@ -18,6 +19,7 @@ public class AuthApiController : ControllerBase
     private readonly IConfiguration _configuration;
     private readonly IS3BucketService _s3Service;
     private readonly IAccountDeletionService _accountDeletion;
+    private readonly ILogger<AuthApiController> _logger;
 
     public AuthApiController(
         IAuthService authService,
@@ -25,7 +27,8 @@ public class AuthApiController : ControllerBase
         IAppleAuthService appleAuthService,
         IConfiguration configuration,
         IS3BucketService s3Service,
-        IAccountDeletionService accountDeletion)
+        IAccountDeletionService accountDeletion,
+        ILogger<AuthApiController> logger)
     {
         _authService = authService;
         _googleAuthService = googleAuthService;
@@ -33,6 +36,7 @@ public class AuthApiController : ControllerBase
         _configuration = configuration;
         _s3Service = s3Service;
         _accountDeletion = accountDeletion;
+        _logger = logger;
     }
 
     [HttpPost("login")]
@@ -383,6 +387,44 @@ public class AuthApiController : ControllerBase
         }
     }
 
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        try
+        {
+            await _authService.RequestPasswordResetAsync(request.Email, cancellationToken);
+            return Ok(new { message = "Si el correo existe, se enviará un enlace de recuperación." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error en forgot-password");
+            return StatusCode(500, new { error = "Error interno del servidor" });
+        }
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordByTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        try
+        {
+            var ok = await _authService.ResetPasswordByTokenAsync(request.Email, request.Token, request.NewPassword, cancellationToken);
+            if (!ok)
+                return BadRequest(new { error = "Token inválido o expirado." });
+            return Ok(new { message = "Contraseña actualizada correctamente." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error en reset-password");
+            return StatusCode(500, new { error = "Error interno del servidor" });
+        }
+    }
+
     [HttpGet("user")]
     [HttpGet("profile")] // Alias para compatibilidad con frontend
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -554,6 +596,27 @@ public class RegisterRequest
     public string NombreCompleto { get; set; } = string.Empty;
     public string? Email { get; set; }
     public string? Telefono { get; set; }
+}
+
+public class ForgotPasswordRequest
+{
+    [Required(ErrorMessage = "El correo es requerido")]
+    [EmailAddress(ErrorMessage = "El correo no es válido")]
+    public string Email { get; set; } = string.Empty;
+}
+
+public class ResetPasswordByTokenRequest
+{
+    [Required(ErrorMessage = "El correo es requerido")]
+    [EmailAddress(ErrorMessage = "El correo no es válido")]
+    public string Email { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "El token es requerido")]
+    public string Token { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "La nueva contraseña es requerida")]
+    [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres")]
+    public string NewPassword { get; set; } = string.Empty;
 }
 
 
