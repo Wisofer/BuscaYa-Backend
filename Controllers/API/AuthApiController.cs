@@ -425,6 +425,26 @@ public class AuthApiController : ControllerBase
         }
     }
 
+    [HttpPost("reset-password/validate")]
+    public async Task<IActionResult> ValidateResetPasswordToken([FromBody] ValidateResetPasswordTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        try
+        {
+            var isValid = await _authService.ValidatePasswordResetTokenAsync(request.Email, request.Token, cancellationToken);
+            if (!isValid)
+                return BadRequest(new { valid = false, error = "Este enlace ya fue utilizado o expiró. Solicita uno nuevo." });
+            return Ok(new { valid = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error en reset-password/validate");
+            return StatusCode(500, new { error = "Error interno del servidor" });
+        }
+    }
+
     [HttpGet("user")]
     [HttpGet("profile")] // Alias para compatibilidad con frontend
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -617,6 +637,16 @@ public class ResetPasswordByTokenRequest
     [Required(ErrorMessage = "La nueva contraseña es requerida")]
     [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres")]
     public string NewPassword { get; set; } = string.Empty;
+}
+
+public class ValidateResetPasswordTokenRequest
+{
+    [Required(ErrorMessage = "El correo es requerido")]
+    [EmailAddress(ErrorMessage = "El correo no es válido")]
+    public string Email { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "El token es requerido")]
+    public string Token { get; set; } = string.Empty;
 }
 
 

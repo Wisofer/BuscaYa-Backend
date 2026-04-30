@@ -36,6 +36,7 @@ public interface IAuthService
 
     // Recuperación de contraseña
     Task RequestPasswordResetAsync(string email, CancellationToken cancellationToken = default);
+    Task<bool> ValidatePasswordResetTokenAsync(string email, string token, CancellationToken cancellationToken = default);
     Task<bool> ResetPasswordByTokenAsync(string email, string token, string nuevaContrasena, CancellationToken cancellationToken = default);
 }
 

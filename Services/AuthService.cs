@@ -345,6 +345,28 @@ public class AuthService : IAuthService
         }
     }
 
+    public async Task<bool> ValidatePasswordResetTokenAsync(string email, string token, CancellationToken cancellationToken = default)
+    {
+        var normalizedEmail = (email ?? string.Empty).Trim();
+        var rawToken = (token ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(normalizedEmail) || string.IsNullOrWhiteSpace(rawToken))
+            return false;
+
+        var usuario = await _context.Usuarios.FirstOrDefaultAsync(
+            u => u.Email != null && u.Email.ToLower() == normalizedEmail.ToLower(),
+            cancellationToken);
+
+        if (usuario == null || !usuario.Activo)
+            return false;
+        if (string.IsNullOrWhiteSpace(usuario.PasswordResetTokenHash) || !usuario.PasswordResetTokenExpiresAt.HasValue)
+            return false;
+        if (usuario.PasswordResetTokenExpiresAt.Value < DateTime.UtcNow)
+            return false;
+
+        var tokenHash = ComputeSha256(rawToken);
+        return string.Equals(usuario.PasswordResetTokenHash, tokenHash, StringComparison.Ordinal);
+    }
+
     public async Task<bool> ResetPasswordByTokenAsync(string email, string token, string nuevaContrasena, CancellationToken cancellationToken = default)
     {
         var normalizedEmail = (email ?? string.Empty).Trim();
