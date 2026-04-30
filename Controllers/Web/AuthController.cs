@@ -45,6 +45,16 @@ public class AuthController : Controller
         return View();
     }
 
+    [HttpGet("/buscayasplash.png")]
+    [AllowAnonymous]
+    public IActionResult BuscaYaSplash()
+    {
+        var path = Path.Combine(Directory.GetCurrentDirectory(), "Views", "buscayasplash.png");
+        if (!System.IO.File.Exists(path))
+            return NotFound();
+        return PhysicalFile(path, "image/png");
+    }
+
     [HttpPost("/login")]
     public async Task<IActionResult> Login(string NombreUsuario, string Contrasena, string? returnUrl = null)
     {
