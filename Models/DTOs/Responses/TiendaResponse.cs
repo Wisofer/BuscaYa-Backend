@@ -24,6 +24,7 @@ public class TiendaResponse
     public bool EstaAbierta { get; set; }
     public double CalificacionPromedio { get; set; }
     public int TotalCalificaciones { get; set; }
+    public int FavoritosCount { get; set; }
     public List<ProductoSimpleResponse> Productos { get; set; } = new();
 
     /// <summary>

@@ -29,6 +29,7 @@ public class Tienda
     // Calificaciones
     public double CalificacionPromedio { get; set; }
     public int TotalCalificaciones { get; set; }
+    public int FavoritosCount { get; set; }
 
     // Relaciones
     public virtual Usuario? Usuario { get; set; }

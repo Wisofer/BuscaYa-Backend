@@ -88,6 +88,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.FotoUrl).HasMaxLength(500);
             entity.Property(e => e.Plan).IsRequired().HasMaxLength(20).HasDefaultValue("Free");
             entity.Property(e => e.Activo).HasDefaultValue(true);
+            entity.Property(e => e.FavoritosCount).HasDefaultValue(0);
             
             entity.HasIndex(e => e.Ciudad);
             entity.HasIndex(e => e.Activo);

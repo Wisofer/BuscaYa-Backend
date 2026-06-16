@@ -118,7 +118,8 @@ public class BusquedaService : IBusquedaService
                     Telefono = p.Tienda.Telefono,
                     LogoUrl = p.Tienda.LogoUrl,
                     Latitud = p.Tienda.Latitud,
-                    Longitud = p.Tienda.Longitud
+                    Longitud = p.Tienda.Longitud,
+                    FavoritosCount = p.Tienda.FavoritosCount
                 },
                 Categoria = new CategoriaInfoResponse
                 {

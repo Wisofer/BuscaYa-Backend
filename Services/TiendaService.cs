@@ -91,6 +91,7 @@ public class TiendaService : ITiendaService
             EstaAbierta = tienda.EstaAbiertaManual,
             CalificacionPromedio = tienda.CalificacionPromedio,
             TotalCalificaciones = tienda.TotalCalificaciones,
+            FavoritosCount = tienda.FavoritosCount,
             Productos = tienda.Productos.Select(p => new ProductoSimpleResponse
             {
                 Id = p.Id,

@@ -76,6 +76,12 @@ public class ClienteController : ControllerBase
                 TiendaId = tiendaId
             };
 
+            var tienda = _context.Tiendas.Find(tiendaId);
+            if (tienda != null)
+            {
+                tienda.FavoritosCount++;
+            }
+
             _context.Favoritos.Add(favorito);
             _context.SaveChanges();
 
@@ -133,6 +139,15 @@ public class ClienteController : ControllerBase
 
             if (favorito == null)
                 return NotFound(new { error = "Favorito no encontrado" });
+
+            if (favorito.TiendaId.HasValue)
+            {
+                var tienda = _context.Tiendas.Find(favorito.TiendaId.Value);
+                if (tienda != null)
+                {
+                    tienda.FavoritosCount = Math.Max(0, tienda.FavoritosCount - 1);
+                }
+            }
 
             _context.Favoritos.Remove(favorito);
             _context.SaveChanges();

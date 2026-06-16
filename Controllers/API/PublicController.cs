@@ -204,6 +204,7 @@ public class PublicController : ControllerBase
                     LogoUrl = producto.Tienda.LogoUrl,
                     Latitud = producto.Tienda.Latitud,
                     Longitud = producto.Tienda.Longitud,
+                    FavoritosCount = producto.Tienda.FavoritosCount,
                     WhatsAppUrl = whatsappUrl // Link personalizado con mensaje del producto
                 },
                 Categoria = new CategoriaInfoResponse
@@ -258,6 +259,52 @@ public class PublicController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { error = "Error al obtener sugerencias", mensaje = ex.Message });
+        }
+    }
+
+    [HttpGet("/api/tiendas/{id}/qr/descargar")]
+    public IActionResult DescargarQr(int id)
+    {
+        try
+        {
+            var tienda = _tiendaService.ObtenerPorId(id);
+            if (tienda == null)
+            {
+                return NotFound(new
+                {
+                    errorMessages = new[] { "Tienda no encontrada" },
+                    error = "Tienda no encontrada"
+                });
+            }
+
+            var url = $"https://buscaya.encuentrame.org/tienda/{id}";
+
+            // Generar código QR utilizando QRCoder.PngByteQRCode
+            using var qrGenerator = new QRCoder.QRCodeGenerator();
+            using var qrData = qrGenerator.CreateQrCode(url, QRCoder.QRCodeGenerator.ECCLevel.Q);
+            using var qrCode = new QRCoder.PngByteQRCode(qrData);
+            
+            // pixelsPerModule: 20 es ideal para alta resolución
+            byte[] pngBytes = qrCode.GetGraphic(20);
+
+            // Sanitizar nombre de archivo
+            var safeNombre = tienda.Nombre;
+            foreach (var c in System.IO.Path.GetInvalidFileNameChars())
+            {
+                safeNombre = safeNombre.Replace(c, '_');
+            }
+            var nombreArchivo = $"qr-tienda-{id}-{safeNombre.Replace(" ", "-").ToLower()}.png";
+
+            return File(pngBytes, "image/png", nombreArchivo);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new
+            {
+                errorMessages = new[] { "Error al generar el código QR" },
+                error = "Error al generar el código QR",
+                mensaje = ex.Message
+            });
         }
     }
 
