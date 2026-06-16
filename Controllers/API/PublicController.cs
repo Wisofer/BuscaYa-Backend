@@ -202,6 +202,7 @@ public class PublicController : ControllerBase
                     WhatsApp = producto.Tienda.WhatsApp,
                     Telefono = producto.Tienda.Telefono,
                     LogoUrl = producto.Tienda.LogoUrl,
+                    FotoUrl = producto.Tienda.FotoUrl,
                     Latitud = producto.Tienda.Latitud,
                     Longitud = producto.Tienda.Longitud,
                     FavoritosCount = producto.Tienda.FavoritosCount,

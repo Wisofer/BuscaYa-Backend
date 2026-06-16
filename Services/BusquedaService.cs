@@ -117,6 +117,7 @@ public class BusquedaService : IBusquedaService
                     WhatsApp = p.Tienda.WhatsApp,
                     Telefono = p.Tienda.Telefono,
                     LogoUrl = p.Tienda.LogoUrl,
+                    FotoUrl = p.Tienda.FotoUrl,
                     Latitud = p.Tienda.Latitud,
                     Longitud = p.Tienda.Longitud,
                     FavoritosCount = p.Tienda.FavoritosCount,

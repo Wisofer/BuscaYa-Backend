@@ -30,6 +30,8 @@ public class TiendaInfoResponse
     public string WhatsApp { get; set; } = string.Empty;
     public string? Telefono { get; set; }
     public string? LogoUrl { get; set; }
+    /// <summary>Foto de portada del negocio. Se usa como fallback cuando no hay LogoUrl.</summary>
+    public string? FotoUrl { get; set; }
     public decimal Latitud { get; set; }
     public decimal Longitud { get; set; }
     public int FavoritosCount { get; set; }
