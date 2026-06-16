@@ -34,6 +34,12 @@ public class TiendaInfoResponse
     public decimal Longitud { get; set; }
     public int FavoritosCount { get; set; }
     public string? WhatsAppUrl { get; set; } // Link de WhatsApp con mensaje personalizado (para productos)
+    public bool EstaAbierta { get; set; }
+    public string? Email { get; set; }
+    public string? DiasAtencion { get; set; }
+    public string? HorarioApertura { get; set; }
+    public string? HorarioCierre { get; set; }
+    public string? Descripcion { get; set; }
 }
 
 public class CategoriaInfoResponse

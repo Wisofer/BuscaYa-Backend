@@ -205,7 +205,13 @@ public class PublicController : ControllerBase
                     Latitud = producto.Tienda.Latitud,
                     Longitud = producto.Tienda.Longitud,
                     FavoritosCount = producto.Tienda.FavoritosCount,
-                    WhatsAppUrl = whatsappUrl // Link personalizado con mensaje del producto
+                    WhatsAppUrl = whatsappUrl, // Link personalizado con mensaje del producto
+                    EstaAbierta = producto.Tienda.EstaAbiertaManual,
+                    Email = producto.Tienda.Email,
+                    DiasAtencion = producto.Tienda.DiasAtencion,
+                    HorarioApertura = producto.Tienda.HorarioApertura,
+                    HorarioCierre = producto.Tienda.HorarioCierre,
+                    Descripcion = producto.Tienda.Descripcion
                 },
                 Categoria = new CategoriaInfoResponse
                 {

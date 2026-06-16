@@ -119,7 +119,13 @@ public class BusquedaService : IBusquedaService
                     LogoUrl = p.Tienda.LogoUrl,
                     Latitud = p.Tienda.Latitud,
                     Longitud = p.Tienda.Longitud,
-                    FavoritosCount = p.Tienda.FavoritosCount
+                    FavoritosCount = p.Tienda.FavoritosCount,
+                    EstaAbierta = p.Tienda.EstaAbiertaManual,
+                    Email = p.Tienda.Email,
+                    DiasAtencion = p.Tienda.DiasAtencion,
+                    HorarioApertura = p.Tienda.HorarioApertura,
+                    HorarioCierre = p.Tienda.HorarioCierre,
+                    Descripcion = p.Tienda.Descripcion
                 },
                 Categoria = new CategoriaInfoResponse
                 {
