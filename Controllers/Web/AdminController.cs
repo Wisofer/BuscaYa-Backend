@@ -19,6 +19,9 @@ public class AdminController : Controller
     private readonly IReporteService _reporteService;
     private readonly IPushNotificationService _pushNotificationService;
     private readonly IUserDeletionService _userDeletionService;
+    private readonly IS3BucketService? _s3;
+
+    private const string R2PrefixPublicidad = "publicidad/banners/";
 
     public AdminController(
         ApplicationDbContext context,
@@ -27,7 +30,8 @@ public class AdminController : Controller
         ICategoriaService categoriaService,
         IReporteService reporteService,
         IPushNotificationService pushNotificationService,
-        IUserDeletionService userDeletionService)
+        IUserDeletionService userDeletionService,
+        IS3BucketService? s3 = null)
     {
         _context = context;
         _tiendaService = tiendaService;
@@ -36,6 +40,7 @@ public class AdminController : Controller
         _reporteService = reporteService;
         _pushNotificationService = pushNotificationService;
         _userDeletionService = userDeletionService;
+        _s3 = s3;
     }
 
     [HttpGet("/admin")]
@@ -664,5 +669,134 @@ public class AdminController : Controller
             TempData["Error"] = "Error al enviar: " + ex.Message;
         }
         return RedirectToAction("Notifications");
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // PUBLICIDAD / BANNERS
+    // ═══════════════════════════════════════════════════════════
+
+    [HttpGet("/admin/publicidad")]
+    public async Task<IActionResult> Publicidad()
+    {
+        var publicidades = await _context.Publicidades
+            .OrderBy(p => p.Orden)
+            .ThenBy(p => p.Id)
+            .ToListAsync();
+
+        ViewBag.Publicidades = publicidades;
+        return View();
+    }
+
+    [HttpPost("/admin/publicidad/crear")]
+    public async Task<IActionResult> CrearPublicidad(
+        IFormFile? Imagen,
+        string? Titulo,
+        string? Subtitulo,
+        string? AccionUrl,
+        int Orden = 0,
+        bool Activo = true)
+    {
+        var publicidad = new Publicidad
+        {
+            AccionUrl     = string.IsNullOrWhiteSpace(AccionUrl) ? null : AccionUrl.Trim(),
+            Orden         = Orden,
+            Activo        = Activo,
+            FechaCreacion = DateTime.UtcNow
+        };
+
+        if (Imagen != null && _s3 != null)
+        {
+            var url = await _s3.UploadImageToWebPAsync(R2PrefixPublicidad, Imagen);
+            if (url == null)
+            {
+                TempData["Error"] = "No se pudo subir la imagen. Verifique el formato (JPG, PNG o WebP).";
+                return RedirectToAction("Publicidad");
+            }
+            publicidad.ImageUrl = url;
+        }
+        else
+        {
+            publicidad.Titulo    = string.IsNullOrWhiteSpace(Titulo)    ? null : Titulo.Trim();
+            publicidad.Subtitulo = string.IsNullOrWhiteSpace(Subtitulo) ? null : Subtitulo.Trim();
+        }
+
+        _context.Publicidades.Add(publicidad);
+        await _context.SaveChangesAsync();
+
+        TempData["Mensaje"] = "Banner creado correctamente.";
+        return RedirectToAction("Publicidad");
+    }
+
+    [HttpPost("/admin/publicidad/{id}/editar")]
+    public async Task<IActionResult> EditarPublicidad(
+        int id,
+        IFormFile? Imagen,
+        bool EliminarImagen,
+        string? Titulo,
+        string? Subtitulo,
+        string? AccionUrl,
+        int Orden = 0,
+        bool Activo = true)
+    {
+        var publicidad = await _context.Publicidades.FindAsync(id);
+        if (publicidad == null)
+        {
+            TempData["Error"] = "Banner no encontrado.";
+            return RedirectToAction("Publicidad");
+        }
+
+        publicidad.AccionUrl = string.IsNullOrWhiteSpace(AccionUrl) ? null : AccionUrl.Trim();
+        publicidad.Orden     = Orden;
+        publicidad.Activo    = Activo;
+
+        if (Imagen != null && _s3 != null)
+        {
+            var url = await _s3.UploadImageToWebPAsync(R2PrefixPublicidad, Imagen, publicidad.ImageUrl);
+            if (url == null)
+            {
+                TempData["Error"] = "No se pudo subir la nueva imagen.";
+                return RedirectToAction("Publicidad");
+            }
+            publicidad.ImageUrl  = url;
+            publicidad.Titulo    = null;
+            publicidad.Subtitulo = null;
+        }
+        else if (EliminarImagen && _s3 != null && publicidad.ImageUrl != null)
+        {
+            await _s3.DeleteFileIfExistsAsync(publicidad.ImageUrl);
+            publicidad.ImageUrl  = null;
+            publicidad.Titulo    = string.IsNullOrWhiteSpace(Titulo)    ? null : Titulo.Trim();
+            publicidad.Subtitulo = string.IsNullOrWhiteSpace(Subtitulo) ? null : Subtitulo.Trim();
+        }
+        else if (publicidad.ImageUrl == null)
+        {
+            publicidad.Titulo    = string.IsNullOrWhiteSpace(Titulo)    ? null : Titulo.Trim();
+            publicidad.Subtitulo = string.IsNullOrWhiteSpace(Subtitulo) ? null : Subtitulo.Trim();
+        }
+
+        await _context.SaveChangesAsync();
+
+        TempData["Mensaje"] = "Banner actualizado correctamente.";
+        return RedirectToAction("Publicidad");
+    }
+
+    [HttpPost("/admin/publicidad/{id}/eliminar")]
+    public async Task<IActionResult> EliminarPublicidad(int id)
+    {
+        var publicidad = await _context.Publicidades.FindAsync(id);
+        if (publicidad == null)
+        {
+            TempData["Error"] = "Banner no encontrado.";
+            return RedirectToAction("Publicidad");
+        }
+
+        if (_s3 != null && !string.IsNullOrEmpty(publicidad.ImageUrl))
+            await _s3.DeleteFileIfExistsAsync(publicidad.ImageUrl);
+
+        _context.Publicidades.Remove(publicidad);
+        await _context.SaveChangesAsync();
+
+        TempData["Mensaje"] = "Banner eliminado correctamente.";
+        return RedirectToAction("Publicidad");
     }
 }

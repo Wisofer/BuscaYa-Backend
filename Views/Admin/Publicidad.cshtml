@@ -1,0 +1,387 @@
+@{
+    ViewData["Title"] = "Publicidad";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var publicidades = ViewBag.Publicidades as List<BuscaYa.Models.Entities.Publicidad> ?? new();
+}
+
+<div class="space-y-6">
+
+    {{!-- ── HEADER ── --}}
+    <div class="card bg-base-100 shadow-lg">
+        <div class="card-body">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="card-title text-2xl">
+                        <i class="bi bi-megaphone-fill text-primary"></i>
+                        Gestión de Publicidad
+                    </h2>
+                    <p class="text-base-content/60 text-sm mt-1">
+                        Administra los banners del carrusel de inicio de la app móvil.
+                        <span class="badge badge-primary badge-sm ml-2">@publicidades.Count banner(s)</span>
+                    </p>
+                </div>
+                <button class="btn btn-primary gap-2" onclick="document.getElementById('modalCrear').showModal()">
+                    <i class="bi bi-plus-circle-fill"></i>
+                    Nuevo Banner
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{!-- ── LEYENDA MODOS ── --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="alert bg-blue-50 border border-blue-200">
+            <i class="bi bi-image text-blue-600 text-xl"></i>
+            <div>
+                <div class="font-bold text-blue-800">Modo Imagen</div>
+                <div class="text-blue-600 text-sm">Sube un archivo — la imagen cubre el 100% de la tarjeta en la app.</div>
+            </div>
+        </div>
+        <div class="alert bg-purple-50 border border-purple-200">
+            <i class="bi bi-palette text-purple-600 text-xl"></i>
+            <div>
+                <div class="font-bold text-purple-800">Modo Gradiente</div>
+                <div class="text-purple-600 text-sm">Sin imagen — la app usa un diseño de gradiente nativo con el Título y Subtítulo.</div>
+            </div>
+        </div>
+    </div>
+
+    {{!-- ── TABLA DE BANNERS ── --}}
+    <div class="card bg-base-100 shadow-lg">
+        <div class="card-body p-0">
+            @if (!publicidades.Any())
+            {
+                <div class="flex flex-col items-center justify-center py-20 text-base-content/40">
+                    <i class="bi bi-megaphone text-6xl mb-4"></i>
+                    <p class="text-lg font-medium">No hay banners todavía</p>
+                    <p class="text-sm">Crea tu primer banner con el botón de arriba.</p>
+                </div>
+            }
+            else
+            {
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <thead>
+                            <tr>
+                                <th>Preview</th>
+                                <th>Modo</th>
+                                <th>Título / Subtítulo</th>
+                                <th>AccionUrl</th>
+                                <th class="text-center">Orden</th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in publicidades.OrderBy(x => x.Orden).ThenBy(x => x.Id))
+                            {
+                                <tr>
+                                    {{!-- Preview --}}
+                                    <td class="w-28">
+                                        @if (p.ImageUrl != null)
+                                        {
+                                            <img src="@p.ImageUrl" alt="Banner @p.Id"
+                                                 class="w-24 h-14 object-cover rounded-lg shadow" />
+                                        }
+                                        else
+                                        {
+                                            <div class="w-24 h-14 rounded-lg bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
+                                                <i class="bi bi-palette text-white text-xl"></i>
+                                            </div>
+                                        }
+                                    </td>
+
+                                    {{!-- Modo --}}
+                                    <td>
+                                        @if (p.ImageUrl != null)
+                                        {
+                                            <span class="badge badge-info gap-1">
+                                                <i class="bi bi-image"></i> Imagen
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-secondary gap-1">
+                                                <i class="bi bi-palette"></i> Gradiente
+                                            </span>
+                                        }
+                                    </td>
+
+                                    {{!-- Textos --}}
+                                    <td>
+                                        @if (p.Titulo != null)
+                                        {
+                                            <div class="font-bold text-sm">@p.Titulo</div>
+                                            <div class="text-xs text-base-content/50">@p.Subtitulo</div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-base-content/30 text-xs italic">— imagen —</span>
+                                        }
+                                    </td>
+
+                                    {{!-- AccionUrl --}}
+                                    <td class="max-w-[160px]">
+                                        @if (p.AccionUrl != null)
+                                        {
+                                            <span class="text-xs font-mono truncate block text-base-content/70" title="@p.AccionUrl">
+                                                @p.AccionUrl
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-base-content/30 text-xs">sin acción</span>
+                                        }
+                                    </td>
+
+                                    {{!-- Orden --}}
+                                    <td class="text-center">
+                                        <span class="badge badge-ghost">@p.Orden</span>
+                                    </td>
+
+                                    {{!-- Estado --}}
+                                    <td class="text-center">
+                                        @if (p.Activo)
+                                        {
+                                            <span class="badge badge-success gap-1"><i class="bi bi-eye"></i>Activo</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-error gap-1"><i class="bi bi-eye-slash"></i>Inactivo</span>
+                                        }
+                                    </td>
+
+                                    {{!-- Acciones --}}
+                                    <td class="text-right">
+                                        <div class="flex gap-2 justify-end">
+                                            <button class="btn btn-sm btn-ghost btn-circle"
+                                                    title="Editar"
+                                                    onclick="abrirModalEditar(@p.Id, '@p.Titulo?.Replace("'","\\'")', '@p.Subtitulo?.Replace("'","\\'")', '@p.AccionUrl?.Replace("'","\\'")', @p.Orden, @p.Activo.ToString().ToLower(), '@p.ImageUrl')">
+                                                <i class="bi bi-pencil-fill text-warning"></i>
+                                            </button>
+                                            <form method="post" action="/admin/publicidad/@p.Id/eliminar"
+                                                  onsubmit="return confirm('¿Eliminar este banner? Se borrará también la imagen de R2.')">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-ghost btn-circle" title="Eliminar">
+                                                    <i class="bi bi-trash-fill text-error"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+{{!-- ════════════════════════════════════════════════════
+     MODAL CREAR
+════════════════════════════════════════════════════ --}}
+<dialog id="modalCrear" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box w-full max-w-lg">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+            <i class="bi bi-plus-circle-fill text-primary"></i>
+            Nuevo Banner
+        </h3>
+
+        <form method="post" action="/admin/publicidad/crear" enctype="multipart/form-data" class="space-y-4">
+            @Html.AntiForgeryToken()
+
+            {{!-- Imagen (opcional) --}}
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text font-medium">Imagen del banner</span>
+                    <span class="label-text-alt text-base-content/50">JPG, PNG o WebP · opcional</span>
+                </label>
+                <input type="file" name="Imagen" accept="image/*" class="file-input file-input-bordered w-full"
+                       id="crear-imagen-input" onchange="previewImagen(this, 'crear-preview')" />
+                <img id="crear-preview" class="mt-2 rounded-lg object-cover w-full h-40 hidden" />
+                <label class="label">
+                    <span class="label-text-alt text-info">
+                        <i class="bi bi-info-circle"></i>
+                        Si subes imagen, el Título y Subtítulo se ignoran (modo imagen full-bleed).
+                    </span>
+                </label>
+            </div>
+
+            <div class="divider text-xs text-base-content/40">O usa modo gradiente con texto</div>
+
+            {{!-- Título --}}
+            <div class="form-control">
+                <label class="label"><span class="label-text font-medium">Título</span></label>
+                <input type="text" name="Titulo" class="input input-bordered w-full" maxlength="200"
+                       placeholder="ej. ¡Ofertas de temporada!" />
+            </div>
+
+            {{!-- Subtítulo --}}
+            <div class="form-control">
+                <label class="label"><span class="label-text font-medium">Subtítulo</span></label>
+                <input type="text" name="Subtitulo" class="input input-bordered w-full" maxlength="500"
+                       placeholder="ej. Hasta 50% en tiendas seleccionadas" />
+            </div>
+
+            <div class="divider text-xs text-base-content/40">Configuración</div>
+
+            {{!-- AccionUrl --}}
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text font-medium">Acción al pulsar</span>
+                    <span class="label-text-alt text-base-content/50">opcional</span>
+                </label>
+                <input type="text" name="AccionUrl" class="input input-bordered w-full font-mono text-sm" maxlength="500"
+                       placeholder="buscaya://tienda/12  o  https://..." />
+            </div>
+
+            {{!-- Orden y Activo --}}
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Orden en carrusel</span></label>
+                    <input type="number" name="Orden" class="input input-bordered w-full" value="0" min="0" max="99" />
+                </div>
+                <div class="form-control justify-end">
+                    <label class="label cursor-pointer justify-start gap-3">
+                        <input type="checkbox" name="Activo" value="true" class="toggle toggle-success" checked />
+                        <span class="label-text font-medium">Activo</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-action">
+                <form method="dialog"><button class="btn btn-ghost">Cancelar</button></form>
+                <button type="submit" class="btn btn-primary gap-2">
+                    <i class="bi bi-save"></i> Guardar Banner
+                </button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+{{!-- ════════════════════════════════════════════════════
+     MODAL EDITAR
+════════════════════════════════════════════════════ --}}
+<dialog id="modalEditar" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box w-full max-w-lg">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+            <i class="bi bi-pencil-fill text-warning"></i>
+            Editar Banner
+        </h3>
+
+        <form method="post" id="formEditar" action="" enctype="multipart/form-data" class="space-y-4">
+            @Html.AntiForgeryToken()
+
+            {{!-- Preview imagen actual --}}
+            <div id="editar-imagen-actual-wrap" class="hidden">
+                <label class="label"><span class="label-text font-medium text-base-content/60">Imagen actual</span></label>
+                <img id="editar-imagen-actual" class="rounded-lg object-cover w-full h-40 mb-2" />
+                <label class="label cursor-pointer justify-start gap-3">
+                    <input type="checkbox" name="EliminarImagen" value="true" class="checkbox checkbox-error checkbox-sm" />
+                    <span class="label-text text-error text-sm">Eliminar imagen y cambiar a modo gradiente</span>
+                </label>
+            </div>
+
+            {{!-- Nueva imagen --}}
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text font-medium">Reemplazar imagen</span>
+                    <span class="label-text-alt text-base-content/50">opcional</span>
+                </label>
+                <input type="file" name="Imagen" accept="image/*" class="file-input file-input-bordered w-full"
+                       onchange="previewImagen(this, 'editar-preview')" />
+                <img id="editar-preview" class="mt-2 rounded-lg object-cover w-full h-40 hidden" />
+            </div>
+
+            <div class="divider text-xs text-base-content/40">Modo gradiente (si no hay imagen)</div>
+
+            <div class="form-control">
+                <label class="label"><span class="label-text font-medium">Título</span></label>
+                <input type="text" name="Titulo" id="editar-titulo" class="input input-bordered w-full" maxlength="200" />
+            </div>
+            <div class="form-control">
+                <label class="label"><span class="label-text font-medium">Subtítulo</span></label>
+                <input type="text" name="Subtitulo" id="editar-subtitulo" class="input input-bordered w-full" maxlength="500" />
+            </div>
+
+            <div class="divider text-xs text-base-content/40">Configuración</div>
+
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text font-medium">Acción al pulsar</span>
+                    <span class="label-text-alt text-base-content/50">opcional</span>
+                </label>
+                <input type="text" name="AccionUrl" id="editar-accionUrl" class="input input-bordered w-full font-mono text-sm" maxlength="500" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Orden en carrusel</span></label>
+                    <input type="number" name="Orden" id="editar-orden" class="input input-bordered w-full" min="0" max="99" />
+                </div>
+                <div class="form-control justify-end">
+                    <label class="label cursor-pointer justify-start gap-3">
+                        <input type="checkbox" name="Activo" value="true" id="editar-activo" class="toggle toggle-success" />
+                        <span class="label-text font-medium">Activo</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-action">
+                <form method="dialog"><button class="btn btn-ghost">Cancelar</button></form>
+                <button type="submit" class="btn btn-warning gap-2">
+                    <i class="bi bi-save"></i> Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+@section Scripts {
+<script>
+    function previewImagen(input, previewId) {
+        const preview = document.getElementById(previewId);
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function abrirModalEditar(id, titulo, subtitulo, accionUrl, orden, activo, imageUrl) {
+        document.getElementById('formEditar').action = `/admin/publicidad/${id}/editar`;
+        document.getElementById('editar-titulo').value     = titulo !== 'undefined' ? titulo : '';
+        document.getElementById('editar-subtitulo').value  = subtitulo !== 'undefined' ? subtitulo : '';
+        document.getElementById('editar-accionUrl').value  = accionUrl !== 'undefined' ? accionUrl : '';
+        document.getElementById('editar-orden').value      = orden;
+        document.getElementById('editar-activo').checked   = activo;
+
+        // Limpiar preview nueva imagen
+        document.getElementById('editar-preview').classList.add('hidden');
+
+        // Imagen actual
+        const wrapActual = document.getElementById('editar-imagen-actual-wrap');
+        const imgActual  = document.getElementById('editar-imagen-actual');
+        if (imageUrl && imageUrl !== 'undefined') {
+            imgActual.src = imageUrl;
+            wrapActual.classList.remove('hidden');
+        } else {
+            wrapActual.classList.add('hidden');
+        }
+
+        document.getElementById('modalEditar').showModal();
+    }
+</script>
+}

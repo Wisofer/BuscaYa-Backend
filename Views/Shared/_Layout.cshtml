@@ -58,6 +58,12 @@
                         </a>
                     </li>
                     <li>
+                        <a href="/admin/publicidad" class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Publicidad" ? "active" : "")">
+                            <i class="bi bi-megaphone-fill"></i>
+                            Publicidad
+                        </a>
+                    </li>
+                    <li>
                         <a href="/admin/configuraciones" class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Configuraciones" ? "active" : "")">
                             <i class="bi bi-gear"></i>
                             Configuraciones
