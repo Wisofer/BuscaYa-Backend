@@ -47,7 +47,7 @@ public class BusquedaService : IBusquedaService
         if (request.Latitud.HasValue && request.Longitud.HasValue)
         {
             var radioKm = request.RadioKm ?? SD.RadioBusquedaDefault;
-            productos = productos
+            var locales = productos
                 .Where(p =>
                 {
                     var distancia = GeolocationHelper.CalcularDistanciaKm(
@@ -56,6 +56,14 @@ public class BusquedaService : IBusquedaService
                     return distancia <= radioKm;
                 })
                 .ToList();
+
+            // Si hay resultados locales, los mostramos.
+            // Si no hay resultados locales pero hay un término de búsqueda específico,
+            // mostramos los resultados globales (lejanos) para que el usuario no vea una pantalla vacía.
+            if (locales.Any() || string.IsNullOrWhiteSpace(request.Termino))
+            {
+                productos = locales;
+            }
         }
 
         // Ordenar: Plan Pro primero, luego por distancia (si hay coordenadas)
@@ -124,8 +132,8 @@ public class BusquedaService : IBusquedaService
                     EstaAbierta = p.Tienda.EstaAbiertaManual,
                     Email = p.Tienda.Email,
                     DiasAtencion = p.Tienda.DiasAtencion,
-                    HorarioApertura = p.Tienda.HorarioApertura,
-                    HorarioCierre = p.Tienda.HorarioCierre,
+                    HorarioApertura = p.Tienda.HorarioApertura?.ToString(@"hh\:mm"),
+                    HorarioCierre = p.Tienda.HorarioCierre?.ToString(@"hh\:mm"),
                     Descripcion = p.Tienda.Descripcion
                 },
                 Categoria = new CategoriaInfoResponse

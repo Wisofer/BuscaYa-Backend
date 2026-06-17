@@ -210,8 +210,8 @@ public class PublicController : ControllerBase
                     EstaAbierta = producto.Tienda.EstaAbiertaManual,
                     Email = producto.Tienda.Email,
                     DiasAtencion = producto.Tienda.DiasAtencion,
-                    HorarioApertura = producto.Tienda.HorarioApertura,
-                    HorarioCierre = producto.Tienda.HorarioCierre,
+                    HorarioApertura = producto.Tienda.HorarioApertura?.ToString(@"hh\:mm"),
+                    HorarioCierre = producto.Tienda.HorarioCierre?.ToString(@"hh\:mm"),
                     Descripcion = producto.Tienda.Descripcion
                 },
                 Categoria = new CategoriaInfoResponse

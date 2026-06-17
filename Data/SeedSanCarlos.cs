@@ -18,6 +18,7 @@ public static class SeedSanCarlos
         var now = DateTime.Now;
         var defaults = new (string Nombre, string Icono)[]
         {
+            ("Comida", "🍔"),
             ("Ropa", "👕"),
             ("Calzado", "👟"),
             ("Accesorios", "👜"),
