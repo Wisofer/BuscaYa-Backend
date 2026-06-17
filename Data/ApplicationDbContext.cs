@@ -38,6 +38,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<Device> Devices { get; set; }
     public DbSet<NotificationLog> NotificationLogs { get; set; }
 
+    // Publicidad / Banners
+    public DbSet<Publicidad> Publicidades { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -310,6 +313,23 @@ public class ApplicationDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.TemplateId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Publicidad
+        modelBuilder.Entity<Publicidad>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ImageUrl).HasMaxLength(500);
+            entity.Property(e => e.Titulo).HasMaxLength(200);
+            entity.Property(e => e.Subtitulo).HasMaxLength(500);
+            entity.Property(e => e.AccionUrl).HasMaxLength(500);
+            entity.Property(e => e.Orden).HasDefaultValue(0);
+            entity.Property(e => e.Activo).HasDefaultValue(true);
+            entity.Property(e => e.FechaCreacion).HasDefaultValueSql("NOW()");
+
+            // Índices para la consulta de la app móvil (activos ordenados)
+            entity.HasIndex(e => e.Activo);
+            entity.HasIndex(e => e.Orden);
         });
     }
 }
