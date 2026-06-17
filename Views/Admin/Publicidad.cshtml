@@ -1,12 +1,13 @@
+@using BuscaYa.Models.Entities
 @{
     ViewData["Title"] = "Publicidad";
     Layout = "~/Views/Shared/_Layout.cshtml";
-    var publicidades = ViewBag.Publicidades as List<BuscaYa.Models.Entities.Publicidad> ?? new();
+    var publicidades = ViewBag.Publicidades as List<Publicidad> ?? new List<Publicidad>();
 }
 
 <div class="space-y-6">
 
-    {{!-- ── HEADER ── --}}
+    @* ── HEADER ── *@
     <div class="card bg-base-100 shadow-lg">
         <div class="card-body">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -28,7 +29,7 @@
         </div>
     </div>
 
-    {{!-- ── LEYENDA MODOS ── --}}
+    @* ── LEYENDA MODOS ── *@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="alert bg-blue-50 border border-blue-200">
             <i class="bi bi-image text-blue-600 text-xl"></i>
@@ -46,7 +47,7 @@
         </div>
     </div>
 
-    {{!-- ── TABLA DE BANNERS ── --}}
+    @* ── TABLA DE BANNERS ── *@
     <div class="card bg-base-100 shadow-lg">
         <div class="card-body p-0">
             @if (!publicidades.Any())
@@ -76,7 +77,6 @@
                             @foreach (var p in publicidades.OrderBy(x => x.Orden).ThenBy(x => x.Id))
                             {
                                 <tr>
-                                    {{!-- Preview --}}
                                     <td class="w-28">
                                         @if (p.ImageUrl != null)
                                         {
@@ -91,7 +91,6 @@
                                         }
                                     </td>
 
-                                    {{!-- Modo --}}
                                     <td>
                                         @if (p.ImageUrl != null)
                                         {
@@ -107,7 +106,6 @@
                                         }
                                     </td>
 
-                                    {{!-- Textos --}}
                                     <td>
                                         @if (p.Titulo != null)
                                         {
@@ -120,7 +118,6 @@
                                         }
                                     </td>
 
-                                    {{!-- AccionUrl --}}
                                     <td class="max-w-[160px]">
                                         @if (p.AccionUrl != null)
                                         {
@@ -134,29 +131,26 @@
                                         }
                                     </td>
 
-                                    {{!-- Orden --}}
                                     <td class="text-center">
                                         <span class="badge badge-ghost">@p.Orden</span>
                                     </td>
 
-                                    {{!-- Estado --}}
                                     <td class="text-center">
                                         @if (p.Activo)
                                         {
-                                            <span class="badge badge-success gap-1"><i class="bi bi-eye"></i>Activo</span>
+                                            <span class="badge badge-success gap-1"><i class="bi bi-eye"></i> Activo</span>
                                         }
                                         else
                                         {
-                                            <span class="badge badge-error gap-1"><i class="bi bi-eye-slash"></i>Inactivo</span>
+                                            <span class="badge badge-error gap-1"><i class="bi bi-eye-slash"></i> Inactivo</span>
                                         }
                                     </td>
 
-                                    {{!-- Acciones --}}
                                     <td class="text-right">
                                         <div class="flex gap-2 justify-end">
                                             <button class="btn btn-sm btn-ghost btn-circle"
                                                     title="Editar"
-                                                    onclick="abrirModalEditar(@p.Id, '@p.Titulo?.Replace("'","\\'")', '@p.Subtitulo?.Replace("'","\\'")', '@p.AccionUrl?.Replace("'","\\'")', @p.Orden, @p.Activo.ToString().ToLower(), '@p.ImageUrl')">
+                                                    onclick="abrirModalEditar(@p.Id, '@(p.Titulo?.Replace("'", "\\'"))', '@(p.Subtitulo?.Replace("'", "\\'"))', '@(p.AccionUrl?.Replace("'", "\\'"))', @p.Orden, @p.Activo.ToString().ToLower(), '@p.ImageUrl')">
                                                 <i class="bi bi-pencil-fill text-warning"></i>
                                             </button>
                                             <form method="post" action="/admin/publicidad/@p.Id/eliminar"
@@ -178,9 +172,9 @@
     </div>
 </div>
 
-{{!-- ════════════════════════════════════════════════════
-     MODAL CREAR
-════════════════════════════════════════════════════ --}}
+@* ════════════════════════════════════════════════════
+   MODAL CREAR
+════════════════════════════════════════════════════ *@
 <dialog id="modalCrear" class="modal modal-bottom sm:modal-middle">
     <div class="modal-box w-full max-w-lg">
         <form method="dialog">
@@ -194,15 +188,14 @@
         <form method="post" action="/admin/publicidad/crear" enctype="multipart/form-data" class="space-y-4">
             @Html.AntiForgeryToken()
 
-            {{!-- Imagen (opcional) --}}
             <div class="form-control">
                 <label class="label">
                     <span class="label-text font-medium">Imagen del banner</span>
                     <span class="label-text-alt text-base-content/50">JPG, PNG o WebP · opcional</span>
                 </label>
                 <input type="file" name="Imagen" accept="image/*" class="file-input file-input-bordered w-full"
-                       id="crear-imagen-input" onchange="previewImagen(this, 'crear-preview')" />
-                <img id="crear-preview" class="mt-2 rounded-lg object-cover w-full h-40 hidden" />
+                       onchange="previewImagen(this, 'crear-preview')" />
+                <img id="crear-preview" class="mt-2 rounded-lg object-cover w-full h-40 hidden" alt="Preview" />
                 <label class="label">
                     <span class="label-text-alt text-info">
                         <i class="bi bi-info-circle"></i>
@@ -213,14 +206,12 @@
 
             <div class="divider text-xs text-base-content/40">O usa modo gradiente con texto</div>
 
-            {{!-- Título --}}
             <div class="form-control">
                 <label class="label"><span class="label-text font-medium">Título</span></label>
                 <input type="text" name="Titulo" class="input input-bordered w-full" maxlength="200"
                        placeholder="ej. ¡Ofertas de temporada!" />
             </div>
 
-            {{!-- Subtítulo --}}
             <div class="form-control">
                 <label class="label"><span class="label-text font-medium">Subtítulo</span></label>
                 <input type="text" name="Subtitulo" class="input input-bordered w-full" maxlength="500"
@@ -229,7 +220,6 @@
 
             <div class="divider text-xs text-base-content/40">Configuración</div>
 
-            {{!-- AccionUrl --}}
             <div class="form-control">
                 <label class="label">
                     <span class="label-text font-medium">Acción al pulsar</span>
@@ -239,7 +229,6 @@
                        placeholder="buscaya://tienda/12  o  https://..." />
             </div>
 
-            {{!-- Orden y Activo --}}
             <div class="grid grid-cols-2 gap-4">
                 <div class="form-control">
                     <label class="label"><span class="label-text font-medium">Orden en carrusel</span></label>
@@ -264,9 +253,9 @@
     <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 
-{{!-- ════════════════════════════════════════════════════
-     MODAL EDITAR
-════════════════════════════════════════════════════ --}}
+@* ════════════════════════════════════════════════════
+   MODAL EDITAR
+════════════════════════════════════════════════════ *@
 <dialog id="modalEditar" class="modal modal-bottom sm:modal-middle">
     <div class="modal-box w-full max-w-lg">
         <form method="dialog">
@@ -280,17 +269,15 @@
         <form method="post" id="formEditar" action="" enctype="multipart/form-data" class="space-y-4">
             @Html.AntiForgeryToken()
 
-            {{!-- Preview imagen actual --}}
             <div id="editar-imagen-actual-wrap" class="hidden">
                 <label class="label"><span class="label-text font-medium text-base-content/60">Imagen actual</span></label>
-                <img id="editar-imagen-actual" class="rounded-lg object-cover w-full h-40 mb-2" />
+                <img id="editar-imagen-actual" class="rounded-lg object-cover w-full h-40 mb-2" alt="Imagen actual" />
                 <label class="label cursor-pointer justify-start gap-3">
                     <input type="checkbox" name="EliminarImagen" value="true" class="checkbox checkbox-error checkbox-sm" />
                     <span class="label-text text-error text-sm">Eliminar imagen y cambiar a modo gradiente</span>
                 </label>
             </div>
 
-            {{!-- Nueva imagen --}}
             <div class="form-control">
                 <label class="label">
                     <span class="label-text font-medium">Reemplazar imagen</span>
@@ -298,7 +285,7 @@
                 </label>
                 <input type="file" name="Imagen" accept="image/*" class="file-input file-input-bordered w-full"
                        onchange="previewImagen(this, 'editar-preview')" />
-                <img id="editar-preview" class="mt-2 rounded-lg object-cover w-full h-40 hidden" />
+                <img id="editar-preview" class="mt-2 rounded-lg object-cover w-full h-40 hidden" alt="Preview nueva imagen" />
             </div>
 
             <div class="divider text-xs text-base-content/40">Modo gradiente (si no hay imagen)</div>
@@ -362,19 +349,17 @@
 
     function abrirModalEditar(id, titulo, subtitulo, accionUrl, orden, activo, imageUrl) {
         document.getElementById('formEditar').action = `/admin/publicidad/${id}/editar`;
-        document.getElementById('editar-titulo').value     = titulo !== 'undefined' ? titulo : '';
-        document.getElementById('editar-subtitulo').value  = subtitulo !== 'undefined' ? subtitulo : '';
-        document.getElementById('editar-accionUrl').value  = accionUrl !== 'undefined' ? accionUrl : '';
-        document.getElementById('editar-orden').value      = orden;
-        document.getElementById('editar-activo').checked   = activo;
+        document.getElementById('editar-titulo').value    = (titulo    && titulo    !== 'undefined') ? titulo    : '';
+        document.getElementById('editar-subtitulo').value = (subtitulo && subtitulo !== 'undefined') ? subtitulo : '';
+        document.getElementById('editar-accionUrl').value = (accionUrl && accionUrl !== 'undefined') ? accionUrl : '';
+        document.getElementById('editar-orden').value     = orden;
+        document.getElementById('editar-activo').checked  = activo;
 
-        // Limpiar preview nueva imagen
         document.getElementById('editar-preview').classList.add('hidden');
 
-        // Imagen actual
         const wrapActual = document.getElementById('editar-imagen-actual-wrap');
         const imgActual  = document.getElementById('editar-imagen-actual');
-        if (imageUrl && imageUrl !== 'undefined') {
+        if (imageUrl && imageUrl !== 'undefined' && imageUrl !== '') {
             imgActual.src = imageUrl;
             wrapActual.classList.remove('hidden');
         } else {
