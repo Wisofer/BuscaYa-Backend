@@ -11,6 +11,7 @@ namespace BuscaYa.Controllers.API;
 
 [ApiController]
 [Route("api/public")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class PublicController : ControllerBase
 {
     private readonly IBusquedaService _busquedaService;
@@ -95,7 +96,6 @@ public class PublicController : ControllerBase
     }
 
     [HttpPost("tienda/{id}/calificar")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public IActionResult CalificarTienda(int id, [FromBody] CalificarTiendaRequest request)
     {
         try
