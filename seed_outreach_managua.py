@@ -425,6 +425,22 @@ def add_product(base_url, token, product_payload):
     status, res = make_request(f"{base_url}/api/tienda/productos", method="POST", data=product_payload, headers=headers)
     return status == 201 or status == 200
 
+def clean_price(raw_price, moneda):
+    if moneda == "C$":
+        val = round(raw_price)
+        if val < 50:
+            return float(val)
+        elif val < 500:
+            return float(round(val / 5) * 5)
+        else:
+            return float(round(val / 10) * 10)
+    else: # USD "$"
+        val = round(raw_price)
+        if random.random() < 0.7:
+            return float(val) - 0.01
+        else:
+            return float(val)
+
 def generate_50_products(category_name, category_id, store_id):
     template = PRODUCT_TEMPLATES.get(category_name)
     if not template:
@@ -446,12 +462,14 @@ def generate_50_products(category_name, category_id, store_id):
         names_seen.add(prod_name)
         
         raw_price = random.uniform(template["min_price"], template["max_price"])
-        precio = round(raw_price, 2)
+        precio = clean_price(raw_price, template["moneda"])
         
         en_oferta = random.random() < 0.3
         precio_anterior = None
         if en_oferta:
-            precio_anterior = round(precio * random.uniform(1.15, 1.30), 2)
+            precio_anterior = clean_price(precio * random.uniform(1.15, 1.30), template["moneda"])
+            if precio_anterior <= precio:
+                precio_anterior = precio + (10.0 if template["moneda"] == "C$" else 1.00)
             
         foto_url = random.choice(template["images"])
         
@@ -473,7 +491,7 @@ def generate_50_products(category_name, category_id, store_id):
         base = random.choice(template["bases"])
         prod_name = f"{base} Especial Serie #{index}"
         raw_price = random.uniform(template["min_price"], template["max_price"])
-        precio = round(raw_price, 2)
+        precio = clean_price(raw_price, template["moneda"])
         
         product_payload = {
             "Nombre": prod_name,

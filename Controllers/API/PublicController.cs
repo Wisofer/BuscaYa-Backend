@@ -255,6 +255,51 @@ public class PublicController : ControllerBase
         }
     }
 
+    [HttpGet("tiendas")]
+    public IActionResult ObtenerTiendas([FromQuery] decimal? lat, [FromQuery] decimal? lng, [FromQuery] double? radioKm)
+    {
+        try
+        {
+            List<BuscaYa.Models.Entities.Tienda> tiendas;
+            if (lat.HasValue && lng.HasValue)
+            {
+                tiendas = _tiendaService.BuscarCercanas(lat.Value, lng.Value, radioKm ?? 100.0);
+            }
+            else
+            {
+                tiendas = _tiendaService.ObtenerTodas();
+            }
+
+            var response = tiendas.Select(t => new
+            {
+                t.Id,
+                t.Nombre,
+                t.Descripcion,
+                t.Telefono,
+                t.WhatsApp,
+                t.Email,
+                t.Direccion,
+                t.Latitud,
+                t.Longitud,
+                t.Ciudad,
+                t.Departamento,
+                t.LogoUrl,
+                t.FotoUrl,
+                t.Plan,
+                EstaAbierta = t.EstaAbiertaManual,
+                t.CalificacionPromedio,
+                t.TotalCalificaciones,
+                t.FavoritosCount
+            });
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error al obtener las tiendas", mensaje = ex.Message });
+        }
+    }
+
     [HttpGet("sugerencias")]
     public IActionResult Sugerencias([FromQuery] string termino, [FromQuery] int limite = 10)
     {
