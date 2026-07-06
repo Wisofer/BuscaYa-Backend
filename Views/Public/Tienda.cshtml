@@ -765,56 +765,109 @@
         </main>
 
         <!-- Footer Completo Premium (Estilo Cowib) -->
-        <footer class="bg-slate-900 text-slate-400 py-16 border-t border-slate-800">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
-                <!-- Info de la Marca -->
-                <div class="space-y-4">
-                    <div class="flex items-center gap-2.5 text-white">
-                        <img src="/images/app_launcher_icon.png" alt="BuscaYa Icon" class="w-8 h-8 rounded-xl object-cover shadow-sm border border-slate-750" />
-                        <span class="font-extrabold text-lg tracking-tight">BuscaYa</span>
+        <footer class="bg-gradient-to-b from-slate-900 to-slate-950 text-slate-400 pt-16 pb-12 border-t border-slate-800/85 relative overflow-hidden">
+            <!-- Capa decorativa de iluminación sutil de fondo -->
+            <div class="absolute top-0 left-1/4 -translate-y-1/2 w-[500px] h-[250px] bg-brand-500/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-8 pb-12 border-b border-slate-800/60">
+                    
+                    <!-- Info de la Marca (5 cols) -->
+                    <div class="md:col-span-5 space-y-5">
+                        <div class="flex items-center gap-3 text-white group cursor-default">
+                            <img src="/images/app_launcher_icon.png" alt="BuscaYa Icon" class="w-9 h-9 rounded-xl object-cover shadow-sm border border-slate-800 transition-transform group-hover:scale-105 duration-300" />
+                            <div class="flex flex-col">
+                                <span class="font-extrabold text-xl tracking-tight leading-none">BuscaYa</span>
+                                <span class="text-[9px] text-brand-400 font-bold uppercase tracking-widest mt-1">El comercio en tus manos</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed max-w-sm">
+                            Transformamos el comercio local en Nicaragua con catálogos digitales interactivos y autogestionables de alta velocidad.
+                        </p>
+                        <!-- Redes Sociales -->
+                        <div class="flex items-center gap-3 pt-2">
+                            <a href="https://wa.me/50587788487" target="_blank" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-emerald-600 text-slate-350 hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm" aria-label="WhatsApp">
+                                <i data-lucide="phone-call" class="w-4 h-4"></i>
+                            </a>
+                            <a href="https://facebook.com/buscaya" target="_blank" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-blue-600 text-slate-350 hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm" aria-label="Facebook">
+                                <i data-lucide="facebook" class="w-4 h-4"></i>
+                            </a>
+                            <a href="https://instagram.com/buscaya" target="_blank" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-pink-600 text-slate-350 hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm" aria-label="Instagram">
+                                <i data-lucide="instagram" class="w-4 h-4"></i>
+                            </a>
+                            <a href="https://buscaya.encuentrame.org" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-brand-500 text-slate-350 hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm" aria-label="Sitio Web">
+                                <i data-lucide="globe" class="w-4 h-4"></i>
+                            </a>
+                        </div>
                     </div>
-                    <p class="text-xs text-slate-400 leading-relaxed">
-                        Transformamos el comercio local en Nicaragua con catálogos digitales interactivos y autogestionables de alta velocidad.
-                    </p>
+
+                    <!-- Enlaces Rápidos (2 cols) -->
+                    <div class="md:col-span-2 space-y-4">
+                        <h4 class="text-xs font-bold text-white uppercase tracking-wider">Catálogo</h4>
+                        <ul class="space-y-3 text-xs">
+                            <li>
+                                <a href="#catalogo" class="text-slate-400 hover:text-brand-400 transition-all duration-200 flex items-center gap-2 group">
+                                    <span class="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-brand-400 transition-colors"></span>
+                                    <span>Productos</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#contacto" class="text-slate-400 hover:text-brand-400 transition-all duration-200 flex items-center gap-2 group">
+                                    <span class="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-brand-400 transition-colors"></span>
+                                    <span>Contacto</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Soporte y Legal (2 cols) -->
+                    <div class="md:col-span-2 space-y-4">
+                        <h4 class="text-xs font-bold text-white uppercase tracking-wider">Legal</h4>
+                        <ul class="space-y-3 text-xs">
+                            <li>
+                                <a href="https://www.cowib.es/terminos" target="_blank" class="text-slate-400 hover:text-brand-400 transition-all duration-200 flex items-center gap-2 group">
+                                    <span class="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-brand-400 transition-colors"></span>
+                                    <span>Términos</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://www.cowib.es/privacidad" target="_blank" class="text-slate-400 hover:text-brand-400 transition-all duration-200 flex items-center gap-2 group">
+                                    <span class="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-brand-400 transition-colors"></span>
+                                    <span>Privacidad</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Descarga directa (3 cols) -->
+                    <div class="md:col-span-3 space-y-4">
+                        <h4 class="text-xs font-bold text-white uppercase tracking-wider">Nuestra App</h4>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Lleva el comercio en tu bolsillo descargando la app de BuscaYa.
+                        </p>
+                        <div class="flex flex-row md:flex-col gap-2.5 pt-1">
+                            <a href="https://play.google.com/store/apps/details?id=com.buscaya.app" target="_blank" class="h-9 hover:-translate-y-0.5 transition-transform duration-200">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" class="h-full object-contain" />
+                            </a>
+                            <a href="https://apps.apple.com/app/id6762116740" target="_blank" class="h-9 hover:-translate-y-0.5 transition-transform duration-200">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" class="h-full object-contain" />
+                            </a>
+                        </div>
+                    </div>
+
                 </div>
 
-                <!-- Enlaces Rápidos -->
-                <div>
-                    <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-4">Catálogo</h4>
-                    <ul class="space-y-2 text-xs">
-                        <li><a href="#catalogo" class="text-slate-400 hover:text-white transition">Productos</a></li>
-                        <li><a href="#contacto" class="text-slate-400 hover:text-white transition">Contacto</a></li>
-                        <li><a href="https://buscaya.encuentrame.org" class="text-slate-400 hover:text-white transition">Explorar más tiendas</a></li>
-                    </ul>
-                </div>
-
-                <!-- Soporte y Legal -->
-                <div>
-                    <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-4">Enlaces de Interés</h4>
-                    <ul class="space-y-2 text-xs">
-                        <li><a href="/descargar" class="text-slate-400 hover:text-white transition">Descargar App Móvil</a></li>
-                        <li><a href="https://www.cowib.es/terminos" target="_blank" class="text-slate-400 hover:text-white transition">Términos de Servicio</a></li>
-                        <li><a href="https://www.cowib.es/privacidad" target="_blank" class="text-slate-400 hover:text-white transition">Política de Privacidad</a></li>
-                    </ul>
-                </div>
-
-                <!-- Descarga directa -->
-                <div class="space-y-4">
-                    <h4 class="text-xs font-bold text-white uppercase tracking-wider">Lleva el comercio en tu bolsillo</h4>
-                    <div class="flex flex-row items-center gap-3 flex-wrap">
-                        <a href="https://play.google.com/store/apps/details?id=com.buscaya.app" target="_blank" class="h-9 opacity-85 hover:opacity-100 transition">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" class="h-full object-contain" />
-                        </a>
-                        <a href="https://apps.apple.com/app/id6762116740" target="_blank" class="h-9 opacity-85 hover:opacity-100 transition">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" class="h-full object-contain" />
-                        </a>
+                <!-- Fila Copyright -->
+                <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
+                    <p>© @DateTime.Now.Year BuscaYa. Todos los derechos reservados. Nicaragua.</p>
+                    <div class="flex items-center gap-4">
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            <span>Sistema Activo</span>
+                        </span>
+                        <span>v2.5.0</span>
                     </div>
                 </div>
-            </div>
-
-            <!-- Fila Copyright -->
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 mt-8 border-t border-slate-800 text-center text-[10px] text-slate-500">
-                <p>© @DateTime.Now.Year BuscaYa. Todos los derechos reservados. Nicaragua.</p>
             </div>
         </footer>
 
