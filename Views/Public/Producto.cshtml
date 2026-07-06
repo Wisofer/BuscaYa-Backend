@@ -89,7 +89,7 @@
     </style>
 </head>
     <body class="antialiased min-h-screen flex flex-col justify-between" 
-      x-data="productoDetail()">
+      x-data="productoDetail(productoConfig)">
 
     @if (producto == null)
     {
@@ -277,9 +277,11 @@
                             }
                             else
                             {
-                                <div class="flex flex-col items-center justify-center text-slate-355">
-                                    <i data-lucide="image" class="w-20 h-20 mb-2"></i>
-                                    <span class="text-xs">Sin foto de producto</span>
+                                <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 text-slate-300 p-8">
+                                    <div class="p-6 bg-white rounded-full shadow-sm mb-4 border border-slate-100">
+                                        <i data-lucide="shopping-bag" class="w-12 h-12 text-slate-300"></i>
+                                    </div>
+                                    <span class="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Sin Imagen</span>
                                 </div>
                             }
                         </div>
@@ -512,62 +514,18 @@
     }
 
     <!-- Script de Alpine.js para la lógica de Producto -->
+    <script src="~/js/public/producto.js" asp-append-version="true"></script>
     <script>
-        function productoDetail() {
-            return {
-                storeId: '@producto?.TiendaId',
-                prodId: '@producto?.Id',
-                prodName: @Html.Raw(Json.Serialize(producto?.Nombre ?? "")),
-                prodPrice: parseFloat('@producto?.Precio') || 0,
-                prodMoneda: @Html.Raw(Json.Serialize(producto?.Moneda ?? "C$")),
-                prodFoto: @Html.Raw(Json.Serialize(producto?.FotoUrl ?? "")),
-                imagenes: @Html.Raw(Json.Serialize(allImages)),
-                activeImage: @Html.Raw(Json.Serialize(producto?.FotoUrl ?? "")),
-                qtySelected: 1,
-                toastShow: false,
-
-                init() {
-                    setTimeout(() => {
-                        lucide.createIcons();
-                    }, 100);
-                },
-
-                agregarAlCarrito() {
-                    const cartKey = `buscaya_cart_${this.storeId}`;
-                    let cart = [];
-                    const savedCart = localStorage.getItem(cartKey);
-                    if (savedCart) {
-                        try {
-                            cart = JSON.parse(savedCart);
-                        } catch(e) {
-                            cart = [];
-                        }
-                    }
-
-                    const existing = cart.find(item => item.id == this.prodId);
-                    if (existing) {
-                        existing.qty += this.qtySelected;
-                    } else {
-                        cart.push({
-                            id: parseInt(this.prodId),
-                            nombre: this.prodName,
-                            precio: this.prodPrice,
-                            moneda: this.prodMoneda,
-                            fotoUrl: this.prodFoto,
-                            qty: this.qtySelected
-                        });
-                    }
-
-                    localStorage.setItem(cartKey, JSON.stringify(cart));
-                    
-                    // Mostrar Toast
-                    this.toastShow = true;
-                    setTimeout(() => {
-                        this.toastShow = false;
-                    }, 4000);
-                }
-            }
-        }
+        const productoConfig = {
+            storeId: '@producto?.TiendaId',
+            prodId: '@producto?.Id',
+            prodName: @Html.Raw(Json.Serialize(producto?.Nombre ?? "")),
+            prodPrice: parseFloat('@producto?.Precio') || 0,
+            prodMoneda: @Html.Raw(Json.Serialize(producto?.Moneda ?? "C$")),
+            prodFoto: @Html.Raw(Json.Serialize(producto?.FotoUrl ?? "")),
+            imagenes: @Html.Raw(Json.Serialize(allImages)),
+            activeImage: @Html.Raw(Json.Serialize(producto?.FotoUrl ?? ""))
+        };
     </script>
 </body>
 </html>
