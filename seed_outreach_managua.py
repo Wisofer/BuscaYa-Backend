@@ -719,6 +719,7 @@ def main():
         else:
             category_id = categories.get(cat_key, categories.get("hogar", 12))
             
+            
         print(f"  [*] Generando 50 productos para {store['nombre']}...")
         products = generate_50_products(store["categoria"], category_id, tienda_id)
         
