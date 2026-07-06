@@ -537,8 +537,8 @@
                                             <h3 class="text-sm font-bold text-slate-900 line-clamp-1" x-text="prod.nombre"></h3>
                                             <div class="mt-2 flex items-center justify-between">
                                                 <div class="flex flex-col">
-                                                    <span class="text-[10px] text-slate-400 line-through" x-text="prod.moneda + ' ' + prod.precioAnterior.toFixed(2)"></span>
-                                                    <span class="text-base font-black text-rose-600" x-text="prod.moneda + ' ' + prod.precio.toFixed(2)"></span>
+                                                    <span class="text-[10px] text-slate-400 line-through" x-text="prod.precioAnterior ? (prod.moneda + ' ' + parseFloat(prod.precioAnterior).toFixed(2)) : ''"></span>
+                                                    <span class="text-base font-black text-rose-600" x-text="prod.precio ? (prod.moneda + ' ' + parseFloat(prod.precio).toFixed(2)) : 'Consultar'"></span>
                                                 </div>
                                                 <button @@click.prevent="animateToCart($event, prod)" class="w-8 h-8 rounded-full bg-rose-50 hover:bg-rose-500 text-rose-500 hover:text-white flex items-center justify-center transition-colors">
                                                     <i data-lucide="plus" class="w-4 h-4"></i>
@@ -576,7 +576,7 @@
                                         <div class="p-4">
                                             <h3 class="text-sm font-bold text-slate-900 line-clamp-1" x-text="prod.nombre"></h3>
                                             <div class="mt-2 flex items-center justify-between">
-                                                <span class="text-base font-black text-slate-900" x-text="prod.moneda + ' ' + prod.precio.toFixed(2)"></span>
+                                                <span class="text-base font-black text-slate-900" x-text="prod.precio ? (prod.moneda + ' ' + parseFloat(prod.precio).toFixed(2)) : 'Consultar'"></span>
                                                 <button @@click.prevent="animateToCart($event, prod)" class="w-8 h-8 rounded-full bg-slate-50 hover:bg-brand-500 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
                                                     <i data-lucide="plus" class="w-4 h-4"></i>
                                                 </button>
@@ -629,8 +629,8 @@
                                 <div>
                                     <template x-if="prod.enOferta && prod.precioAnterior">
                                         <div class="flex flex-col">
-                                            <span class="text-slate-400 line-through text-[10px] font-bold" x-text="`${prod.moneda} ${parseFloat(prod.precioAnterior).toFixed(2)}`"></span>
-                                            <span class="text-brand-650 font-black text-sm sm:text-base" x-text="`${prod.moneda} ${parseFloat(prod.precio).toFixed(2)}`"></span>
+                                            <span class="text-slate-400 line-through text-[10px] font-bold" x-text="prod.precioAnterior ? `${prod.moneda} ${parseFloat(prod.precioAnterior).toFixed(2)}` : ''"></span>
+                                            <span class="text-brand-650 font-black text-sm sm:text-base" x-text="prod.precio ? `${prod.moneda} ${parseFloat(prod.precio).toFixed(2)}` : 'Consultar'"></span>
                                         </div>
                                     </template>
                                     <template x-if="!(prod.enOferta && prod.precioAnterior)">
