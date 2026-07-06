@@ -6,6 +6,25 @@
     var appleAppId = ViewData["AppleAppId"] as string;
 
     ViewData["Title"] = producto?.Nombre ?? "Producto";
+
+    var allImages = new List<string>();
+    if (producto != null)
+    {
+        if (!string.IsNullOrEmpty(producto.FotoUrl))
+        {
+            allImages.Add(producto.FotoUrl);
+        }
+        if (producto.Imagenes != null)
+        {
+            foreach (var img in producto.Imagenes.OrderBy(i => i.Orden))
+            {
+                if (!string.IsNullOrEmpty(img.Url) && !allImages.Contains(img.Url))
+                {
+                    allImages.Add(img.Url);
+                }
+            }
+        }
+    }
 }
 
 <!DOCTYPE html>
@@ -69,15 +88,8 @@
         }
     </style>
 </head>
-<body class="antialiased min-h-screen flex flex-col justify-between" 
-      x-data="productoDetail({ 
-          storeId: '@producto?.TiendaId',
-          prodId: '@producto?.Id',
-          prodName: '@producto?.Nombre',
-          prodPrice: '@producto?.Precio',
-          prodMoneda: '@producto?.Moneda',
-          prodFoto: '@producto?.FotoUrl'
-      })">
+    <body class="antialiased min-h-screen flex flex-col justify-between" 
+      x-data="productoDetail()">
 
     @if (producto == null)
     {
@@ -98,6 +110,90 @@
     }
     else
     {
+        <!-- Banner Inteligente de Descarga App para Móviles (Estilo Glassmorphism Apple) -->
+        <div x-data="{ 
+                showBanner: false,
+                os: 'unknown',
+                dismiss() {
+                    this.showBanner = false;
+                    sessionStorage.setItem('buscaya_hide_app_banner', 'true');
+                },
+                init() {
+                    // Detectar OS
+                    const ua = navigator.userAgent || navigator.vendor || window.opera;
+                    if (/android/i.test(ua)) {
+                        this.os = 'android';
+                    } else if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
+                        this.os = 'ios';
+                    }
+
+                    // Mostrar banner si no ha sido descartado
+                    if (sessionStorage.getItem('buscaya_hide_app_banner') !== 'true') {
+                        setTimeout(() => {
+                            this.showBanner = true;
+                        }, 1200);
+                    }
+                },
+                getDownloadUrl() {
+                    if (this.os === 'android') {
+                        return 'https://play.google.com/store/apps/details?id=com.buscaya.app';
+                    }
+                    if (this.os === 'ios') {
+                        return 'https://apps.apple.com/app/id6762116740';
+                    }
+                    return '/descargar';
+                }
+             }"
+             x-show="showBanner"
+             x-transition:enter="transition ease-out duration-500 transform"
+             x-transition:enter-start="translate-y-full opacity-0"
+             x-transition:enter-end="translate-y-0 opacity-100"
+             x-transition:leave="transition ease-in duration-300 transform"
+             x-transition:leave-start="translate-y-0 opacity-100"
+             x-transition:leave-end="translate-y-full opacity-0"
+             class="fixed bottom-4 left-4 right-4 z-[100] md:hidden pointer-events-auto"
+             x-cloak>
+            
+            <div class="relative overflow-hidden rounded-3xl border border-white/40 bg-white/75 backdrop-blur-2xl p-5 shadow-2xl shadow-slate-900/10 flex items-center gap-4">
+                <!-- Efecto de brillo de cristal -->
+                <div class="absolute inset-0 bg-gradient-to-tr from-white/10 via-white/20 to-white/5 pointer-events-none"></div>
+                
+                <!-- Botón Cerrar (X) -->
+                <button @@click="dismiss()" class="absolute top-3 right-3 p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-950/5 transition">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+
+                <!-- Icono de App Premium -->
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 flex items-center justify-center shadow-md border border-white/25 flex-shrink-0">
+                    <img src="/images/app_launcher_icon.png" alt="BuscaYa Icon" class="w-8 h-8 object-contain rounded-lg" />
+                </div>
+
+                <!-- Textos -->
+                <div class="flex-grow pr-5">
+                    <h4 class="text-xs font-extrabold text-slate-900 tracking-tight flex items-center gap-1">
+                        Abre en la App BuscaYa
+                        <span class="inline-flex px-1.5 py-0.5 rounded-full text-[8px] font-black bg-brand-50 text-brand-600 border border-brand-100 uppercase tracking-wider">Gratis</span>
+                    </h4>
+                    <p class="text-[10px] text-slate-500 leading-tight mt-0.5">Una experiencia de compra más rápida y exclusiva para ti.</p>
+                    
+                    <div class="flex items-center gap-2 mt-2">
+                        <!-- Botón Descargar / Instalar -->
+                        <a :href="getDownloadUrl()" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 active:scale-95 transition-all text-white font-extrabold rounded-xl text-[10px] shadow-sm">
+                            <span x-text="os === 'unknown' ? 'Descargar App' : 'Instalar Gratis'"></span>
+                            <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                        </a>
+                        
+                        @if (!string.IsNullOrEmpty(deepLink))
+                        {
+                            <a href="@deepLink" class="inline-flex items-center gap-1 px-3 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-600 font-extrabold rounded-xl text-[10px] border border-brand-100/50 transition">
+                                Abrir en App
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Top Floating Glass Navbar (Apple/Tesla Premium Style) -->
         <header class="fixed top-0 left-0 w-full z-50 px-4 pt-4 pb-2 pointer-events-none transition-all duration-300">
             <div class="pointer-events-auto mx-auto max-w-6xl h-16 rounded-full border border-white/40 bg-white/75 backdrop-blur-xl shadow-xl shadow-slate-950/5 ring-1 ring-slate-900/5 flex items-center justify-between px-6 transition-all duration-300">
@@ -114,9 +210,8 @@
                         </div>
                     }
                     <div class="flex flex-col">
-                        <span class="font-extrabold text-slate-900 tracking-tight text-xs sm:text-sm leading-tight flex items-center gap-1">
+                        <span class="font-extrabold text-slate-900 tracking-tight text-xs sm:text-sm leading-tight flex items-center gap-1 max-w-[125px] xs:max-w-[165px] sm:max-w-none truncate">
                             @(producto.Tienda?.Nombre ?? "Tienda")
-                            <i data-lucide="badge-check" class="w-5 h-5 text-brand-500 fill-brand-500/10"></i>
                         </span>
                         <span class="text-[9px] text-slate-400 font-bold tracking-wider uppercase">Exclusive Merchant</span>
                     </div>
@@ -133,10 +228,17 @@
                 </nav>
 
                 <!-- Actions -->
-                <div class="flex items-center gap-3">
-                    <a href="/descargar" class="hidden sm:inline-flex items-center gap-1.5 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold rounded-full text-xs shadow-md shadow-slate-900/10 active:scale-95 transition-all">
-                        Descargar App
-                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                <div class="flex items-center gap-2">
+                    <!-- Catálogo Button: Icon on mobile, Pill on desktop -->
+                    <a href="/tienda/@producto.Tienda?.TokenPublico" class="inline-flex items-center justify-center w-9 h-9 sm:w-auto sm:px-3.5 sm:py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold rounded-full transition duration-300 gap-1.5 border border-slate-200/50" title="Ver Catálogo">
+                        <i data-lucide="store" class="w-4 h-4 flex-shrink-0"></i>
+                        <span class="hidden sm:inline text-xs">Catálogo</span>
+                    </a>
+                    
+                    <!-- Descargar Button: Icon on mobile, Pill on desktop -->
+                    <a href="/descargar" class="inline-flex items-center justify-center w-9 h-9 sm:w-auto sm:px-4 sm:py-2 bg-slate-900 hover:bg-slate-800 text-white font-extrabold rounded-full transition-all active:scale-95 shadow-md shadow-slate-900/10 gap-1.5" title="Descargar App">
+                        <i data-lucide="download" class="w-4 h-4 flex-shrink-0"></i>
+                        <span class="hidden sm:inline text-xs">Descargar</span>
                     </a>
                 </div>
             </div>
@@ -158,26 +260,42 @@
 
                 <!-- Contenedor Principal del Producto (Diseño de Columna y Fila Elegante) -->
                 <div class="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm grid grid-cols-1 md:grid-cols-12 gap-8 p-6 md:p-8">
-                    <!-- Columna Izquierda: Imagen del Producto (5 columnas de ancho) -->
-                    <div class="md:col-span-5 relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center border border-slate-100">
-                        @if (producto.EnOferta)
-                        {
-                            <span class="absolute top-4 left-4 bg-red-500 text-white text-xs font-extrabold uppercase px-2.5 py-1 rounded-lg z-10 tracking-wider shadow">
-                                Oferta
-                            </span>
-                        }
-                        
-                        @if (!string.IsNullOrEmpty(producto.FotoUrl))
-                        {
-                            <img src="@producto.FotoUrl" alt="@producto.Nombre" class="w-full h-full object-cover" />
-                        }
-                        else
-                        {
-                            <div class="flex flex-col items-center justify-center text-slate-350">
-                                <i data-lucide="image" class="w-20 h-20 mb-2"></i>
-                                <span class="text-xs">Sin foto de producto</span>
+                    <!-- Columna Izquierda: Imagen del Producto y Galería (5 columnas de ancho) -->
+                    <div class="md:col-span-5 flex flex-col gap-4">
+                        <!-- Contenedor Imagen Principal -->
+                        <div class="relative aspect-square w-full rounded-3xl overflow-hidden bg-slate-50 flex items-center justify-center border border-slate-100/80">
+                            @if (producto.EnOferta)
+                            {
+                                <span class="absolute top-4 left-4 bg-red-500 text-white text-xs font-extrabold uppercase px-2.5 py-1 rounded-lg z-10 tracking-wider shadow">
+                                    Oferta
+                                </span>
+                            }
+                            
+                            @if (!string.IsNullOrEmpty(producto.FotoUrl))
+                            {
+                                <img src="@producto.FotoUrl" :src="activeImage" alt="@producto.Nombre" class="w-full h-full object-cover transition-all duration-300" />
+                            }
+                            else
+                            {
+                                <div class="flex flex-col items-center justify-center text-slate-355">
+                                    <i data-lucide="image" class="w-20 h-20 mb-2"></i>
+                                    <span class="text-xs">Sin foto de producto</span>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Miniaturas de la Galería -->
+                        <template x-if="imagenes.length > 1">
+                            <div class="flex items-center gap-2.5 overflow-x-auto scrollbar-none py-1">
+                                <template x-for="(img, idx) in imagenes" :key="idx">
+                                    <button @@click="activeImage = img"
+                                            class="w-14 h-14 rounded-2xl overflow-hidden border bg-slate-50 flex-shrink-0 transition-all duration-300 outline-none"
+                                            :class="activeImage === img ? 'ring-2 ring-brand-500 ring-offset-2 border-transparent scale-95 opacity-100 shadow-sm' : 'border-slate-100 opacity-60 hover:opacity-100 hover:scale-105'">
+                                        <img :src="img" class="w-full h-full object-cover" />
+                                    </button>
+                                </template>
                             </div>
-                        }
+                        </template>
                     </div>
 
                     <!-- Columna Derecha: Información del Producto (7 columnas de ancho) -->
@@ -196,14 +314,17 @@
                             <div class="pt-2">
                                 @if (producto.Precio.HasValue)
                                 {
-                                    <div class="flex items-baseline gap-3">
+                                    <div class="flex items-center gap-3 flex-wrap">
                                         <span class="text-3xl font-extrabold text-brand-500">
                                             @(producto.Moneda ?? "C$") @producto.Precio.Value.ToString("N2")
                                         </span>
-                                        @if (producto.EnOferta && producto.PrecioAnterior.HasValue)
+                                        @if (producto.EnOferta && producto.PrecioAnterior.HasValue && producto.PrecioAnterior.Value > producto.Precio.Value)
                                         {
                                             <span class="text-slate-400 line-through text-base font-semibold">
                                                 @(producto.Moneda ?? "C$") @producto.PrecioAnterior.Value.ToString("N2")
+                                            </span>
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-red-50 text-red-600 border border-red-100 uppercase tracking-wider">
+                                                 <i data-lucide="sparkles" class="w-3 h-3 text-red-500"></i> -@((int)Math.Round(((producto.PrecioAnterior.Value - producto.Precio.Value) / producto.PrecioAnterior.Value) * 100))% OFF
                                             </span>
                                         }
                                     </div>
@@ -223,26 +344,61 @@
                             }
                         </div>
 
-                        <!-- Botones de Acción -->
-                        <div class="space-y-3 pt-6 border-t border-slate-100">
-                            @if (producto.Precio.HasValue)
-                            {
-                                <button class="w-full py-4 bg-brand-500 hover:bg-brand-600 active:scale-[0.98] transition-all text-white font-bold rounded-2xl flex items-center justify-center gap-3 shadow-sm shadow-brand-500/10"
-                                        @@click="agregarAlCarrito()">
-                                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-                                    Añadir al Carrito del Catálogo
-                                </button>
-                            }
+                        <!-- Selector de Cantidad Premium -->
+                        @if (producto.Precio.HasValue)
+                        {
+                            <div class="flex items-center justify-between py-3 border-t border-slate-100">
+                                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Cantidad</span>
+                                <div class="flex items-center border border-slate-200/80 rounded-full bg-slate-50/50 p-1">
+                                    <button @@click="if(qtySelected > 1) qtySelected--" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:bg-white hover:text-slate-900 hover:shadow-sm active:scale-90 transition duration-200">
+                                        <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                    <span class="w-10 text-center font-extrabold text-slate-900 text-sm" x-text="qtySelected">1</span>
+                                    <button @@click="qtySelected++" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:bg-white hover:text-slate-900 hover:shadow-sm active:scale-90 transition duration-200">
+                                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
 
-                            @if (!string.IsNullOrEmpty(whatsappUrl))
-                            {
-                                <a href="@whatsappUrl" target="_blank" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all text-white font-bold rounded-2xl flex items-center justify-center gap-3 shadow-md shadow-emerald-750/10">
-                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
-                                    </svg>
-                                    Preguntar por WhatsApp
-                                </a>
-                            }
+                        <!-- Botones de Acción y Trust Badges -->
+                        <div class="space-y-4 pt-4 border-t border-slate-100">
+                            <div class="grid grid-cols-2 gap-3">
+                                @if (producto.Precio.HasValue)
+                                {
+                                    <button class="w-full py-3 bg-brand-500 hover:bg-brand-600 active:scale-[0.98] transition-all text-white font-extrabold rounded-2xl flex items-center justify-center gap-2 shadow-sm shadow-brand-500/10 text-[11px] xs:text-xs sm:text-sm"
+                                            @@click="agregarAlCarrito()">
+                                        <i data-lucide="shopping-bag" class="w-4 h-4 flex-shrink-0"></i>
+                                        <span class="truncate">Añadir al Carrito</span>
+                                    </button>
+                                }
+
+                                @if (!string.IsNullOrEmpty(whatsappUrl))
+                                {
+                                    <a href="@whatsappUrl" target="_blank" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all text-white font-extrabold rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-emerald-750/10 text-[11px] xs:text-xs sm:text-sm">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
+                                        </svg>
+                                        <span class="truncate">Preguntar WhatsApp</span>
+                                    </a>
+                                }
+                            </div>
+
+                            <!-- Trust Badges -->
+                            <div class="grid grid-cols-3 gap-2 pt-1 text-center">
+                                <div class="flex flex-col items-center p-2 rounded-2xl bg-slate-50/50 border border-slate-100/50">
+                                    <i data-lucide="truck" class="w-3.5 h-3.5 text-brand-500 mb-1"></i>
+                                    <span class="text-[8px] font-extrabold text-slate-400 tracking-wide uppercase leading-tight">Entrega Rápida</span>
+                                </div>
+                                <div class="flex flex-col items-center p-2 rounded-2xl bg-slate-50/50 border border-slate-100/50">
+                                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-brand-500 mb-1"></i>
+                                    <span class="text-[8px] font-extrabold text-slate-400 tracking-wide uppercase leading-tight">Garantía Vendedor</span>
+                                </div>
+                                <div class="flex flex-col items-center p-2 rounded-2xl bg-slate-50/50 border border-slate-100/50">
+                                    <i data-lucide="wallet" class="w-3.5 h-3.5 text-brand-500 mb-1"></i>
+                                    <span class="text-[8px] font-extrabold text-slate-400 tracking-wide uppercase leading-tight">Pago al Recibir</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -266,9 +422,11 @@
                             
                             <div>
                                 <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Vendido por</p>
-                                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-1.5">
+                                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
                                     @producto.Tienda.Nombre
-                                    <i data-lucide="badge-check" class="w-4 h-4 text-brand-500 fill-brand-500/10"></i>
+                                    <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-blue-50 text-blue-600 border border-blue-100">
+                                        <i data-lucide="badge-check" class="w-3 h-3 fill-blue-600/10"></i> Comercio Verificado
+                                    </span>
                                 </h3>
                                 <p class="text-xs text-slate-500">@producto.Tienda.Direccion</p>
                             </div>
@@ -311,8 +469,8 @@
                     <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-4">Enlaces de Interés</h4>
                     <ul class="space-y-2 text-xs">
                         <li><a href="/descargar" class="text-slate-400 hover:text-white transition">Descargar App Móvil</a></li>
-                        <li><a href="/terminos" class="text-slate-400 hover:text-white transition">Términos de Servicio</a></li>
-                        <li><a href="/privacidad" class="text-slate-400 hover:text-white transition">Política de Privacidad</a></li>
+                        <li><a href="https://www.cowib.es/terminos" target="_blank" class="text-slate-400 hover:text-white transition">Términos de Servicio</a></li>
+                        <li><a href="https://www.cowib.es/privacidad" target="_blank" class="text-slate-400 hover:text-white transition">Política de Privacidad</a></li>
                     </ul>
                 </div>
 
@@ -355,14 +513,17 @@
 
     <!-- Script de Alpine.js para la lógica de Producto -->
     <script>
-        function productoDetail(config) {
+        function productoDetail() {
             return {
-                storeId: config.storeId,
-                prodId: config.prodId,
-                prodName: config.prodName,
-                prodPrice: parseFloat(config.prodPrice) || 0,
-                prodMoneda: config.prodMoneda || 'C$',
-                prodFoto: config.prodFoto,
+                storeId: '@producto?.TiendaId',
+                prodId: '@producto?.Id',
+                prodName: @Html.Raw(Json.Serialize(producto?.Nombre ?? "")),
+                prodPrice: parseFloat('@producto?.Precio') || 0,
+                prodMoneda: @Html.Raw(Json.Serialize(producto?.Moneda ?? "C$")),
+                prodFoto: @Html.Raw(Json.Serialize(producto?.FotoUrl ?? "")),
+                imagenes: @Html.Raw(Json.Serialize(allImages)),
+                activeImage: @Html.Raw(Json.Serialize(producto?.FotoUrl ?? "")),
+                qtySelected: 1,
                 toastShow: false,
 
                 init() {
@@ -385,7 +546,7 @@
 
                     const existing = cart.find(item => item.id == this.prodId);
                     if (existing) {
-                        existing.qty++;
+                        existing.qty += this.qtySelected;
                     } else {
                         cart.push({
                             id: parseInt(this.prodId),
@@ -393,7 +554,7 @@
                             precio: this.prodPrice,
                             moneda: this.prodMoneda,
                             fotoUrl: this.prodFoto,
-                            qty: 1
+                            qty: this.qtySelected
                         });
                     }
 
