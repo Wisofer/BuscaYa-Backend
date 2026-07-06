@@ -957,7 +957,7 @@
     </button>
 
     <!-- Script de Inicialización de Alpine.js para la lógica del Catálogo -->
-    <script src="~/js/public/tienda.js" asp-append-version="true"></script>
+    <script src="~/js/public/tienda.js?v=@(DateTime.Now.Ticks)"></script>
     <script>
         const tiendaConfig = {
             whatsappNum: '@tienda?.WhatsApp',
