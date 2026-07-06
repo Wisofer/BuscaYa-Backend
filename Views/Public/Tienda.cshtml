@@ -200,9 +200,9 @@
                 <!-- Store branding (No mention of BuscaYa in top navbar) -->
                 <div class="flex items-center gap-3 transition-all duration-300 transform"
                      :class="scrolled ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none md:opacity-100 md:translate-x-0 md:pointer-events-auto'">
-                    @if (!string.IsNullOrEmpty(tienda.LogoUrl))
+                    @if (!string.IsNullOrWhiteSpace(tienda.LogoUrl))
                     {
-                        <img src="@tienda.LogoUrl" alt="Logo de @tienda.Nombre" class="w-9 h-9 rounded-full object-cover ring-2 ring-slate-100/50 shadow-sm transition hover:scale-105 duration-300" />
+                        <img src="@tienda.LogoUrl" alt="Logo de @tienda.Nombre" class="w-9 h-9 rounded-full object-cover ring-2 ring-slate-100/50 shadow-sm transition hover:scale-105 duration-300" onerror="this.outerHTML='<div class=\'w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center ring-2 ring-slate-100/50 shadow-sm text-white font-black text-xs\'>@tienda.Nombre.Substring(0, 1).ToUpper()</div>'" />
                     }
                     else
                     {
@@ -223,15 +223,15 @@
                 <!-- Navigation Links Premium (Apple/Tesla Minimal Style) -->
                 <nav class="hidden md:flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors duration-300"
                      :class="scrolled ? 'text-slate-500' : 'text-white/85'">
-                    <a href="#catalogo" class="flex items-center gap-1.5 px-4 py-2 rounded-full transition duration-300"
+                    <a href="#catalogo" @@click.prevent="document.getElementById('catalogo').scrollIntoView({behavior: 'smooth'})" class="flex items-center gap-1.5 px-4 py-2 rounded-full transition duration-300"
                        :class="scrolled ? 'text-slate-900 bg-slate-950/5 hover:bg-slate-950/10' : 'text-white bg-white/10 hover:bg-white/20'">
                         Catálogo
                     </a>
-                    <a href="#contacto" class="flex items-center gap-1.5 px-4 py-2 rounded-full transition duration-300"
+                    <a href="#contacto" @@click.prevent="window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'})" class="flex items-center gap-1.5 px-4 py-2 rounded-full transition duration-300"
                        :class="scrolled ? 'hover:bg-slate-950/5 hover:text-slate-950' : 'hover:bg-white/10 hover:text-white'">
                         Contacto
                     </a>
-                    <a href="#contacto" class="flex items-center gap-1.5 px-4 py-2 rounded-full transition duration-300"
+                    <a href="#nosotros" @@click.prevent="window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'})" class="flex items-center gap-1.5 px-4 py-2 rounded-full transition duration-300"
                        :class="scrolled ? 'hover:bg-slate-950/5 hover:text-slate-950' : 'hover:bg-white/10 hover:text-white'">
                         Nosotros
                     </a>
@@ -264,14 +264,17 @@
         <main class="flex-grow">
             <!-- ================= VISTA DE ESCRITORIO (DECORADO ORIGINAL DIRECTO EN BANNER) ================= -->
             <div class="hidden md:block relative h-80 md:h-[400px] w-full overflow-hidden bg-slate-900 grid-bg">
-                <div class="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-slate-950/40 to-slate-950/80 z-10"></div>
-                @if (!string.IsNullOrEmpty(tienda.FotoUrl))
+                <div class="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-slate-950/40 to-slate-950/80 z-10 pointer-events-none"></div>
+                @if (!string.IsNullOrWhiteSpace(tienda.FotoUrl))
                 {
-                    <img src="@tienda.FotoUrl" alt="@tienda.Nombre" class="w-full h-full object-cover opacity-90 scale-100" />
+                    <img id="banner-desktop-img" src="@tienda.FotoUrl" alt="@tienda.Nombre" class="w-full h-full object-cover opacity-90 scale-100" onerror="this.style.display='none'; document.getElementById('banner-desktop-fallback').style.display='block';" />
+                    <div id="banner-desktop-fallback" style="display: none;" class="w-full h-full bg-gradient-to-r from-brand-800 via-brand-900 to-slate-900 opacity-90">
+                        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-50 mix-blend-overlay"></div>
+                    </div>
                 }
                 else
                 {
-                    <div class="w-full h-full bg-gradient-to-br from-brand-600 via-slate-800 to-slate-950 opacity-90">
+                    <div class="w-full h-full bg-gradient-to-r from-brand-800 via-brand-900 to-slate-900 opacity-90">
                         <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-50 mix-blend-overlay"></div>
                     </div>
                 }
@@ -283,9 +286,9 @@
                             <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4 sm:gap-6">
                                 <!-- Logo Circular Overlapping -->
                                 <div class="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white/10 overflow-hidden bg-white/95 backdrop-blur shadow-2xl flex-shrink-0 flex items-center justify-center">
-                                    @if (!string.IsNullOrEmpty(tienda.LogoUrl))
+                                    @if (!string.IsNullOrWhiteSpace(tienda.LogoUrl))
                                     {
-                                        <img src="@tienda.LogoUrl" alt="Logo de @tienda.Nombre" class="w-full h-full object-cover" />
+                                        <img src="@tienda.LogoUrl" alt="Logo de @tienda.Nombre" class="w-full h-full object-cover" onerror="this.outerHTML='<span class=\'text-3xl sm:text-4xl font-black text-brand-500\'>@tienda.Nombre.Substring(0, 1).ToUpper()</span>'" />
                                     }
                                     else
                                     {
@@ -354,14 +357,17 @@
 
             <!-- ================= VISTA DE MÓVIL (block md:hidden) ================= -->
             <div class="block md:hidden relative h-44 w-full overflow-hidden bg-slate-900 grid-bg">
-                <div class="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-slate-950/40 to-slate-950/70 z-10"></div>
-                @if (!string.IsNullOrEmpty(tienda.FotoUrl))
+                <div class="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-slate-950/40 to-slate-950/70 z-10 pointer-events-none"></div>
+                @if (!string.IsNullOrWhiteSpace(tienda.FotoUrl))
                 {
-                    <img src="@tienda.FotoUrl" alt="@tienda.Nombre" class="w-full h-full object-cover opacity-85 scale-100" />
+                    <img id="banner-mobile-img" src="@tienda.FotoUrl" alt="@tienda.Nombre" class="w-full h-full object-cover opacity-85 scale-100" onerror="this.style.display='none'; document.getElementById('banner-mobile-fallback').style.display='block';" />
+                    <div id="banner-mobile-fallback" style="display: none;" class="w-full h-full bg-gradient-to-r from-brand-800 via-brand-900 to-slate-900 opacity-90">
+                        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-50 mix-blend-overlay"></div>
+                    </div>
                 }
                 else
                 {
-                    <div class="w-full h-full bg-gradient-to-br from-brand-600 via-slate-800 to-slate-950 opacity-90">
+                    <div class="w-full h-full bg-gradient-to-r from-brand-800 via-brand-900 to-slate-900 opacity-90">
                         <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-50 mix-blend-overlay"></div>
                     </div>
                 }
@@ -373,9 +379,9 @@
                     
                     <!-- Logo Circular Solapado -->
                     <div class="w-24 h-24 rounded-full border-4 border-white overflow-hidden bg-white shadow-lg flex-shrink-0 flex items-center justify-center">
-                        @if (!string.IsNullOrEmpty(tienda.LogoUrl))
+                        @if (!string.IsNullOrWhiteSpace(tienda.LogoUrl))
                         {
-                            <img src="@tienda.LogoUrl" alt="Logo de @tienda.Nombre" class="w-full h-full object-cover" />
+                            <img src="@tienda.LogoUrl" alt="Logo de @tienda.Nombre" class="w-full h-full object-cover" onerror="this.outerHTML='<span class=\'text-3xl font-black text-brand-500\'>@tienda.Nombre.Substring(0, 1).ToUpper()</span>'" />
                         }
                         else
                         {
@@ -830,6 +836,23 @@
             </div>
         </div>
     }
+
+    <!-- Botón Volver Arriba Flotante (Solo Desktop) -->
+    <button x-data="{ show: false }" 
+            @@scroll.window="show = window.pageYOffset > 500"
+            x-show="show"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-10"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 translate-y-10"
+            @@click="window.scrollTo({ top: 0, behavior: 'smooth' })"
+            class="fixed bottom-8 right-8 z-40 bg-slate-900 text-white p-3.5 rounded-full shadow-2xl hover:bg-brand-500 hover:scale-110 active:scale-95 transition-all hidden md:flex items-center justify-center ring-4 ring-slate-900/10"
+            style="display: none;"
+            aria-label="Volver arriba">
+        <i data-lucide="arrow-up" class="w-5 h-5"></i>
+    </button>
 
     <!-- Script de Inicialización de Alpine.js para la lógica del Catálogo -->
     <script src="~/js/public/tienda.js" asp-append-version="true"></script>

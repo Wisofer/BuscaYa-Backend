@@ -271,9 +271,15 @@
                                 </span>
                             }
                             
-                            @if (!string.IsNullOrEmpty(producto.FotoUrl))
+                            @if (!string.IsNullOrWhiteSpace(producto.FotoUrl))
                             {
-                                <img src="@producto.FotoUrl" :src="activeImage" alt="@producto.Nombre" class="w-full h-full object-cover transition-all duration-300" />
+                                <img id="producto-img" src="@producto.FotoUrl" :src="activeImage" alt="@producto.Nombre" class="w-full h-full object-cover transition-all duration-300" onerror="this.style.display='none'; document.getElementById('producto-fallback').style.display='flex';" />
+                                <div id="producto-fallback" style="display: none;" class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 text-slate-300 p-8">
+                                    <div class="p-6 bg-white rounded-full shadow-sm mb-4 border border-slate-100">
+                                        <i data-lucide="shopping-bag" class="w-12 h-12 text-slate-300"></i>
+                                    </div>
+                                    <span class="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Sin Imagen</span>
+                                </div>
                             }
                             else
                             {
