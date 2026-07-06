@@ -112,24 +112,19 @@
         <!-- Top Navbar Completo (Estilo Cowib) -->
         <header class="sticky top-0 z-50 w-full bg-white/85 backdrop-blur-md border-b border-slate-100">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                <!-- Branding BuscaYa + Comercio -->
-                <div class="flex items-center gap-3">
-                    <a href="https://buscaya.encuentrame.org" class="flex items-center gap-2">
-                        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-500 to-blue-600 flex items-center justify-center shadow-md shadow-brand-500/20 text-white font-black text-base">
-                            B
+                <!-- Store branding (No mention of BuscaYa in top navbar) -->
+                <div class="flex items-center gap-2.5">
+                    @if (!string.IsNullOrEmpty(tienda.LogoUrl))
+                    {
+                        <img src="@tienda.LogoUrl" alt="Logo de @tienda.Nombre" class="w-9 h-9 rounded-full object-cover border border-slate-200 shadow-sm" />
+                    }
+                    else
+                    {
+                        <div class="w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center shadow-sm text-white font-black text-sm">
+                            @tienda.Nombre.Substring(0, 1).ToUpper()
                         </div>
-                        <span class="font-extrabold text-slate-900 tracking-tight text-lg hidden sm:inline-block">BuscaYa</span>
-                    </a>
-                    
-                    <span class="w-[1px] h-5 bg-slate-200 hidden sm:inline-block"></span>
-                    
-                    <div class="flex items-center gap-2">
-                        @if (!string.IsNullOrEmpty(tienda.LogoUrl))
-                        {
-                            <img src="@tienda.LogoUrl" alt="Mini logo" class="w-6 h-6 rounded-full object-cover border border-slate-100" />
-                        }
-                        <span class="text-slate-700 font-bold text-sm max-w-[120px] sm:max-w-[200px] truncate">@tienda.Nombre</span>
-                    </div>
+                    }
+                    <span class="font-extrabold text-slate-900 tracking-tight text-base sm:text-lg">@tienda.Nombre</span>
                 </div>
 
                 <!-- Navigation Links -->
@@ -413,10 +408,8 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
                 <!-- Info de la Marca -->
                 <div class="space-y-4">
-                    <div class="flex items-center gap-2 text-white">
-                        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-500 to-blue-600 flex items-center justify-center text-white font-black text-sm">
-                            B
-                        </div>
+                    <div class="flex items-center gap-2.5 text-white">
+                        <img src="/images/app_launcher_icon.png" alt="BuscaYa Icon" class="w-8 h-8 rounded-xl object-cover shadow-sm border border-slate-750" />
                         <span class="font-extrabold text-lg tracking-tight">BuscaYa</span>
                     </div>
                     <p class="text-xs text-slate-400 leading-relaxed">
