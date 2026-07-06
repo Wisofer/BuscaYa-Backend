@@ -25,6 +25,7 @@ public class TiendaResponse
     public double CalificacionPromedio { get; set; }
     public int TotalCalificaciones { get; set; }
     public int FavoritosCount { get; set; }
+    public string? TokenPublico { get; set; }
     public List<ProductoSimpleResponse> Productos { get; set; } = new();
 
     /// <summary>
@@ -80,4 +81,5 @@ public class ProductoSimpleResponse
     public int? PorcentajeDescuento { get; set; }
     public string? FotoUrl { get; set; }
     public string? CategoriaNombre { get; set; }
+    public string? TokenPublico { get; set; }
 }

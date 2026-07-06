@@ -92,6 +92,7 @@ public class TiendaService : ITiendaService
             CalificacionPromedio = tienda.CalificacionPromedio,
             TotalCalificaciones = tienda.TotalCalificaciones,
             FavoritosCount = tienda.FavoritosCount,
+            TokenPublico = tienda.TokenPublico,
             Productos = tienda.Productos.Select(p => new ProductoSimpleResponse
             {
                 Id = p.Id,
@@ -102,7 +103,8 @@ public class TiendaService : ITiendaService
                 PrecioAnterior = p.PrecioAnterior,
                 PorcentajeDescuento = ProductoHelper.CalcularPorcentajeDescuento(p.Precio, p.PrecioAnterior),
                 FotoUrl = p.FotoUrl,
-                CategoriaNombre = p.Categoria?.Nombre
+                CategoriaNombre = p.Categoria?.Nombre,
+                TokenPublico = p.TokenPublico
             }).ToList()
         };
 
@@ -148,6 +150,7 @@ public class TiendaService : ITiendaService
             CalificacionPromedio = tienda.CalificacionPromedio,
             TotalCalificaciones = tienda.TotalCalificaciones,
             FavoritosCount = tienda.FavoritosCount,
+            TokenPublico = tienda.TokenPublico,
             Productos = tienda.Productos.Select(p => new ProductoSimpleResponse
             {
                 Id = p.Id,
@@ -158,7 +161,8 @@ public class TiendaService : ITiendaService
                 PrecioAnterior = p.PrecioAnterior,
                 PorcentajeDescuento = ProductoHelper.CalcularPorcentajeDescuento(p.Precio, p.PrecioAnterior),
                 FotoUrl = p.FotoUrl,
-                CategoriaNombre = p.Categoria?.Nombre
+                CategoriaNombre = p.Categoria?.Nombre,
+                TokenPublico = p.TokenPublico
             }).ToList()
         };
 

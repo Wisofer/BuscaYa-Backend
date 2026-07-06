@@ -193,6 +193,7 @@ public class PublicController : ControllerBase
                 PorcentajeDescuento = ProductoHelper.CalcularPorcentajeDescuento(producto.Precio, producto.PrecioAnterior),
                 FotoUrl = producto.FotoUrl,
                 GaleriaUrls = galeriaUrls,
+                TokenPublico = producto.TokenPublico,
                 Tienda = new TiendaInfoResponse
                 {
                     Id = producto.Tienda.Id,
@@ -212,7 +213,8 @@ public class PublicController : ControllerBase
                     DiasAtencion = producto.Tienda.DiasAtencion,
                     HorarioApertura = producto.Tienda.HorarioApertura?.ToString(@"hh\:mm"),
                     HorarioCierre = producto.Tienda.HorarioCierre?.ToString(@"hh\:mm"),
-                    Descripcion = producto.Tienda.Descripcion
+                    Descripcion = producto.Tienda.Descripcion,
+                    TokenPublico = producto.Tienda.TokenPublico
                 },
                 Categoria = new CategoriaInfoResponse
                 {
