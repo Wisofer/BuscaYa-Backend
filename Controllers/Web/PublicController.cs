@@ -51,12 +51,12 @@ public class PublicController : Controller
     private static bool LooksLikeAndroid(string ua) =>
         ua.Contains("Android", StringComparison.OrdinalIgnoreCase);
 
-    [HttpGet("/producto/{id}")]
-    public IActionResult VerProducto(int id)
+    [HttpGet("/producto/{token}")]
+    public IActionResult VerProducto(string token)
     {
         try
         {
-            var producto = _productoService.ObtenerPorId(id);
+            var producto = _productoService.ObtenerPorToken(token);
             
             if (producto == null || !producto.Activo)
             {
@@ -79,7 +79,7 @@ public class PublicController : Controller
             // Preparar datos para la vista
             ViewData["Producto"] = producto;
             ViewData["WhatsAppUrl"] = whatsappUrl;
-            ViewData["DeepLink"] = $"buscaya://producto/{id}";
+            ViewData["DeepLink"] = $"buscaya://producto/{token}";
             SetAppDownloadViewData();
 
             return View("Producto");
@@ -95,19 +95,19 @@ public class PublicController : Controller
     /// Detalle público de tienda para compartir:
     /// GET /tienda/{id}
     /// </summary>
-    [HttpGet("/tienda/{id}")]
-    public IActionResult VerTienda(int id)
+    [HttpGet("/tienda/{token}")]
+    public IActionResult VerTienda(string token)
     {
         try
         {
-            var tienda = _tiendaService.ObtenerDetalle(id);
+            var tienda = _tiendaService.ObtenerDetallePorToken(token);
             if (tienda == null)
             {
                 return View("TiendaNoEncontrada");
             }
 
             ViewData["Tienda"] = tienda;
-            ViewData["DeepLink"] = $"buscaya://tienda/{id}";
+            ViewData["DeepLink"] = $"buscaya://tienda/{token}";
             SetAppDownloadViewData();
 
             return View("Tienda");

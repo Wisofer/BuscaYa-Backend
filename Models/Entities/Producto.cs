@@ -17,6 +17,7 @@ public class Producto
     /// <summary>Stock disponible. Null = no controlado. Para notificación "volvió a haber stock" cuando pasa de 0 a &gt;0.</summary>
     public int? Stock { get; set; }
     public bool Activo { get; set; } = true;
+    public string TokenPublico { get; set; } = string.Empty;
     public DateTime FechaCreacion { get; set; } = DateTime.Now;
     public DateTime? FechaActualizacion { get; set; }
 

@@ -11,6 +11,7 @@ public interface ITiendaService
     List<Tienda> ObtenerPorCiudad(string ciudad);
     List<Tienda> BuscarCercanas(decimal lat, decimal lng, double radioKm);
     TiendaResponse? ObtenerDetalle(int id, decimal? latUsuario = null, decimal? lngUsuario = null);
+    TiendaResponse? ObtenerDetallePorToken(string token, decimal? latUsuario = null, decimal? lngUsuario = null);
     Tienda Crear(CrearTiendaRequest request, int? usuarioId = null);
     bool Actualizar(int id, ActualizarTiendaRequest request);
     bool ActualizarEstado(int id, bool estaAbiertaManual);

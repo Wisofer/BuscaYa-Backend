@@ -101,7 +101,64 @@ public class TiendaService : ITiendaService
                 EnOferta = p.EnOferta,
                 PrecioAnterior = p.PrecioAnterior,
                 PorcentajeDescuento = ProductoHelper.CalcularPorcentajeDescuento(p.Precio, p.PrecioAnterior),
-                FotoUrl = p.FotoUrl
+                FotoUrl = p.FotoUrl,
+                CategoriaNombre = p.Categoria?.Nombre
+            }).ToList()
+        };
+
+        if (latUsuario.HasValue && lngUsuario.HasValue)
+        {
+            response.DistanciaKm = GeolocationHelper.CalcularDistanciaKm(
+                latUsuario.Value, lngUsuario.Value,
+                tienda.Latitud, tienda.Longitud);
+        }
+
+        return response;
+    }
+
+    public TiendaResponse? ObtenerDetallePorToken(string token, decimal? latUsuario = null, decimal? lngUsuario = null)
+    {
+        var tienda = _context.Tiendas
+            .Include(t => t.Productos.Where(p => p.Activo))
+            .ThenInclude(p => p.Categoria)
+            .FirstOrDefault(t => t.TokenPublico == token);
+            
+        if (tienda == null) return null;
+
+        var response = new TiendaResponse
+        {
+            Id = tienda.Id,
+            Nombre = tienda.Nombre,
+            Descripcion = tienda.Descripcion,
+            Telefono = tienda.Telefono,
+            WhatsApp = tienda.WhatsApp,
+            Email = tienda.Email,
+            Direccion = tienda.Direccion,
+            Latitud = tienda.Latitud,
+            Longitud = tienda.Longitud,
+            Ciudad = tienda.Ciudad,
+            Departamento = tienda.Departamento,
+            HorarioApertura = tienda.HorarioApertura,
+            HorarioCierre = tienda.HorarioCierre,
+            DiasAtencion = tienda.DiasAtencion,
+            LogoUrl = tienda.LogoUrl,
+            FotoUrl = tienda.FotoUrl,
+            Plan = tienda.Plan,
+            EstaAbierta = tienda.EstaAbiertaManual,
+            CalificacionPromedio = tienda.CalificacionPromedio,
+            TotalCalificaciones = tienda.TotalCalificaciones,
+            FavoritosCount = tienda.FavoritosCount,
+            Productos = tienda.Productos.Select(p => new ProductoSimpleResponse
+            {
+                Id = p.Id,
+                Nombre = p.Nombre,
+                Precio = p.Precio,
+                Moneda = p.Moneda,
+                EnOferta = p.EnOferta,
+                PrecioAnterior = p.PrecioAnterior,
+                PorcentajeDescuento = ProductoHelper.CalcularPorcentajeDescuento(p.Precio, p.PrecioAnterior),
+                FotoUrl = p.FotoUrl,
+                CategoriaNombre = p.Categoria?.Nombre
             }).ToList()
         };
 
@@ -137,6 +194,7 @@ public class TiendaService : ITiendaService
             EstaAbiertaManual = request.EstaAbiertaManual,
             Plan = SD.PlanFree,
             Activo = true,
+            TokenPublico = TokenHelper.GenerarToken(10),
             UsuarioId = usuarioId
         };
 

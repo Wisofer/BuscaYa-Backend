@@ -92,9 +92,11 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Plan).IsRequired().HasMaxLength(20).HasDefaultValue("Free");
             entity.Property(e => e.Activo).HasDefaultValue(true);
             entity.Property(e => e.FavoritosCount).HasDefaultValue(0);
+            entity.Property(e => e.TokenPublico).IsRequired().HasMaxLength(50).HasDefaultValue("");
             
             entity.HasIndex(e => e.Ciudad);
             entity.HasIndex(e => e.Activo);
+            entity.HasIndex(e => e.TokenPublico).IsUnique();
         });
 
         // Producto
@@ -110,6 +112,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Moneda).IsRequired().HasMaxLength(10).HasDefaultValue("C$");
             entity.Property(e => e.FotoUrl).HasMaxLength(500);
             entity.Property(e => e.Activo).HasDefaultValue(true);
+            entity.Property(e => e.TokenPublico).IsRequired().HasMaxLength(50).HasDefaultValue("");
             
             entity.HasOne(e => e.Tienda)
                 .WithMany(t => t.Productos)
@@ -125,6 +128,7 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.CategoriaId);
             entity.HasIndex(e => e.Activo);
             entity.HasIndex(e => e.Nombre); // Para full-text search
+            entity.HasIndex(e => e.TokenPublico).IsUnique();
         });
 
         // ProductoImagen

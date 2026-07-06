@@ -7,6 +7,7 @@ public interface IProductoService
 {
     List<Producto> ObtenerPorTienda(int tiendaId);
     Producto? ObtenerPorId(int id);
+    Producto? ObtenerPorToken(string token);
     Producto Crear(int tiendaId, CrearProductoRequest request);
     bool Actualizar(int id, ActualizarProductoRequest request);
     bool Eliminar(int id);

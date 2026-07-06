@@ -23,6 +23,7 @@ public class Tienda
     public string Plan { get; set; } = "Free"; // Free, Pro
     public bool Activo { get; set; } = true;
     public int? UsuarioId { get; set; }
+    public string TokenPublico { get; set; } = string.Empty;
     public DateTime FechaCreacion { get; set; } = DateTime.Now;
     public DateTime? FechaActualizacion { get; set; }
 

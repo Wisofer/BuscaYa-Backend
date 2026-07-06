@@ -79,4 +79,5 @@ public class ProductoSimpleResponse
     public decimal? PrecioAnterior { get; set; }
     public int? PorcentajeDescuento { get; set; }
     public string? FotoUrl { get; set; }
+    public string? CategoriaNombre { get; set; }
 }

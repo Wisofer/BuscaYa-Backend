@@ -41,6 +41,16 @@ public class ProductoService : IProductoService
             .FirstOrDefault(p => p.Id == id);
     }
 
+    public Producto? ObtenerPorToken(string token)
+    {
+        return _context.Productos
+            .Include(p => p.Tienda)
+            .Include(p => p.Categoria)
+            .Include(p => p.Imagenes.OrderBy(i => i.Orden))
+            .AsNoTracking()
+            .FirstOrDefault(p => p.TokenPublico == token);
+    }
+
     public Producto Crear(int tiendaId, CrearProductoRequest request)
     {
         // Verificar límite de productos según plan
@@ -74,7 +84,8 @@ public class ProductoService : IProductoService
             Moneda = request.Moneda,
             CategoriaId = request.CategoriaId,
             FotoUrl = imagenPrincipal,
-            Activo = true
+            Activo = true,
+            TokenPublico = TokenHelper.GenerarToken(10)
         };
 
         _context.Productos.Add(producto);

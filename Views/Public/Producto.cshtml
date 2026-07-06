@@ -9,14 +9,14 @@
 }
 
 <!DOCTYPE html>
-<html lang="es" data-theme="light">
+<html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@producto?.Nombre - BuscaYa</title>
     
     <!-- Meta tags para compartir en redes sociales -->
-    <meta property="og:title" content="@producto?.Nombre" />
+    <meta property="og:title" content="@producto?.Nombre - En venta en @producto?.Tienda?.Nombre" />
     <meta property="og:description" content="@producto?.Descripcion" />
     @if (!string.IsNullOrEmpty(producto?.FotoUrl))
     {
@@ -28,160 +28,306 @@
         <meta name="apple-itunes-app" content="app-id=@appleAppId" />
     }
     
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     
+    <!-- Alpine.js & Tailwind CSS -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6', // Azul principal de la app
+                            600: '#2563eb', // Azul hover/activo
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
+        [x-cloak] { display: none !important; }
+        
         body {
-            background: linear-gradient(to bottom, #f3f4f6, #ffffff);
+            background-color: #f8fafc;
+            color: #0f172a;
         }
     </style>
 </head>
-<body>
-    <div class="min-h-screen pb-8">
-        <!-- Header -->
-        <div class="bg-white shadow-sm">
-            <div class="max-w-4xl mx-auto px-4 py-4">
-                <div class="flex items-center justify-between gap-2 flex-wrap">
-                    <h1 class="text-2xl font-bold text-gray-800">BuscaYa</h1>
-                    <div class="flex gap-2">
-                        <a href="/descargar" class="btn btn-ghost btn-sm">Descargar app</a>
-                        <a href="@deepLink" class="btn btn-primary btn-sm">
-                            <i class="bi bi-phone"></i>
-                            Abrir en la app
-                        </a>
+<body class="antialiased" 
+      x-data="productoDetail({ 
+          storeId: '@producto?.TiendaId',
+          prodId: '@producto?.Id',
+          prodName: '@producto?.Nombre',
+          prodPrice: '@producto?.Precio',
+          prodMoneda: '@producto?.Moneda',
+          prodFoto: '@producto?.FotoUrl'
+      })">
+
+    @if (producto == null)
+    {
+        <!-- Vista Producto No Encontrado -->
+        <div class="min-h-screen flex items-center justify-center px-4">
+            <div class="max-w-md w-full text-center bg-white border border-slate-200 p-8 rounded-3xl shadow-xl">
+                <div class="inline-flex p-4 bg-red-50 text-red-500 rounded-2xl mb-6">
+                    <i data-lucide="package-x" class="w-12 h-12"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900 mb-2">Producto no encontrado</h2>
+                <p class="text-slate-550 mb-6">El producto que buscas no está disponible o ha sido eliminado por la tienda.</p>
+                <a href="https://buscaya.encuentrame.org" class="inline-flex items-center gap-2 px-6 py-3 bg-brand-600 hover:bg-brand-500 active:scale-95 transition-all text-white font-semibold rounded-xl">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    Ir a BuscaYa
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Banner Inteligente (Descargar App - Limpio Blanco/Azul) -->
+        <div class="bg-white border-b border-slate-100 text-slate-700 text-xs sm:text-sm py-2.5 px-4 sticky top-0 z-50 backdrop-blur-md bg-opacity-95 shadow-sm">
+            <div class="max-w-4xl mx-auto flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-blue-450 flex items-center justify-center shadow-md text-white font-extrabold text-base">
+                        B
                     </div>
+                    <div>
+                        <p class="font-bold text-slate-900 text-xs sm:text-sm">Consigue una mejor experiencia en la App</p>
+                        <p class="text-[10px] sm:text-xs text-slate-500">Notificaciones de stock y ofertas al instante</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="@deepLink" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 active:scale-95 transition text-slate-700 font-semibold rounded-lg text-xs">
+                        Abrir
+                    </a>
+                    <a href="/descargar" class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-500 active:scale-95 transition text-white font-semibold rounded-lg text-xs shadow-md shadow-brand-600/10">
+                        Descargar
+                    </a>
                 </div>
             </div>
         </div>
 
-        <!-- Contenido del producto -->
-        <div class="max-w-4xl mx-auto px-4 mt-6">
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <!-- Imagen del producto -->
-                @if (!string.IsNullOrEmpty(producto?.FotoUrl))
+        <div class="min-h-screen pb-16 pt-6">
+            <div class="max-w-4xl mx-auto px-4">
+                <!-- Botón de regreso a la tienda -->
+                @if (producto.Tienda != null)
                 {
-                    <div class="w-full h-64 md:h-96 bg-gray-100 flex items-center justify-center">
-                        <img src="@producto.FotoUrl" alt="@producto?.Nombre" class="w-full h-full object-cover" />
-                    </div>
-                }
-                else
-                {
-                    <div class="w-full h-64 md:h-96 bg-gray-200 flex items-center justify-center">
-                        <i class="bi bi-image text-6xl text-gray-400"></i>
+                    <div class="mb-6">
+                        <a href="/tienda/@producto.Tienda.TokenPublico" class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-950 text-sm font-semibold transition-all">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                            Volver al catálogo de @producto.Tienda.Nombre
+                        </a>
                     </div>
                 }
 
-                <!-- Información del producto -->
-                <div class="p-6">
-                    <div class="mb-4">
-                        <span class="badge badge-primary">@producto?.Categoria?.Nombre</span>
-                    </div>
-                    
-                    <h2 class="text-3xl font-bold text-gray-800 mb-2">@producto?.Nombre</h2>
-                    
-                    @if (!string.IsNullOrEmpty(producto?.Descripcion))
-                    {
-                        <p class="text-gray-600 mb-4">@producto.Descripcion</p>
-                    }
-                    
-                    @if (producto?.Precio.HasValue == true)
-                    {
-                        <div class="flex items-center gap-2 mb-6">
-                            <span class="text-4xl font-bold text-primary">
-                                @(producto.Moneda ?? "C$") @producto.Precio.Value.ToString("N2")
-                            </span>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="flex items-center gap-2 mb-6">
-                            <span class="text-lg text-gray-500">
-                                Precio a consultar
-                            </span>
-                        </div>
-                    }
-
-                    <!-- Información de la tienda -->
-                    @if (producto?.Tienda != null)
-                    {
-                        <div class="border-t pt-6 mb-6">
-                            <h3 class="text-xl font-semibold text-gray-800 mb-4">Información de la tienda</h3>
-                            
-                            <div class="space-y-3">
-                                <div class="flex items-start gap-3">
-                                    <i class="bi bi-shop text-primary text-xl mt-1"></i>
-                                    <div>
-                                        <p class="font-semibold text-gray-800">@producto.Tienda.Nombre</p>
-                                        @if (!string.IsNullOrEmpty(producto.Tienda.Direccion))
-                                        {
-                                            <p class="text-gray-600 text-sm">@producto.Tienda.Direccion</p>
-                                        }
-                                        @if (!string.IsNullOrEmpty(producto.Tienda.Ciudad))
-                                        {
-                                            <p class="text-gray-600 text-sm">@producto.Tienda.Ciudad, @producto.Tienda.Departamento</p>
-                                        }
-                                    </div>
-                                </div>
-                                
-                                @if (!string.IsNullOrEmpty(producto.Tienda.Telefono))
-                                {
-                                    <div class="flex items-center gap-3">
-                                        <i class="bi bi-telephone text-primary"></i>
-                                        <a href="tel:@producto.Tienda.Telefono" class="text-gray-700 hover:text-primary">
-                                            @producto.Tienda.Telefono
-                                        </a>
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    }
-
-                    <!-- Botones de acción -->
-                    <div class="flex flex-col sm:flex-row gap-3">
-                        @if (!string.IsNullOrEmpty(whatsappUrl))
+                <!-- Contenedor Principal del Producto -->
+                <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xl grid grid-cols-1 md:grid-cols-2 gap-8 p-6 md:p-8">
+                    <!-- Columna Izquierda: Imagen del Producto -->
+                    <div class="relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center border border-slate-100">
+                        @if (producto.EnOferta)
                         {
-                            <a href="@whatsappUrl" target="_blank" class="btn btn-success flex-1">
-                                <i class="bi bi-whatsapp"></i>
-                                Contactar por WhatsApp
-                            </a>
+                            <span class="absolute top-4 left-4 bg-red-500 text-white text-xs font-extrabold uppercase px-2.5 py-1 rounded-lg z-10 tracking-wider shadow">
+                                Oferta
+                            </span>
                         }
                         
-                        <a href="@deepLink" class="btn btn-primary flex-1">
-                            <i class="bi bi-phone"></i>
-                            Ver en la app
-                        </a>
+                        @if (!string.IsNullOrEmpty(producto.FotoUrl))
+                        {
+                            <img src="@producto.FotoUrl" alt="@producto.Nombre" class="w-full h-full object-cover" />
+                        }
+                        else
+                        {
+                            <div class="flex flex-col items-center justify-center text-slate-400">
+                                <i data-lucide="image" class="w-20 h-20 mb-2"></i>
+                                <span class="text-xs">Sin foto de producto</span>
+                            </div>
+                        }
                     </div>
 
-                    <div class="mt-6">
-                        @await Html.PartialAsync("_AppDownloadLinks")
+                    <!-- Columna Derecha: Información del Producto -->
+                    <div class="flex flex-col justify-between space-y-6">
+                        <div class="space-y-4">
+                            @if (producto.Categoria != null)
+                            {
+                                <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-brand-50 text-brand-600 border border-brand-200 capitalize">
+                                    @producto.Categoria.Nombre
+                                </span>
+                            }
+
+                            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">@producto.Nombre</h1>
+
+                            <!-- Fila de Precio -->
+                            <div class="pt-2">
+                                @if (producto.Precio.HasValue)
+                                {
+                                    <div class="flex items-baseline gap-3">
+                                        <span class="text-3xl font-extrabold text-brand-600">
+                                            @(producto.Moneda ?? "C$") @producto.Precio.Value.ToString("N2")
+                                        </span>
+                                        @if (producto.EnOferta && producto.PrecioAnterior.HasValue)
+                                        {
+                                            <span class="text-slate-400 line-through text-base font-semibold">
+                                                @(producto.Moneda ?? "C$") @producto.PrecioAnterior.Value.ToString("N2")
+                                            </span>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-lg text-slate-500 font-semibold">Precio a consultar</span>
+                                }
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(producto.Descripcion))
+                            {
+                                <div class="border-t border-slate-100 pt-4">
+                                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Descripción</h3>
+                                    <p class="text-slate-650 text-sm sm:text-base leading-relaxed">@producto.Descripcion</p>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div class="space-y-3 pt-6 border-t border-slate-100">
+                            @if (producto.Precio.HasValue)
+                            {
+                                <button class="w-full py-4 bg-brand-600 hover:bg-brand-500 active:scale-[0.98] transition-all text-white font-bold rounded-2xl flex items-center justify-center gap-3 shadow-md shadow-brand-600/10"
+                                        @@click="agregarAlCarrito()">
+                                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                                    Añadir al Carrito del Catálogo
+                                </button>
+                            }
+
+                            @if (!string.IsNullOrEmpty(whatsappUrl))
+                            {
+                                <a href="@whatsappUrl" target="_blank" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all text-white font-bold rounded-2xl flex items-center justify-center gap-3 shadow-md shadow-emerald-900/10">
+                                    <i data-lucide="message-square" class="w-5 h-5"></i>
+                                    Preguntar por WhatsApp
+                                </a>
+                            }
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Footer -->
-            <div class="text-center mt-8 text-gray-500 text-sm">
-                <p>Compartido desde BuscaYa</p>
+                <!-- Tarjeta de Información de la Tienda Relacionada -->
+                @if (producto.Tienda != null)
+                {
+                    <div class="mt-8 bg-white border border-slate-200 p-6 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-sm">
+                        <div class="flex items-center gap-4">
+                            <!-- Logo Mini de la Tienda -->
+                            <div class="w-14 h-14 rounded-xl bg-slate-50 overflow-hidden flex-shrink-0 flex items-center justify-center border border-slate-200">
+                                @if (!string.IsNullOrEmpty(producto.Tienda.LogoUrl))
+                                {
+                                    <img src="@producto.Tienda.LogoUrl" alt="Logo de @producto.Tienda.Nombre" class="w-full h-full object-cover" />
+                                }
+                                else
+                                {
+                                    <span class="text-xl font-bold text-brand-600">@producto.Tienda.Nombre.Substring(0, 1).ToUpper()</span>
+                                }
+                            </div>
+                            
+                            <div>
+                                <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Vendido por</p>
+                                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-1">
+                                    @producto.Tienda.Nombre
+                                    <i data-lucide="badge-check" class="w-4 h-4 text-brand-500 fill-brand-500/10"></i>
+                                </h3>
+                                <p class="text-xs text-slate-500">@producto.Tienda.Direccion</p>
+                            </div>
+                        </div>
+                        
+                        <a href="/tienda/@producto.Tienda.TokenPublico" class="w-full sm:w-auto text-center px-5 py-2.5 bg-slate-100 hover:bg-slate-200 active:scale-95 transition text-slate-800 font-semibold rounded-xl text-sm border border-slate-200">
+                            Ver Catálogo Completo
+                        </a>
+                    </div>
+                }
             </div>
         </div>
-    </div>
 
-    <!-- Script para intentar abrir la app automáticamente en móviles -->
+        <!-- Toast de Notificación Exito (Alpine.js) -->
+        <div class="fixed bottom-6 right-6 z-50 bg-white border border-slate-200 text-slate-900 px-5 py-4 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300"
+             x-show="toastShow" 
+             x-transition:enter="translate-y-10 opacity-0"
+             x-transition:enter-end="translate-y-0 opacity-100"
+             x-transition:leave="translate-y-10 opacity-0"
+             x-cloak>
+            <div class="p-1.5 bg-brand-50 text-brand-600 rounded-lg">
+                <i data-lucide="check" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <p class="text-sm font-bold">¡Agregado con éxito!</p>
+                <a :href="`/tienda/${'@producto.Tienda?.TokenPublico'}`" class="text-xs text-brand-600 hover:underline">Ir a pagar al Carrito →</a>
+            </div>
+        </div>
+    }
+
+    <!-- Script de Alpine.js para la lógica de Producto -->
     <script>
-        // Detectar si es móvil
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        
-        if (isMobile) {
-            // Intentar abrir la app después de un breve delay
-            setTimeout(function() {
-                window.location.href = '@deepLink';
-            }, 500);
-            
-            // Si después de 2 segundos no se abrió la app, mostrar mensaje opcional
-            setTimeout(function() {
-                // El usuario puede seguir viendo la página web
-            }, 2000);
+        function productoDetail(config) {
+            return {
+                storeId: config.storeId,
+                prodId: config.prodId,
+                prodName: config.prodName,
+                prodPrice: parseFloat(config.prodPrice) || 0,
+                prodMoneda: config.prodMoneda || 'C$',
+                prodFoto: config.prodFoto,
+                toastShow: false,
+
+                init() {
+                    setTimeout(() => {
+                        lucide.createIcons();
+                    }, 100);
+                },
+
+                agregarAlCarrito() {
+                    const cartKey = `buscaya_cart_${this.storeId}`;
+                    let cart = [];
+                    const savedCart = localStorage.getItem(cartKey);
+                    if (savedCart) {
+                        try {
+                            cart = JSON.parse(savedCart);
+                        } catch(e) {
+                            cart = [];
+                        }
+                    }
+
+                    const existing = cart.find(item => item.id == this.prodId);
+                    if (existing) {
+                        existing.qty++;
+                    } else {
+                        cart.push({
+                            id: parseInt(this.prodId),
+                            nombre: this.prodName,
+                            precio: this.prodPrice,
+                            moneda: this.prodMoneda,
+                            fotoUrl: this.prodFoto,
+                            qty: 1
+                        });
+                    }
+
+                    localStorage.setItem(cartKey, JSON.stringify(cart));
+                    
+                    // Mostrar Toast
+                    this.toastShow = true;
+                    setTimeout(() => {
+                        this.toastShow = false;
+                    }, 4000);
+                }
+            }
         }
     </script>
 </body>
