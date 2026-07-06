@@ -47,12 +47,12 @@
                     },
                     colors: {
                         brand: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            500: '#3b82f6', // Azul principal de la app
-                            600: '#2563eb', // Azul hover/activo
-                            700: '#1d4ed8',
-                            900: '#1e3a8a',
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#1d4ed8', // Azul real premium
+                            600: '#1e40af',
+                            700: '#1d3557',
+                            900: '#0f172a',
                         },
                     }
                 }
@@ -64,8 +64,8 @@
         [x-cloak] { display: none !important; }
         
         body {
-            background-color: #f8fafc;
-            color: #0f172a;
+            background-color: #fcfcfd;
+            color: #1e293b;
         }
     </style>
 </head>
@@ -83,13 +83,13 @@
     {
         <!-- Vista Producto No Encontrado -->
         <div class="min-h-screen flex items-center justify-center px-4">
-            <div class="max-w-md w-full text-center bg-white border border-slate-200 p-8 rounded-3xl shadow-xl">
+            <div class="max-w-md w-full text-center bg-white border border-slate-100 p-8 rounded-3xl shadow-xl">
                 <div class="inline-flex p-4 bg-red-50 text-red-500 rounded-2xl mb-6">
                     <i data-lucide="package-x" class="w-12 h-12"></i>
                 </div>
                 <h2 class="text-2xl font-bold text-slate-900 mb-2">Producto no encontrado</h2>
-                <p class="text-slate-550 mb-6">El producto que buscas no está disponible o ha sido eliminado por la tienda.</p>
-                <a href="https://buscaya.encuentrame.org" class="inline-flex items-center gap-2 px-6 py-3 bg-brand-600 hover:bg-brand-500 active:scale-95 transition-all text-white font-semibold rounded-xl">
+                <p class="text-slate-500 mb-6">El producto que buscas no está disponible o ha sido eliminado por la tienda.</p>
+                <a href="https://buscaya.encuentrame.org" class="inline-flex items-center gap-2 px-6 py-3 bg-brand-500 hover:bg-brand-600 active:scale-95 transition-all text-white font-semibold rounded-xl">
                     <i data-lucide="arrow-left" class="w-5 h-5"></i>
                     Ir a BuscaYa
                 </a>
@@ -98,23 +98,23 @@
     }
     else
     {
-        <!-- Banner Inteligente (Descargar App - Limpio Blanco/Azul) -->
-        <div class="bg-white border-b border-slate-100 text-slate-700 text-xs sm:text-sm py-2.5 px-4 sticky top-0 z-50 backdrop-blur-md bg-opacity-95 shadow-sm">
-            <div class="max-w-4xl mx-auto flex items-center justify-between gap-4">
+        <!-- Banner Inteligente (Descargar App - Ultra-premium) -->
+        <div class="bg-white/80 border-b border-slate-100 text-slate-750 text-xs py-3 px-4 sticky top-0 z-50 backdrop-blur-md shadow-sm">
+            <div class="max-w-5xl mx-auto flex items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-blue-450 flex items-center justify-center shadow-md text-white font-extrabold text-base">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-500 to-blue-600 flex items-center justify-center shadow-sm text-white font-extrabold text-sm">
                         B
                     </div>
                     <div>
-                        <p class="font-bold text-slate-900 text-xs sm:text-sm">Consigue una mejor experiencia en la App</p>
-                        <p class="text-[10px] sm:text-xs text-slate-500">Notificaciones de stock y ofertas al instante</p>
+                        <p class="font-bold text-slate-900 text-xs">Descargar BuscaYa App</p>
+                        <p class="text-[10px] text-slate-500">Notificaciones de stock y ofertas al instante</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <a href="@deepLink" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 active:scale-95 transition text-slate-700 font-semibold rounded-lg text-xs">
+                    <a href="@deepLink" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 active:scale-95 transition text-slate-700 font-semibold rounded-lg text-xs">
                         Abrir
                     </a>
-                    <a href="/descargar" class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-500 active:scale-95 transition text-white font-semibold rounded-lg text-xs shadow-md shadow-brand-600/10">
+                    <a href="/descargar" class="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 active:scale-95 transition text-white font-semibold rounded-lg text-xs shadow-sm shadow-brand-500/10">
                         Descargar
                     </a>
                 </div>
@@ -122,7 +122,7 @@
         </div>
 
         <div class="min-h-screen pb-16 pt-6">
-            <div class="max-w-4xl mx-auto px-4">
+            <div class="max-w-5xl mx-auto px-4">
                 <!-- Botón de regreso a la tienda -->
                 @if (producto.Tienda != null)
                 {
@@ -134,10 +134,10 @@
                     </div>
                 }
 
-                <!-- Contenedor Principal del Producto -->
-                <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xl grid grid-cols-1 md:grid-cols-2 gap-8 p-6 md:p-8">
-                    <!-- Columna Izquierda: Imagen del Producto -->
-                    <div class="relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center border border-slate-100">
+                <!-- Contenedor Principal del Producto (Diseño de Columna y Fila Elegante) -->
+                <div class="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xl grid grid-cols-1 md:grid-cols-12 gap-8 p-6 md:p-8">
+                    <!-- Columna Izquierda: Imagen del Producto (5 columnas de ancho) -->
+                    <div class="md:col-span-5 relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center border border-slate-100">
                         @if (producto.EnOferta)
                         {
                             <span class="absolute top-4 left-4 bg-red-500 text-white text-xs font-extrabold uppercase px-2.5 py-1 rounded-lg z-10 tracking-wider shadow">
@@ -151,19 +151,19 @@
                         }
                         else
                         {
-                            <div class="flex flex-col items-center justify-center text-slate-400">
+                            <div class="flex flex-col items-center justify-center text-slate-350">
                                 <i data-lucide="image" class="w-20 h-20 mb-2"></i>
                                 <span class="text-xs">Sin foto de producto</span>
                             </div>
                         }
                     </div>
 
-                    <!-- Columna Derecha: Información del Producto -->
-                    <div class="flex flex-col justify-between space-y-6">
+                    <!-- Columna Derecha: Información del Producto (7 columnas de ancho) -->
+                    <div class="md:col-span-7 flex flex-col justify-between space-y-6">
                         <div class="space-y-4">
                             @if (producto.Categoria != null)
                             {
-                                <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-brand-50 text-brand-600 border border-brand-200 capitalize">
+                                <span class="inline-flex px-3 py-1 rounded-full text-xs font-bold bg-brand-50 text-brand-500 border border-brand-100 capitalize">
                                     @producto.Categoria.Nombre
                                 </span>
                             }
@@ -175,7 +175,7 @@
                                 @if (producto.Precio.HasValue)
                                 {
                                     <div class="flex items-baseline gap-3">
-                                        <span class="text-3xl font-extrabold text-brand-600">
+                                        <span class="text-3xl font-extrabold text-brand-500">
                                             @(producto.Moneda ?? "C$") @producto.Precio.Value.ToString("N2")
                                         </span>
                                         @if (producto.EnOferta && producto.PrecioAnterior.HasValue)
@@ -196,7 +196,7 @@
                             {
                                 <div class="border-t border-slate-100 pt-4">
                                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Descripción</h3>
-                                    <p class="text-slate-650 text-sm sm:text-base leading-relaxed">@producto.Descripcion</p>
+                                    <p class="text-slate-600 text-sm sm:text-base leading-relaxed font-normal">@producto.Descripcion</p>
                                 </div>
                             }
                         </div>
@@ -205,7 +205,7 @@
                         <div class="space-y-3 pt-6 border-t border-slate-100">
                             @if (producto.Precio.HasValue)
                             {
-                                <button class="w-full py-4 bg-brand-600 hover:bg-brand-500 active:scale-[0.98] transition-all text-white font-bold rounded-2xl flex items-center justify-center gap-3 shadow-md shadow-brand-600/10"
+                                <button class="w-full py-4 bg-brand-500 hover:bg-brand-600 active:scale-[0.98] transition-all text-white font-bold rounded-2xl flex items-center justify-center gap-3 shadow-sm shadow-brand-500/10"
                                         @@click="agregarAlCarrito()">
                                     <i data-lucide="shopping-bag" class="w-5 h-5"></i>
                                     Añadir al Carrito del Catálogo
@@ -214,7 +214,7 @@
 
                             @if (!string.IsNullOrEmpty(whatsappUrl))
                             {
-                                <a href="@whatsappUrl" target="_blank" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all text-white font-bold rounded-2xl flex items-center justify-center gap-3 shadow-md shadow-emerald-900/10">
+                                <a href="@whatsappUrl" target="_blank" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all text-white font-bold rounded-2xl flex items-center justify-center gap-3 shadow-md shadow-emerald-700/10">
                                     <i data-lucide="message-square" class="w-5 h-5"></i>
                                     Preguntar por WhatsApp
                                 </a>
@@ -226,7 +226,7 @@
                 <!-- Tarjeta de Información de la Tienda Relacionada -->
                 @if (producto.Tienda != null)
                 {
-                    <div class="mt-8 bg-white border border-slate-200 p-6 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-sm">
+                    <div class="mt-8 bg-white border border-slate-100 p-6 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-sm">
                         <div class="flex items-center gap-4">
                             <!-- Logo Mini de la Tienda -->
                             <div class="w-14 h-14 rounded-xl bg-slate-50 overflow-hidden flex-shrink-0 flex items-center justify-center border border-slate-200">
@@ -236,13 +236,13 @@
                                 }
                                 else
                                 {
-                                    <span class="text-xl font-bold text-brand-600">@producto.Tienda.Nombre.Substring(0, 1).ToUpper()</span>
+                                    <span class="text-xl font-bold text-brand-500">@producto.Tienda.Nombre.Substring(0, 1).ToUpper()</span>
                                 }
                             </div>
                             
                             <div>
-                                <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Vendido por</p>
-                                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-1">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Vendido por</p>
+                                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-1.5">
                                     @producto.Tienda.Nombre
                                     <i data-lucide="badge-check" class="w-4 h-4 text-brand-500 fill-brand-500/10"></i>
                                 </h3>
@@ -250,7 +250,7 @@
                             </div>
                         </div>
                         
-                        <a href="/tienda/@producto.Tienda.TokenPublico" class="w-full sm:w-auto text-center px-5 py-2.5 bg-slate-100 hover:bg-slate-200 active:scale-95 transition text-slate-800 font-semibold rounded-xl text-sm border border-slate-200">
+                        <a href="/tienda/@producto.Tienda.TokenPublico" class="w-full sm:w-auto text-center px-5 py-2.5 bg-slate-100 hover:bg-slate-200 active:scale-95 transition text-slate-750 font-semibold rounded-xl text-sm border border-slate-200 shadow-sm">
                             Ver Catálogo Completo
                         </a>
                     </div>
@@ -259,18 +259,18 @@
         </div>
 
         <!-- Toast de Notificación Exito (Alpine.js) -->
-        <div class="fixed bottom-6 right-6 z-50 bg-white border border-slate-200 text-slate-900 px-5 py-4 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300"
+        <div class="fixed bottom-6 right-6 z-50 bg-white border border-slate-100 text-slate-900 px-5 py-4 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300"
              x-show="toastShow" 
              x-transition:enter="translate-y-10 opacity-0"
              x-transition:enter-end="translate-y-0 opacity-100"
              x-transition:leave="translate-y-10 opacity-0"
              x-cloak>
-            <div class="p-1.5 bg-brand-50 text-brand-600 rounded-lg">
+            <div class="p-1.5 bg-brand-50 text-brand-500 rounded-lg">
                 <i data-lucide="check" class="w-5 h-5"></i>
             </div>
             <div>
                 <p class="text-sm font-bold">¡Agregado con éxito!</p>
-                <a :href="`/tienda/${'@producto.Tienda?.TokenPublico'}`" class="text-xs text-brand-600 hover:underline">Ir a pagar al Carrito →</a>
+                <a :href="`/tienda/${'@producto.Tienda?.TokenPublico'}`" class="text-xs text-brand-500 hover:underline">Ir a pagar al Carrito →</a>
             </div>
         </div>
     }
