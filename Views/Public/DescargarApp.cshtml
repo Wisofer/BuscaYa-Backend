@@ -11,22 +11,100 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Descargar BuscaYa</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .bg-grid {
+            background-size: 30px 30px;
+            background-image: radial-gradient(circle, rgba(15, 23, 42, 0.03) 1px, transparent 1px);
+        }
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(24px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
 </head>
-<body class="min-h-screen bg-gradient-to-b from-base-200 to-base-100">
-    <div class="mx-auto max-w-lg px-4 py-12 text-center">
-        <h1 class="mb-2 text-3xl font-bold text-gray-800">BuscaYa</h1>
-        <p class="mb-8 text-gray-600">Encuentra productos en tiendas cerca de ti.</p>
-        <div class="card bg-base-100 shadow-lg">
-            <div class="card-body gap-4">
-                <p class="text-sm text-gray-600">En la mayoría de móviles te redirigimos automáticamente a la tienda correcta. Si no, elige abajo.</p>
-                @await Html.PartialAsync("_AppDownloadLinks")
+<body class="min-h-screen bg-[#F8FAFC] bg-grid flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    
+    <!-- Ambient Light Orbs for premium look -->
+    <div class="absolute top-[10%] left-[-10%] w-[600px] h-[600px] bg-gradient-to-tr from-blue-300/10 to-indigo-400/10 rounded-full blur-[120px] pointer-events-none"></div>
+    <div class="absolute bottom-[10%] right-[-10%] w-[600px] h-[600px] bg-gradient-to-br from-violet-300/10 to-purple-400/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+    <!-- Main Content Container with entry animations -->
+    <div class="w-full max-w-sm text-center z-10 animate-fade-in opacity-0">
+        
+        <!-- Card Container with overlapping icon -->
+        <div class="relative bg-white/70 backdrop-blur-2xl border border-white/60 rounded-[2.5rem] shadow-2xl shadow-slate-200/40 p-8 pt-16 mt-16">
+            
+            <!-- App Icon floating at the top -->
+            <div class="absolute -top-12 left-1/2 -translate-x-1/2 p-2 bg-[#F8FAFC] rounded-[2.2rem] shadow-xl shadow-slate-200/50 hover:scale-105 active:scale-98 transition duration-500 cursor-pointer">
+                <img src="/images/app_launcher_icon.png" alt="BuscaYa Icon" class="w-20 h-20 rounded-[1.65rem] object-cover" />
+            </div>
+
+            <!-- Heading -->
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight mb-1">BuscaYa</h1>
+            <p class="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest mb-6">Lleva el comercio en tu bolsillo</p>
+
+            <p class="text-slate-650 text-[13px] leading-relaxed mb-6 font-medium text-slate-600">
+                En la mayoría de teléfonos móviles te redirigiremos automáticamente. Si no, selecciona tu plataforma:
+            </p>
+
+            <!-- Buttons on the same line -->
+            <div class="flex gap-3 w-full justify-center">
+                @if (!string.IsNullOrEmpty(store))
+                {
+                    <a href="@store" target="_blank" rel="noopener noreferrer" class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-slate-950 hover:bg-slate-900 text-white rounded-2xl transition active:scale-[0.96] duration-200 shadow-md">
+                        <i class="bi bi-apple text-xl"></i>
+                        <div class="text-left leading-tight">
+                            <p class="text-[8px] uppercase tracking-wider font-semibold text-slate-400">Descargar</p>
+                            <p class="text-xs font-black">App Store</p>
+                        </div>
+                    </a>
+                }
+                
+                @if (!string.IsNullOrEmpty(play))
+                {
+                    <a href="@play" target="_blank" rel="noopener noreferrer" class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-slate-950 hover:bg-slate-900 text-white rounded-2xl transition active:scale-[0.96] duration-200 shadow-md">
+                        <i class="bi bi-google-play text-lg text-emerald-400"></i>
+                        <div class="text-left leading-tight">
+                            <p class="text-[8px] uppercase tracking-wider font-semibold text-slate-400">Disponible</p>
+                            <p class="text-xs font-black">Google Play</p>
+                        </div>
+                    </a>
+                }
+            </div>
+
+            <!-- Auto Redirect indicator -->
+            <div class="flex items-center justify-center gap-2 mt-6 py-2 px-4 bg-slate-50/80 border border-slate-100/50 rounded-xl text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Redirección Automática
             </div>
         </div>
-        <a href="/" class="btn btn-ghost btn-sm mt-6">Volver</a>
+
+        <!-- Volver Button with history back logic -->
+        <button onclick="goBack()" class="mt-8 inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-slate-50 border border-slate-200/60 text-slate-500 hover:text-slate-800 font-bold rounded-full shadow-sm text-xs active:scale-95 transition-all">
+            <i class="bi bi-arrow-left"></i>
+            Volver
+        </button>
     </div>
+
     <script>
+        function goBack() {
+            if (document.referrer && document.referrer.includes(window.location.host)) {
+                history.back();
+            } else {
+                window.location.href = '/';
+            }
+        }
+
         (function () {
             const play = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(play));
             const appStore = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(store));
