@@ -63,8 +63,8 @@
         [x-cloak] { display: none !important; }
         
         body {
-            background-color: #fcfcfd;
-            color: #1e293b;
+            background-color: #f8fafc;
+            color: #0f172a;
         }
 
         /* Ocultar barra de scroll nativa */
@@ -75,9 +75,15 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+
+        /* Grid Background Pattern */
+        .grid-bg {
+            background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
+        }
     </style>
 </head>
-<body class="antialiased selection:bg-brand-500 selection:text-white" 
+<body class="antialiased selection:bg-brand-500 selection:text-white min-h-screen flex flex-col justify-between" 
       x-data="catalogoStore({ 
           whatsappNum: '@tienda?.WhatsApp', 
           storeName: '@tienda?.Nombre', 
@@ -87,7 +93,7 @@
     @if (tienda == null)
     {
         <!-- Vista Tienda No Encontrada -->
-        <div class="min-h-screen flex items-center justify-center px-4">
+        <div class="min-h-screen flex items-center justify-center px-4 bg-slate-50">
             <div class="max-w-md w-full text-center bg-white border border-slate-100 p-8 rounded-3xl shadow-xl">
                 <div class="inline-flex p-4 bg-red-50 text-red-500 rounded-2xl mb-6">
                     <i data-lucide="store" class="w-12 h-12"></i>
@@ -103,244 +109,360 @@
     }
     else
     {
-        <!-- Banner Inteligente (Descargar App - Ultra-premium) -->
-        <div class="bg-white/80 border-b border-slate-100 text-slate-750 text-xs py-3 px-4 sticky top-0 z-50 backdrop-blur-md shadow-sm">
-            <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        <!-- Top Navbar Completo (Estilo Cowib) -->
+        <header class="sticky top-0 z-50 w-full bg-white/85 backdrop-blur-md border-b border-slate-100">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <!-- Branding BuscaYa + Comercio -->
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-500 to-blue-600 flex items-center justify-center shadow-sm text-white font-extrabold text-sm">
-                        B
-                    </div>
-                    <div>
-                        <p class="font-bold text-slate-900 text-xs">Descargar BuscaYa App</p>
-                        <p class="text-[10px] text-slate-500">Guarda tus comercios favoritos y recibe ofertas exclusivas</p>
+                    <a href="https://buscaya.encuentrame.org" class="flex items-center gap-2">
+                        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-500 to-blue-600 flex items-center justify-center shadow-md shadow-brand-500/20 text-white font-black text-base">
+                            B
+                        </div>
+                        <span class="font-extrabold text-slate-900 tracking-tight text-lg hidden sm:inline-block">BuscaYa</span>
+                    </a>
+                    
+                    <span class="w-[1px] h-5 bg-slate-200 hidden sm:inline-block"></span>
+                    
+                    <div class="flex items-center gap-2">
+                        @if (!string.IsNullOrEmpty(tienda.LogoUrl))
+                        {
+                            <img src="@tienda.LogoUrl" alt="Mini logo" class="w-6 h-6 rounded-full object-cover border border-slate-100" />
+                        }
+                        <span class="text-slate-700 font-bold text-sm max-w-[120px] sm:max-w-[200px] truncate">@tienda.Nombre</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <a href="@deepLink" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 active:scale-95 transition text-slate-700 font-semibold rounded-lg text-xs">
-                        Abrir
-                    </a>
-                    <a href="/descargar" class="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 active:scale-95 transition text-white font-semibold rounded-lg text-xs shadow-sm shadow-brand-500/10">
-                        Descargar
+
+                <!-- Navigation Links -->
+                <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-500">
+                    <a href="#catalogo" class="text-brand-500 hover:text-brand-600 transition">Catálogo</a>
+                    <a href="#contacto" class="hover:text-slate-900 transition">Contacto y Horarios</a>
+                    <a href="#nosotros" class="hover:text-slate-900 transition">Sobre Nosotros</a>
+                </nav>
+
+                <!-- Actions -->
+                <div class="flex items-center gap-3">
+                    <!-- Botón Carrito flotante en Navbar -->
+                    <button class="relative p-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl transition"
+                            @@click="cartOpen = true">
+                        <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                        <span class="absolute -top-1 -right-1 bg-brand-500 text-white font-extrabold text-[9px] w-4.5 h-4.5 rounded-full flex items-center justify-center shadow-sm"
+                              x-show="cartTotalCount() > 0"
+                              x-text="cartTotalCount()"></span>
+                    </button>
+
+                    <a href="/descargar" class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 bg-brand-500 hover:bg-brand-600 active:scale-95 transition-all text-white font-bold rounded-xl text-xs shadow-md shadow-brand-500/10">
+                        <i data-lucide="arrow-down-to-line" class="w-3.5 h-3.5"></i>
+                        Descargar App
                     </a>
                 </div>
             </div>
-        </div>
+        </header>
 
-        <div class="min-h-screen pb-24">
-            <!-- Portada de la Tienda (Sin bordes duros) -->
-            <div class="relative h-48 sm:h-64 md:h-80 w-full overflow-hidden bg-slate-100">
-                <div class="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/35 z-10"></div>
+        <!-- Main Wrapper -->
+        <main class="flex-grow">
+            <!-- Portada de la Tienda (Estilo Premium con Overlay de Degradado) -->
+            <div class="relative h-64 sm:h-80 md:h-[400px] w-full overflow-hidden bg-slate-900 grid-bg">
+                <div class="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-slate-950/40 to-slate-950/80 z-10"></div>
                 @if (!string.IsNullOrEmpty(tienda.FotoUrl))
                 {
-                    <img src="@tienda.FotoUrl" alt="@tienda.Nombre" class="w-full h-full object-cover scale-100" />
+                    <img src="@tienda.FotoUrl" alt="@tienda.Nombre" class="w-full h-full object-cover opacity-90 scale-100" />
                 }
                 else
                 {
-                    <div class="w-full h-full bg-gradient-to-tr from-slate-100 to-slate-200"></div>
+                    <div class="w-full h-full bg-gradient-to-br from-brand-700 via-slate-900 to-slate-950"></div>
                 }
-            </div>
 
-            <!-- Contenedor Principal (Estilo Perfil Editorial e Integrado) -->
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 -mt-16 sm:-mt-20">
-                <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-100">
-                    <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4 sm:gap-6">
-                        <!-- Logo Circular Flotante (Solapado) -->
-                        <div class="w-28 h-28 sm:w-36 sm:h-36 rounded-full border-4 border-white overflow-hidden bg-white shadow-xl flex-shrink-0 flex items-center justify-center relative z-30">
-                            @if (!string.IsNullOrEmpty(tienda.LogoUrl))
-                            {
-                                <img src="@tienda.LogoUrl" alt="Logo de @tienda.Nombre" class="w-full h-full object-cover" />
-                            }
-                            else
-                            {
-                                <span class="text-4xl font-extrabold text-brand-500">@tienda.Nombre.Substring(0, 1).ToUpper()</span>
-                            }
-                        </div>
+                <!-- Contenido solapado directamente sobre el Banner para look Premium (Estilo Web Cowib/Hero) -->
+                <div class="absolute inset-0 z-20 flex items-end">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pb-10 md:pb-12">
+                        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                            <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4 sm:gap-6">
+                                <!-- Logo Circular Overlapping -->
+                                <div class="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white/10 overflow-hidden bg-white/95 backdrop-blur shadow-2xl flex-shrink-0 flex items-center justify-center">
+                                    @if (!string.IsNullOrEmpty(tienda.LogoUrl))
+                                    {
+                                        <img src="@tienda.LogoUrl" alt="Logo de @tienda.Nombre" class="w-full h-full object-cover" />
+                                    }
+                                    else
+                                    {
+                                        <span class="text-3xl sm:text-4xl font-black text-brand-500">@tienda.Nombre.Substring(0, 1).ToUpper()</span>
+                                    }
+                                </div>
 
-                        <!-- Información Textual -->
-                        <div class="space-y-2.5">
-                            <div class="flex flex-wrap items-center gap-3">
-                                <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-                                    @tienda.Nombre
-                                    <i data-lucide="badge-check" class="w-7 h-7 text-brand-500 fill-brand-500/10"></i>
-                                </h1>
-                                
-                                @if (tienda.EstaAbierta)
-                                {
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                        Abierto
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-red-50 text-red-500 border border-red-100">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                                        Cerrado
-                                    </span>
-                                }
+                                <!-- Texto Hero -->
+                                <div class="space-y-2 text-white">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight flex items-center gap-2 text-white">
+                                            @tienda.Nombre
+                                            <i data-lucide="badge-check" class="w-6 h-6 text-blue-450 fill-blue-400"></i>
+                                        </h1>
+                                        @if (tienda.EstaAbierta)
+                                        {
+                                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 backdrop-blur-md">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                                Abierto
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/30 backdrop-blur-md">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                                                Cerrado
+                                            </span>
+                                        }
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(tienda.Descripcion))
+                                    {
+                                        <p class="text-slate-200 text-sm sm:text-base max-w-xl font-medium leading-relaxed opacity-90">@tienda.Descripcion</p>
+                                    }
+                                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm text-slate-350 pt-1">
+                                        <div class="flex items-center gap-1.5">
+                                            <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
+                                            <span>@tienda.Direccion</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            @if (!string.IsNullOrEmpty(tienda.Descripcion))
-                            {
-                                <p class="text-slate-600 text-sm sm:text-base max-w-2xl font-normal leading-relaxed">@tienda.Descripcion</p>
-                            }
-
-                            <!-- Ubicación, Distancia y Horarios -->
-                            <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs sm:text-sm text-slate-500">
-                                @if (!string.IsNullOrEmpty(tienda.DireccionCompleta))
+                            <!-- Botones de Acción sobre Banner -->
+                            <div class="flex gap-3 w-full md:w-auto self-stretch md:self-auto flex-wrap sm:flex-nowrap">
+                                @if (!string.IsNullOrEmpty(tienda.WhatsApp))
                                 {
-                                    <div class="flex items-center gap-1.5">
-                                        <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
-                                        <span>@tienda.DireccionCompleta</span>
-                                    </div>
+                                    var whatsappLink = BuscaYa.Utils.WhatsAppHelper.GenerarLinkSimple(tienda.WhatsApp);
+                                    <a href="@whatsappLink" target="_blank" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white font-bold rounded-2xl shadow-lg shadow-emerald-900/30 text-sm">
+                                        <i data-lucide="message-square" class="w-4.5 h-4.5"></i>
+                                        WhatsApp
+                                    </a>
                                 }
-                                @if (!string.IsNullOrEmpty(tienda.HorarioFormateado))
+                                @if (!string.IsNullOrEmpty(tienda.Telefono))
                                 {
-                                    <div class="flex items-center gap-1.5">
-                                        <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
-                                        <span>@tienda.HorarioFormateado</span>
-                                    </div>
+                                    <a href="tel:@tienda.Telefono" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur active:scale-95 transition-all text-white font-bold rounded-2xl border border-white/20 text-sm">
+                                        <i data-lucide="phone" class="w-4.5 h-4.5"></i>
+                                        Llamar
+                                    </a>
                                 }
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Botones de Acción (Estilo Limpio e Integrado) -->
-                    <div class="flex gap-3 w-full md:w-auto self-stretch md:self-auto flex-wrap sm:flex-nowrap">
-                        @if (!string.IsNullOrEmpty(tienda.WhatsApp))
-                        {
-                            var whatsappLink = BuscaYa.Utils.WhatsAppHelper.GenerarLinkSimple(tienda.WhatsApp);
-                            <a href="@whatsappLink" target="_blank" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white font-semibold rounded-2xl shadow-sm text-sm">
-                                <i data-lucide="message-square" class="w-4 h-4"></i>
-                                WhatsApp
-                            </a>
-                        }
-                        @if (!string.IsNullOrEmpty(tienda.Telefono))
-                        {
-                            <a href="tel:@tienda.Telefono" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 bg-white hover:bg-slate-50 active:scale-95 transition-all text-slate-700 font-semibold rounded-2xl border border-slate-200 text-sm shadow-sm">
-                                <i data-lucide="phone" class="w-4 h-4"></i>
-                                Llamar
-                            </a>
-                        }
                     </div>
                 </div>
+            </div>
 
-                <!-- Buscador y Barra de Categorías (Diseño Horizontal Flotante y Limpio) -->
-                <div class="mt-8 space-y-6">
-                    <!-- Buscador e input -->
-                    <div class="relative max-w-xl">
+            <!-- Contenido del Catálogo -->
+            <div id="catalogo" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <!-- Buscador e input -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                    <div class="relative w-full md:max-w-md">
                         <i data-lucide="search" class="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2"></i>
                         <input type="text" 
-                               placeholder="Buscar en el catálogo de la tienda..." 
+                               placeholder="Buscar en el catálogo..." 
                                x-model="searchQuery"
-                               class="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 rounded-2xl text-slate-900 placeholder-slate-400 outline-none transition-all shadow-sm text-sm" />
+                               class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 rounded-2xl text-slate-900 placeholder-slate-400 outline-none transition-all shadow-sm text-sm" />
                     </div>
 
-                    <!-- Categorías (Navegación horizontal fluida y elegante para todos los dispositivos) -->
-                    <div class="border-b border-slate-100 pb-2">
-                        <div class="flex overflow-x-auto gap-2 scrollbar-none py-1">
-                            <button class="px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300"
-                                    :class="categoriaSeleccionada === 'all' ? 'bg-brand-500 text-white shadow-sm' : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/60'"
-                                    @@click="categoriaSeleccionada = 'all'">
-                                Ver Todo
+                    <!-- Filtro Categorías Pills -->
+                    <div class="flex items-center gap-2 overflow-x-auto scrollbar-none py-1">
+                        <button class="px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-300"
+                                :class="categoriaSeleccionada === 'all' ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
+                                @@click="categoriaSeleccionada = 'all'">
+                            Ver Todo
+                        </button>
+                        <template x-for="cat in categorias" :key="cat">
+                            <button class="px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap capitalize transition-all duration-300"
+                                    :class="categoriaSeleccionada === cat ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
+                                    @@click="categoriaSeleccionada = cat"
+                                    x-text="cat">
                             </button>
-                            <template x-for="cat in categorias" :key="cat">
-                                <button class="px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap capitalize transition-all duration-300"
-                                        :class="categoriaSeleccionada === cat ? 'bg-brand-500 text-white shadow-sm' : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/60'"
-                                        @@click="categoriaSeleccionada = cat"
-                                        x-text="cat">
-                                </button>
-                            </template>
-                        </div>
+                        </template>
                     </div>
                 </div>
 
-                <!-- Catálogo de Productos (Grid elegante de 4 columnas) -->
-                <div class="mt-8">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-                        <template x-for="prod in filteredProducts()" :key="prod.id">
-                            <div class="group bg-white border border-slate-100 hover:border-slate-200 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between relative">
+                <!-- Grid de Productos -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                    <template x-for="prod in filteredProducts()" :key="prod.id">
+                        <div class="group bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative">
+                            
+                            <!-- Wrapper Link al Detalle del Producto (Soluciona la navegación al presionar) -->
+                            <a :href="'/producto/' + prod.tokenPublico" class="block cursor-pointer flex-grow">
+                                <!-- Imagen -->
+                                <div class="relative aspect-square w-full overflow-hidden bg-slate-50 flex items-center justify-center">
+                                    <template x-if="prod.enOferta">
+                                        <span class="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-lg z-10 tracking-wider shadow">
+                                            Oferta
+                                        </span>
+                                    </template>
+                                    
+                                    <template x-if="prod.fotoUrl">
+                                        <img :src="prod.fotoUrl" :alt="prod.nombre" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-500" />
+                                    </template>
+                                    <template x-if="!prod.fotoUrl">
+                                        <div class="flex flex-col items-center justify-center text-slate-300">
+                                            <i data-lucide="image" class="w-10 h-10"></i>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <!-- Detalles -->
+                                <div class="p-5 space-y-1.5">
+                                    <h4 class="font-bold text-slate-800 text-base group-hover:text-brand-500 transition-colors duration-300 line-clamp-1" x-text="prod.nombre"></h4>
+                                    <p class="text-slate-500 text-xs line-clamp-2 h-8 leading-relaxed" x-text="prod.descripcion || 'Sin descripción disponible.'"></p>
+                                </div>
+                            </a>
+
+                            <!-- Fila de Precios y Agregar -->
+                            <div class="p-5 pt-0 flex items-center justify-between gap-4 mt-auto">
                                 <div>
-                                    <!-- Contenedor Imagen con Aspect Ratio Premium -->
-                                    <div class="relative aspect-[4/3] w-full overflow-hidden bg-slate-50 flex items-center justify-center">
-                                        <!-- Badge de Oferta -->
-                                        <template x-if="prod.enOferta">
-                                            <span class="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-lg z-10 tracking-wider shadow">
-                                                Oferta
-                                            </span>
-                                        </template>
-                                        
-                                        <template x-if="prod.fotoUrl">
-                                            <img :src="prod.fotoUrl" :alt="prod.nombre" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-500" />
-                                        </template>
-                                        <template x-if="!prod.fotoUrl">
-                                            <div class="flex flex-col items-center justify-center text-slate-300">
-                                                <i data-lucide="image" class="w-10 h-10"></i>
-                                            </div>
-                                        </template>
-                                    </div>
-
-                                    <!-- Detalles del Producto -->
-                                    <div class="p-5 space-y-1.5">
-                                        <h4 class="font-bold text-slate-800 text-base group-hover:text-brand-500 transition-colors duration-300 line-clamp-1" x-text="prod.nombre"></h4>
-                                        <p class="text-slate-500 text-xs line-clamp-2 h-8 leading-relaxed" x-text="prod.descripcion || 'Sin descripción disponible.'"></p>
-                                    </div>
+                                    <template x-if="prod.enOferta && prod.precioAnterior">
+                                        <div class="flex flex-col">
+                                            <span class="text-slate-450 line-through text-xs" x-text="`${prod.moneda} ${parseFloat(prod.precioAnterior).toFixed(2)}`"></span>
+                                            <span class="text-brand-500 font-extrabold text-base" x-text="`${prod.moneda} ${parseFloat(prod.precio).toFixed(2)}`"></span>
+                                        </div>
+                                    </template>
+                                    <template x-if="!(prod.enOferta && prod.precioAnterior)">
+                                        <span class="text-brand-500 font-extrabold text-base" x-text="prod.precio ? `${prod.moneda} ${parseFloat(prod.precio).toFixed(2)}` : 'Consultar'"></span>
+                                    </template>
                                 </div>
 
-                                <!-- Fila Inferior con Precios y Acción -->
-                                <div class="p-5 pt-0 flex items-center justify-between gap-4 mt-auto">
-                                    <div>
-                                        <template x-if="prod.enOferta && prod.precioAnterior">
-                                            <div class="flex flex-col">
-                                                <span class="text-slate-400 line-through text-xs" x-text="`${prod.moneda} ${parseFloat(prod.precioAnterior).toFixed(2)}`"></span>
-                                                <span class="text-brand-500 font-extrabold text-base sm:text-lg" x-text="`${prod.moneda} ${parseFloat(prod.precio).toFixed(2)}`"></span>
-                                            </div>
-                                        </template>
-                                        <template x-if="!(prod.enOferta && prod.precioAnterior)">
-                                            <span class="text-brand-500 font-extrabold text-base sm:text-lg" x-text="prod.precio ? `${prod.moneda} ${parseFloat(prod.precio).toFixed(2)}` : 'Consultar'"></span>
-                                        </template>
-                                    </div>
-
-                                    <!-- Botón Agregar con Icono Elegante -->
-                                    <button class="inline-flex items-center gap-1.5 px-3 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs transition active:scale-95 shadow-sm shadow-brand-500/10"
-                                            @@click="addToCart(prod)">
-                                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                                        Agregar
-                                    </button>
-                                </div>
+                                <button class="inline-flex items-center gap-1.5 px-3 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs transition active:scale-95 shadow-sm shadow-brand-500/10"
+                                        @@click="addToCart(prod)">
+                                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                    Agregar
+                                </button>
                             </div>
-                        </template>
-
-                        <!-- Estado Vacío -->
-                        <div class="col-span-full py-20 text-center" x-show="filteredProducts().length === 0" x-cloak>
-                            <div class="inline-flex p-4 bg-slate-50 text-slate-400 rounded-full mb-4 border border-slate-100">
-                                <i data-lucide="search" class="w-7 h-7"></i>
-                            </div>
-                            <h4 class="text-lg font-bold text-slate-800">No se encontraron productos</h4>
-                            <p class="text-slate-500 text-sm mt-1">Intenta realizar otra búsqueda o cambia de categoría.</p>
                         </div>
+                    </template>
+
+                    <!-- Estado Vacío -->
+                    <div class="col-span-full py-20 text-center" x-show="filteredProducts().length === 0" x-cloak>
+                        <div class="inline-flex p-4 bg-slate-50 text-slate-400 rounded-full mb-4 border border-slate-100">
+                            <i data-lucide="search" class="w-7 h-7"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-slate-800">No se encontraron productos</h4>
+                        <p class="text-slate-500 text-sm mt-1">Intenta realizar otra búsqueda o cambia de categoría.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Footer y Descarga de App -->
-            <div class="max-w-xl mx-auto px-4 mt-20 text-center">
-                <div class="bg-white border border-slate-150 p-8 rounded-3xl shadow-sm">
-                    <h3 class="font-bold text-lg text-slate-900 mb-2">¿Quieres ver este negocio en tu celular?</h3>
-                    <p class="text-slate-500 text-sm mb-6">Descarga BuscaYa para guardar favoritos, ver horarios actualizados y chatear con comercios de forma nativa.</p>
-                    <div class="flex items-center justify-center gap-4 flex-wrap">
-                        <a href="https://play.google.com/store/apps/details?id=com.buscaya.app" target="_blank" class="h-10 opacity-90 hover:opacity-100 transition">
+            <!-- Sección de Contacto e Info (Estilo Landing Page Cowib) -->
+            <section id="contacto" class="bg-white border-t border-b border-slate-100 py-16">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                        <!-- Detalles de contacto -->
+                        <div class="space-y-6">
+                            <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Información de Contacto</h2>
+                            <p class="text-slate-500 text-sm">¿Tienes alguna duda o quieres hacer un pedido especial? Ponte en contacto con nosotros directamente.</p>
+                            
+                            <div class="space-y-4 text-slate-600 text-sm">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2.5 bg-brand-50 text-brand-500 rounded-xl">
+                                        <i data-lucide="phone" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-xs text-slate-400 uppercase">Teléfono</p>
+                                        <p class="font-semibold">@tienda.Telefono</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2.5 bg-emerald-50 text-emerald-650 rounded-xl">
+                                        <i data-lucide="message-circle" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-xs text-slate-400 uppercase">WhatsApp</p>
+                                        <p class="font-semibold">@tienda.WhatsApp</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2.5 bg-slate-50 text-slate-500 rounded-xl">
+                                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-xs text-slate-400 uppercase">Dirección</p>
+                                        <p class="font-semibold">@tienda.Direccion, @tienda.Ciudad, @tienda.Departamento</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Horarios de atención -->
+                        <div class="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                            <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                <i data-lucide="clock" class="w-5 h-5 text-slate-500"></i>
+                                Horarios de Atención
+                            </h3>
+                            <div class="space-y-3 text-sm text-slate-600">
+                                <div class="flex justify-between py-2 border-b border-slate-200/60">
+                                    <span class="font-semibold text-slate-700">Días de Atención:</span>
+                                    <span>@(tienda.DiasAtencion ?? "No especificado")</span>
+                                </div>
+                                <div class="flex justify-between py-2 border-b border-slate-200/60">
+                                    <span class="font-semibold text-slate-700">Hora de Apertura:</span>
+                                    <span>@(tienda.HorarioApertura.HasValue ? tienda.HorarioApertura.Value.ToString(@"hh\:mm") : "No especificado")</span>
+                                </div>
+                                <div class="flex justify-between py-2">
+                                    <span class="font-semibold text-slate-700">Hora de Cierre:</span>
+                                    <span>@(tienda.HorarioCierre.HasValue ? tienda.HorarioCierre.Value.ToString(@"hh\:mm") : "No especificado")</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer Completo Premium (Estilo Cowib) -->
+        <footer class="bg-slate-900 text-slate-450 py-16 border-t border-slate-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Info de la Marca -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 text-white">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-500 to-blue-600 flex items-center justify-center text-white font-black text-sm">
+                            B
+                        </div>
+                        <span class="font-extrabold text-lg tracking-tight">BuscaYa</span>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Transformamos el comercio local en Nicaragua con catálogos digitales interactivos y autogestionables de alta velocidad.
+                    </p>
+                </div>
+
+                <!-- Enlaces Rápidos -->
+                <div>
+                    <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-4">Catálogo</h4>
+                    <ul class="space-y-2 text-xs">
+                        <li><a href="#catalogo" class="hover:text-white transition">Productos</a></li>
+                        <li><a href="#contacto" class="hover:text-white transition">Contacto</a></li>
+                        <li><a href="https://buscaya.encuentrame.org" class="hover:text-white transition">Explorar más tiendas</a></li>
+                    </ul>
+                </div>
+
+                <!-- Soporte y Legal -->
+                <div>
+                    <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-4">Enlaces de Interés</h4>
+                    <ul class="space-y-2 text-xs">
+                        <li><a href="/descargar" class="hover:text-white transition">Descargar App Móvil</a></li>
+                        <li><a href="/terminos" class="hover:text-white transition">Términos de Servicio</a></li>
+                        <li><a href="/privacidad" class="hover:text-white transition">Política de Privacidad</a></li>
+                    </ul>
+                </div>
+
+                <!-- Descarga directa -->
+                <div class="space-y-4">
+                    <h4 class="text-xs font-bold text-white uppercase tracking-wider">Lleva el comercio en tu bolsillo</h4>
+                    <div class="flex flex-col gap-2">
+                        <a href="https://play.google.com/store/apps/details?id=com.buscaya.app" target="_blank" class="h-9 opacity-85 hover:opacity-100 transition">
                             <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" class="h-full object-contain" />
                         </a>
-                        <a href="https://apps.apple.com/app/id6762116740" target="_blank" class="h-10 opacity-90 hover:opacity-100 transition">
+                        <a href="https://apps.apple.com/app/id6762116740" target="_blank" class="h-9 opacity-85 hover:opacity-100 transition">
                             <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" class="h-full object-contain" />
                         </a>
                     </div>
                 </div>
-                
-                <p class="text-slate-400 text-xs mt-10">© @DateTime.Now.Year BuscaYa. Todos los derechos reservados.</p>
             </div>
-        </div>
+
+            <!-- Fila Copyright -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 mt-8 border-t border-slate-800 text-center text-[10px] text-slate-500">
+                <p>© @DateTime.Now.Year BuscaYa. Todos los derechos reservados. Nicaragua.</p>
+            </div>
+        </footer>
 
         <!-- Carrito de Compras Flotante (Rediseño Circular Elegante) -->
         <div class="fixed bottom-6 right-6 z-40" x-show="cart.length > 0" x-transition x-cloak>
@@ -398,7 +520,7 @@
                                         <img :src="item.fotoUrl" class="w-full h-full object-cover" />
                                     </template>
                                     <template x-if="!item.fotoUrl">
-                                        <i data-lucide="image" class="w-6 h-6 text-slate-350"></i>
+                                        <i data-lucide="image" class="w-6 h-6 text-slate-355"></i>
                                     </template>
                                 </div>
 
@@ -429,7 +551,7 @@
 
                     <!-- Checkout Box -->
                     <div class="p-6 border-t border-slate-100 bg-slate-50/50 space-y-4">
-                        <div class="flex items-center justify-between text-slate-555 text-sm">
+                        <div class="flex items-center justify-between text-slate-500 text-sm">
                             <span>Artículos:</span>
                             <span class="text-slate-900 font-bold" x-text="cartTotalCount()"></span>
                         </div>

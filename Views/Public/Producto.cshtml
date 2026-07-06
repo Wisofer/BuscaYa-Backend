@@ -64,12 +64,12 @@
         [x-cloak] { display: none !important; }
         
         body {
-            background-color: #fcfcfd;
-            color: #1e293b;
+            background-color: #f8fafc;
+            color: #0f172a;
         }
     </style>
 </head>
-<body class="antialiased" 
+<body class="antialiased min-h-screen flex flex-col justify-between" 
       x-data="productoDetail({ 
           storeId: '@producto?.TiendaId',
           prodId: '@producto?.Id',
@@ -82,7 +82,7 @@
     @if (producto == null)
     {
         <!-- Vista Producto No Encontrado -->
-        <div class="min-h-screen flex items-center justify-center px-4">
+        <div class="min-h-screen flex items-center justify-center px-4 bg-slate-50">
             <div class="max-w-md w-full text-center bg-white border border-slate-100 p-8 rounded-3xl shadow-xl">
                 <div class="inline-flex p-4 bg-red-50 text-red-500 rounded-2xl mb-6">
                     <i data-lucide="package-x" class="w-12 h-12"></i>
@@ -98,30 +98,47 @@
     }
     else
     {
-        <!-- Banner Inteligente (Descargar App - Ultra-premium) -->
-        <div class="bg-white/80 border-b border-slate-100 text-slate-750 text-xs py-3 px-4 sticky top-0 z-50 backdrop-blur-md shadow-sm">
-            <div class="max-w-5xl mx-auto flex items-center justify-between gap-4">
+        <!-- Top Navbar Completo (Estilo Cowib) -->
+        <header class="sticky top-0 z-50 w-full bg-white/85 backdrop-blur-md border-b border-slate-100">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <!-- Branding BuscaYa + Comercio -->
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-500 to-blue-600 flex items-center justify-center shadow-sm text-white font-extrabold text-sm">
-                        B
-                    </div>
-                    <div>
-                        <p class="font-bold text-slate-900 text-xs">Descargar BuscaYa App</p>
-                        <p class="text-[10px] text-slate-500">Notificaciones de stock y ofertas al instante</p>
+                    <a href="https://buscaya.encuentrame.org" class="flex items-center gap-2">
+                        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-500 to-blue-600 flex items-center justify-center shadow-md shadow-brand-500/20 text-white font-black text-base">
+                            B
+                        </div>
+                        <span class="font-extrabold text-slate-900 tracking-tight text-lg hidden sm:inline-block">BuscaYa</span>
+                    </a>
+                    
+                    <span class="w-[1px] h-5 bg-slate-200 hidden sm:inline-block"></span>
+                    
+                    <div class="flex items-center gap-2">
+                        @if (producto.Tienda != null && !string.IsNullOrEmpty(producto.Tienda.LogoUrl))
+                        {
+                            <img src="@producto.Tienda.LogoUrl" alt="Mini logo" class="w-6 h-6 rounded-full object-cover border border-slate-100" />
+                        }
+                        <span class="text-slate-700 font-bold text-sm max-w-[120px] sm:max-w-[200px] truncate">@(producto.Tienda?.Nombre ?? "Tienda")</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <a href="@deepLink" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 active:scale-95 transition text-slate-700 font-semibold rounded-lg text-xs">
-                        Abrir
-                    </a>
-                    <a href="/descargar" class="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 active:scale-95 transition text-white font-semibold rounded-lg text-xs shadow-sm shadow-brand-500/10">
-                        Descargar
+
+                <!-- Navigation Links -->
+                <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-500">
+                    <a href="/tienda/@producto.Tienda?.TokenPublico" class="hover:text-slate-900 transition">Catálogo</a>
+                    <a href="/tienda/@producto.Tienda?.TokenPublico#contacto" class="hover:text-slate-900 transition">Contacto</a>
+                </nav>
+
+                <!-- Actions -->
+                <div class="flex items-center gap-3">
+                    <a href="/descargar" class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 bg-brand-500 hover:bg-brand-600 active:scale-95 transition-all text-white font-bold rounded-xl text-xs shadow-md shadow-brand-500/10">
+                        <i data-lucide="arrow-down-to-line" class="w-3.5 h-3.5"></i>
+                        Descargar App
                     </a>
                 </div>
             </div>
-        </div>
+        </header>
 
-        <div class="min-h-screen pb-16 pt-6">
+        <!-- Main Wrapper -->
+        <main class="flex-grow py-12">
             <div class="max-w-5xl mx-auto px-4">
                 <!-- Botón de regreso a la tienda -->
                 @if (producto.Tienda != null)
@@ -135,7 +152,7 @@
                 }
 
                 <!-- Contenedor Principal del Producto (Diseño de Columna y Fila Elegante) -->
-                <div class="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xl grid grid-cols-1 md:grid-cols-12 gap-8 p-6 md:p-8">
+                <div class="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm grid grid-cols-1 md:grid-cols-12 gap-8 p-6 md:p-8">
                     <!-- Columna Izquierda: Imagen del Producto (5 columnas de ancho) -->
                     <div class="md:col-span-5 relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center border border-slate-100">
                         @if (producto.EnOferta)
@@ -214,7 +231,7 @@
 
                             @if (!string.IsNullOrEmpty(whatsappUrl))
                             {
-                                <a href="@whatsappUrl" target="_blank" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all text-white font-bold rounded-2xl flex items-center justify-center gap-3 shadow-md shadow-emerald-700/10">
+                                <a href="@whatsappUrl" target="_blank" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all text-white font-bold rounded-2xl flex items-center justify-center gap-3 shadow-md shadow-emerald-750/10">
                                     <i data-lucide="message-square" class="w-5 h-5"></i>
                                     Preguntar por WhatsApp
                                 </a>
@@ -250,13 +267,69 @@
                             </div>
                         </div>
                         
-                        <a href="/tienda/@producto.Tienda.TokenPublico" class="w-full sm:w-auto text-center px-5 py-2.5 bg-slate-100 hover:bg-slate-200 active:scale-95 transition text-slate-750 font-semibold rounded-xl text-sm border border-slate-200 shadow-sm">
+                        <a href="/tienda/@producto.Tienda.TokenPublico" class="w-full sm:w-auto text-center px-5 py-2.5 bg-slate-100 hover:bg-slate-200 active:scale-95 transition text-slate-755 font-semibold rounded-xl text-sm border border-slate-200 shadow-sm">
                             Ver Catálogo Completo
                         </a>
                     </div>
                 }
             </div>
-        </div>
+        </main>
+
+        <!-- Footer Completo Premium (Estilo Cowib) -->
+        <footer class="bg-slate-900 text-slate-450 py-16 border-t border-slate-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Info de la Marca -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 text-white">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-500 to-blue-600 flex items-center justify-center text-white font-black text-sm">
+                            B
+                        </div>
+                        <span class="font-extrabold text-lg tracking-tight">BuscaYa</span>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Transformamos el comercio local en Nicaragua con catálogos digitales interactivos y autogestionables de alta velocidad.
+                    </p>
+                </div>
+
+                <!-- Enlaces Rápidos -->
+                <div>
+                    <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-4">Catálogo</h4>
+                    <ul class="space-y-2 text-xs">
+                        <li><a href="/tienda/@producto.Tienda?.TokenPublico" class="hover:text-white transition">Catálogo de la Tienda</a></li>
+                        <li><a href="/tienda/@producto.Tienda?.TokenPublico#contacto" class="hover:text-white transition">Contacto</a></li>
+                        <li><a href="https://buscaya.encuentrame.org" class="hover:text-white transition">Explorar más tiendas</a></li>
+                    </ul>
+                </div>
+
+                <!-- Soporte y Legal -->
+                <div>
+                    <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-4">Enlaces de Interés</h4>
+                    <ul class="space-y-2 text-xs">
+                        <li><a href="/descargar" class="hover:text-white transition">Descargar App Móvil</a></li>
+                        <li><a href="/terminos" class="hover:text-white transition">Términos de Servicio</a></li>
+                        <li><a href="/privacidad" class="hover:text-white transition">Política de Privacidad</a></li>
+                    </ul>
+                </div>
+
+                <!-- Descarga directa -->
+                <div class="space-y-4">
+                    <h4 class="text-xs font-bold text-white uppercase tracking-wider">Lleva el comercio en tu bolsillo</h4>
+                    <div class="flex flex-col gap-2">
+                        <a href="https://play.google.com/store/apps/details?id=com.buscaya.app" target="_blank" class="h-9 opacity-85 hover:opacity-100 transition">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" class="h-full object-contain" />
+                        </a>
+                        <a href="https://apps.apple.com/app/id6762116740" target="_blank" class="h-9 opacity-85 hover:opacity-100 transition">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" class="h-full object-contain" />
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fila Copyright -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 mt-8 border-t border-slate-800 text-center text-[10px] text-slate-500">
+                <p>© @DateTime.Now.Year BuscaYa. Todos los derechos reservados. Nicaragua.</p>
+            </div>
+        </footer>
 
         <!-- Toast de Notificación Exito (Alpine.js) -->
         <div class="fixed bottom-6 right-6 z-50 bg-white border border-slate-100 text-slate-900 px-5 py-4 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300"
