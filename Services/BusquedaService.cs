@@ -116,6 +116,7 @@ public class BusquedaService : IBusquedaService
                 PrecioAnterior = p.PrecioAnterior,
                 PorcentajeDescuento = ProductoHelper.CalcularPorcentajeDescuento(p.Precio, p.PrecioAnterior),
                 FotoUrl = p.FotoUrl,
+                TokenPublico = p.TokenPublico,
                 Tienda = new TiendaInfoResponse
                 {
                     Id = p.Tienda.Id,
@@ -134,7 +135,8 @@ public class BusquedaService : IBusquedaService
                     DiasAtencion = p.Tienda.DiasAtencion,
                     HorarioApertura = p.Tienda.HorarioApertura?.ToString(@"hh\:mm"),
                     HorarioCierre = p.Tienda.HorarioCierre?.ToString(@"hh\:mm"),
-                    Descripcion = p.Tienda.Descripcion
+                    Descripcion = p.Tienda.Descripcion,
+                    TokenPublico = p.Tienda.TokenPublico
                 },
                 Categoria = new CategoriaInfoResponse
                 {

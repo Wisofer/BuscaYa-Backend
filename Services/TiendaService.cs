@@ -198,7 +198,7 @@ public class TiendaService : ITiendaService
             EstaAbiertaManual = request.EstaAbiertaManual,
             Plan = SD.PlanFree,
             Activo = true,
-            TokenPublico = TokenHelper.GenerarToken(10),
+            TokenPublico = TokenHelper.GenerarToken(24),
             UsuarioId = usuarioId
         };
 

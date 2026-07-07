@@ -8,7 +8,7 @@ public static class TokenHelper
     private static readonly char[] Alphabet = 
         "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
 
-    public static string GenerarToken(int size = 10)
+    public static string GenerarToken(int size = 24)
     {
         var result = new StringBuilder(size);
         for (int i = 0; i < size; i++)

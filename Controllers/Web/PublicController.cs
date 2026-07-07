@@ -58,8 +58,17 @@ public class PublicController : Controller
         {
             var producto = _productoService.ObtenerPorToken(token);
             
-            if (producto == null || !producto.Activo)
+            if (producto == null)
             {
+                return View("ProductoNoEncontrado");
+            }
+
+            if (!producto.Activo)
+            {
+                if (producto.Tienda != null && producto.Tienda.Activo && !string.IsNullOrEmpty(producto.Tienda.TokenPublico))
+                {
+                    return RedirectToAction("VerTienda", new { token = producto.Tienda.TokenPublico, mensaje = "producto_no_disponible" });
+                }
                 return View("ProductoNoEncontrado");
             }
 

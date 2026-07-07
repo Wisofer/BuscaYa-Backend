@@ -85,7 +85,7 @@ public class ProductoService : IProductoService
             CategoriaId = request.CategoriaId,
             FotoUrl = imagenPrincipal,
             Activo = true,
-            TokenPublico = TokenHelper.GenerarToken(10)
+            TokenPublico = TokenHelper.GenerarToken(24)
         };
 
         _context.Productos.Add(producto);

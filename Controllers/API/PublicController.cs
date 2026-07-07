@@ -291,7 +291,8 @@ public class PublicController : ControllerBase
                 EstaAbierta = t.EstaAbiertaManual,
                 t.CalificacionPromedio,
                 t.TotalCalificaciones,
-                t.FavoritosCount
+                t.FavoritosCount,
+                TokenPublico = t.TokenPublico
             });
 
             return Ok(response);

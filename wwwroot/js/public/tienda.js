@@ -10,10 +10,26 @@ function catalogoStore(config) {
         cart: [],
         categorias: [],
         isLoading: true, // Para el Skeleton Loader
+        toastShow: false,
+        toastMessage: '',
 
         products: config.products || [],
 
         init() {
+            // Verificar parámetro de redirección de producto no disponible
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('mensaje') === 'producto_no_disponible') {
+                this.toastMessage = 'El producto que buscas ya no está disponible, pero puedes explorar otras opciones en esta tienda.';
+                this.toastShow = true;
+                setTimeout(() => {
+                    this.toastShow = false;
+                }, 5000);
+                
+                // Limpiar el parámetro de la URL sin recargar la página
+                const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+            }
+
             // Simular carga de red para Skeleton (800ms)
             setTimeout(() => {
                 this.isLoading = false;

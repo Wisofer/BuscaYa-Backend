@@ -1009,6 +1009,32 @@
         <i data-lucide="arrow-up" class="w-5 h-5"></i>
     </button>
 
+    <!-- Toast de Alerta (Glassmorphic) -->
+    <div class="fixed top-24 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-sm px-4 pointer-events-none"
+         x-show="toastShow"
+         x-transition:enter="transition ease-out duration-300 transform"
+         x-transition:enter-start="-translate-y-12 opacity-0 scale-95"
+         x-transition:enter-end="translate-y-0 opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-200 transform"
+         x-transition:leave-start="translate-y-0 opacity-100 scale-100"
+         x-transition:leave-end="-translate-y-12 opacity-0 scale-95"
+         style="display: none;"
+         x-cloak>
+        <div class="pointer-events-auto relative overflow-hidden rounded-2xl border border-white/40 bg-white/70 backdrop-blur-xl p-4 shadow-2xl shadow-slate-900/10 flex items-start gap-3">
+            <div class="absolute inset-0 bg-gradient-to-tr from-white/10 via-white/20 to-white/5 pointer-events-none"></div>
+            <div class="p-2 bg-amber-50 text-amber-500 rounded-xl border border-amber-100 flex-shrink-0">
+                <i data-lucide="info" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-grow pr-4">
+                <h5 class="text-xs font-extrabold text-slate-900 tracking-tight">Producto no disponible</h5>
+                <p class="text-[10px] text-slate-500 leading-tight mt-0.5" x-text="toastMessage"></p>
+            </div>
+            <button @@click="toastShow = false" class="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-950/5 transition flex-shrink-0">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+        </div>
+    </div>
+
     <!-- Script de Inicialización de Alpine.js para la lógica del Catálogo -->
     <script src="~/js/public/tienda.js?v=@(DateTime.Now.Ticks)"></script>
     <script>
