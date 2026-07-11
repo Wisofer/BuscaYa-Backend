@@ -93,6 +93,7 @@ public class TiendaService : ITiendaService
             TotalCalificaciones = tienda.TotalCalificaciones,
             FavoritosCount = tienda.FavoritosCount,
             TokenPublico = tienda.TokenPublico,
+            Slug = tienda.Slug,
             Productos = tienda.Productos.Select(p => new ProductoSimpleResponse
             {
                 Id = p.Id,
@@ -104,7 +105,8 @@ public class TiendaService : ITiendaService
                 PorcentajeDescuento = ProductoHelper.CalcularPorcentajeDescuento(p.Precio, p.PrecioAnterior),
                 FotoUrl = p.FotoUrl,
                 CategoriaNombre = p.Categoria?.Nombre,
-                TokenPublico = p.TokenPublico
+                TokenPublico = p.TokenPublico,
+                Slug = p.Slug
             }).ToList()
         };
 
@@ -124,6 +126,16 @@ public class TiendaService : ITiendaService
             .Include(t => t.Productos.Where(p => p.Activo))
             .ThenInclude(p => p.Categoria)
             .FirstOrDefault(t => t.TokenPublico == token);
+        if (tienda == null) return null;
+        return ObtenerDetallePorSlug(tienda.Slug, latUsuario, lngUsuario);
+    }
+
+    public TiendaResponse? ObtenerDetallePorSlug(string slug, decimal? latUsuario = null, decimal? lngUsuario = null)
+    {
+        var tienda = _context.Tiendas
+            .Include(t => t.Productos.Where(p => p.Activo))
+            .ThenInclude(p => p.Categoria)
+            .FirstOrDefault(t => t.Slug == slug && t.Activo);
             
         if (tienda == null) return null;
 
@@ -151,6 +163,7 @@ public class TiendaService : ITiendaService
             TotalCalificaciones = tienda.TotalCalificaciones,
             FavoritosCount = tienda.FavoritosCount,
             TokenPublico = tienda.TokenPublico,
+            Slug = tienda.Slug,
             Productos = tienda.Productos.Select(p => new ProductoSimpleResponse
             {
                 Id = p.Id,
@@ -162,7 +175,8 @@ public class TiendaService : ITiendaService
                 PorcentajeDescuento = ProductoHelper.CalcularPorcentajeDescuento(p.Precio, p.PrecioAnterior),
                 FotoUrl = p.FotoUrl,
                 CategoriaNombre = p.Categoria?.Nombre,
-                TokenPublico = p.TokenPublico
+                TokenPublico = p.TokenPublico,
+                Slug = p.Slug
             }).ToList()
         };
 
@@ -199,6 +213,7 @@ public class TiendaService : ITiendaService
             Plan = SD.PlanFree,
             Activo = true,
             TokenPublico = TokenHelper.GenerarToken(24),
+            Slug = SlugHelper.GenerarUnico(request.Nombre, _context.Tiendas, t => t.Slug),
             UsuarioId = usuarioId
         };
 

@@ -51,6 +51,16 @@ public class ProductoService : IProductoService
             .FirstOrDefault(p => p.TokenPublico == token);
     }
 
+    public Producto? ObtenerPorSlug(string tiendaSlug, string productoSlug)
+    {
+        return _context.Productos
+            .Include(p => p.Tienda)
+            .Include(p => p.Categoria)
+            .Include(p => p.Imagenes.OrderBy(i => i.Orden))
+            .AsNoTracking()
+            .FirstOrDefault(p => p.Slug == productoSlug && p.Tienda.Slug == tiendaSlug);
+    }
+
     public Producto Crear(int tiendaId, CrearProductoRequest request)
     {
         // Verificar límite de productos según plan
@@ -73,6 +83,10 @@ public class ProductoService : IProductoService
         // }
 
         var imagenPrincipal = request.FotoUrl ?? request.ImagenesUrls?.FirstOrDefault();
+        var slugBase = SlugHelper.GenerarUnico(
+            request.Nombre,
+            _context.Productos.Where(p => p.TiendaId == tiendaId),
+            p => p.Slug);
         var producto = new Producto
         {
             TiendaId = tiendaId,
@@ -85,7 +99,8 @@ public class ProductoService : IProductoService
             CategoriaId = request.CategoriaId,
             FotoUrl = imagenPrincipal,
             Activo = true,
-            TokenPublico = TokenHelper.GenerarToken(24)
+            TokenPublico = TokenHelper.GenerarToken(24),
+            Slug = slugBase
         };
 
         _context.Productos.Add(producto);

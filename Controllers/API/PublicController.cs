@@ -332,7 +332,7 @@ public class PublicController : ControllerBase
                 });
             }
 
-            var url = $"https://buscaya.encuentrame.org/tienda/{id}";
+            var url = $"https://buscaya.encuentrame.org/s/{tienda.Slug}";
 
             // Generar código QR utilizando QRCoder.PngByteQRCode
             using var qrGenerator = new QRCoder.QRCodeGenerator();
@@ -378,6 +378,241 @@ public class PublicController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { error = "Error al registrar evento", mensaje = ex.Message });
+        }
+    }
+    /// <summary>
+    /// Obtiene el detalle de una tienda por su token público.
+    /// Diseñado para el SSR de Next.js — no requiere JWT.
+    /// GET /api/public/tienda/token/{token}
+    /// </summary>
+    [HttpGet("tienda/token/{token}")]
+    [AllowAnonymous]
+    public IActionResult ObtenerTiendaPorToken(string token)
+    {
+        try
+        {
+            var tienda = _tiendaService.ObtenerDetallePorToken(token);
+            if (tienda == null)
+                return NotFound(new { error = "Tienda no encontrada" });
+
+            return Ok(tienda);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error al obtener la tienda", mensaje = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Obtiene el detalle de una tienda por su slug.
+    /// Diseñado para el SSR de Next.js — no requiere JWT.
+    /// GET /api/public/s/{slug}
+    /// </summary>
+    [HttpGet("s/{slug}")]
+    [AllowAnonymous]
+    public IActionResult ObtenerTiendaPorSlug(string slug)
+    {
+        try
+        {
+            var tienda = _tiendaService.ObtenerDetallePorSlug(slug);
+            if (tienda == null)
+                return NotFound(new { error = "Negocio no encontrado" });
+
+            return Ok(tienda);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error al obtener el negocio", mensaje = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Obtiene el detalle de un producto por slug de tienda + slug de producto.
+    /// Diseñado para el SSR de Next.js — no requiere JWT.
+    /// GET /api/public/s/{tiendaSlug}/{productoSlug}
+    /// </summary>
+    [HttpGet("s/{tiendaSlug}/{productoSlug}")]
+    [AllowAnonymous]
+    public IActionResult ObtenerProductoPorSlug(string tiendaSlug, string productoSlug)
+    {
+        try
+        {
+            var producto = _productoService.ObtenerPorSlug(tiendaSlug, productoSlug);
+            if (producto == null)
+                return NotFound(new { error = "Producto no encontrado" });
+
+            if (!producto.Activo)
+            {
+                if (producto.Tienda != null && producto.Tienda.Activo && !string.IsNullOrEmpty(producto.Tienda.Slug))
+                    return Ok(new { redirigir = true, slugTienda = producto.Tienda.Slug });
+
+                return NotFound(new { error = "Producto no disponible" });
+            }
+
+            if (producto.Tienda == null || !producto.Tienda.Activo)
+                return NotFound(new { error = "Negocio no encontrado o inactivo" });
+
+            var whatsappUrl = WhatsAppHelper.GenerarLinkProducto(
+                producto.Tienda.WhatsApp,
+                producto.Nombre,
+                producto.Precio,
+                producto.Moneda ?? "C$"
+            );
+
+            var galeriaUrls = new List<string>();
+            if (!string.IsNullOrEmpty(producto.FotoUrl))
+                galeriaUrls.Add(producto.FotoUrl);
+            if (producto.Imagenes != null)
+            {
+                var otras = producto.Imagenes.OrderBy(i => i.Orden).Select(i => i.Url).Where(u => u != producto.FotoUrl).ToList();
+                galeriaUrls.AddRange(otras);
+            }
+
+            var response = new ProductoResponse
+            {
+                Id = producto.Id,
+                Nombre = producto.Nombre,
+                Descripcion = producto.Descripcion,
+                Precio = producto.Precio,
+                Moneda = producto.Moneda ?? "C$",
+                EnOferta = producto.EnOferta,
+                PrecioAnterior = producto.PrecioAnterior,
+                PorcentajeDescuento = ProductoHelper.CalcularPorcentajeDescuento(producto.Precio, producto.PrecioAnterior),
+                FotoUrl = producto.FotoUrl,
+                GaleriaUrls = galeriaUrls,
+                TokenPublico = producto.TokenPublico,
+                Slug = producto.Slug,
+                Tienda = new TiendaInfoResponse
+                {
+                    Id = producto.Tienda.Id,
+                    Nombre = producto.Tienda.Nombre,
+                    Direccion = producto.Tienda.Direccion,
+                    Ciudad = producto.Tienda.Ciudad,
+                    WhatsApp = producto.Tienda.WhatsApp,
+                    Telefono = producto.Tienda.Telefono,
+                    LogoUrl = producto.Tienda.LogoUrl,
+                    FotoUrl = producto.Tienda.FotoUrl,
+                    Latitud = producto.Tienda.Latitud,
+                    Longitud = producto.Tienda.Longitud,
+                    FavoritosCount = producto.Tienda.FavoritosCount,
+                    WhatsAppUrl = whatsappUrl,
+                    EstaAbierta = producto.Tienda.EstaAbiertaManual,
+                    Email = producto.Tienda.Email,
+                    DiasAtencion = producto.Tienda.DiasAtencion,
+                    HorarioApertura = producto.Tienda.HorarioApertura?.ToString(@"hh\:mm"),
+                    HorarioCierre = producto.Tienda.HorarioCierre?.ToString(@"hh\:mm"),
+                    Descripcion = producto.Tienda.Descripcion,
+                    TokenPublico = producto.Tienda.TokenPublico,
+                    Slug = producto.Tienda.Slug
+                },
+                Categoria = new CategoriaInfoResponse
+                {
+                    Id = producto.Categoria.Id,
+                    Nombre = producto.Categoria.Nombre,
+                    Icono = producto.Categoria.Icono
+                }
+            };
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error al obtener el producto", mensaje = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Obtiene el detalle de un producto por su token público.
+    /// Diseñado para el SSR de Next.js — no requiere JWT.
+    /// GET /api/public/producto/token/{token}
+    /// </summary>
+    [HttpGet("producto/token/{token}")]
+    [AllowAnonymous]
+    public IActionResult ObtenerProductoPorToken(string token)
+    {
+        try
+        {
+            var producto = _productoService.ObtenerPorToken(token);
+            if (producto == null)
+                return NotFound(new { error = "Producto no encontrado" });
+
+            if (!producto.Activo)
+            {
+                if (producto.Tienda != null && producto.Tienda.Activo && !string.IsNullOrEmpty(producto.Tienda.TokenPublico))
+                    return Ok(new { redirigir = true, tokenTienda = producto.Tienda.TokenPublico });
+
+                return NotFound(new { error = "Producto no disponible" });
+            }
+
+            if (producto.Tienda == null || !producto.Tienda.Activo)
+                return NotFound(new { error = "Tienda no encontrada o inactiva" });
+
+            var whatsappUrl = WhatsAppHelper.GenerarLinkProducto(
+                producto.Tienda.WhatsApp,
+                producto.Nombre,
+                producto.Precio,
+                producto.Moneda ?? "C$"
+            );
+
+            var galeriaUrls = new List<string>();
+            if (!string.IsNullOrEmpty(producto.FotoUrl))
+                galeriaUrls.Add(producto.FotoUrl);
+            if (producto.Imagenes != null)
+            {
+                var otras = producto.Imagenes.OrderBy(i => i.Orden).Select(i => i.Url).Where(u => u != producto.FotoUrl).ToList();
+                galeriaUrls.AddRange(otras);
+            }
+
+            var response = new ProductoResponse
+            {
+                Id = producto.Id,
+                Nombre = producto.Nombre,
+                Descripcion = producto.Descripcion,
+                Precio = producto.Precio,
+                Moneda = producto.Moneda ?? "C$",
+                EnOferta = producto.EnOferta,
+                PrecioAnterior = producto.PrecioAnterior,
+                PorcentajeDescuento = ProductoHelper.CalcularPorcentajeDescuento(producto.Precio, producto.PrecioAnterior),
+                FotoUrl = producto.FotoUrl,
+                GaleriaUrls = galeriaUrls,
+                TokenPublico = producto.TokenPublico,
+                Tienda = new TiendaInfoResponse
+                {
+                    Id = producto.Tienda.Id,
+                    Nombre = producto.Tienda.Nombre,
+                    Direccion = producto.Tienda.Direccion,
+                    Ciudad = producto.Tienda.Ciudad,
+                    WhatsApp = producto.Tienda.WhatsApp,
+                    Telefono = producto.Tienda.Telefono,
+                    LogoUrl = producto.Tienda.LogoUrl,
+                    FotoUrl = producto.Tienda.FotoUrl,
+                    Latitud = producto.Tienda.Latitud,
+                    Longitud = producto.Tienda.Longitud,
+                    FavoritosCount = producto.Tienda.FavoritosCount,
+                    WhatsAppUrl = whatsappUrl,
+                    EstaAbierta = producto.Tienda.EstaAbiertaManual,
+                    Email = producto.Tienda.Email,
+                    DiasAtencion = producto.Tienda.DiasAtencion,
+                    HorarioApertura = producto.Tienda.HorarioApertura?.ToString(@"hh\:mm"),
+                    HorarioCierre = producto.Tienda.HorarioCierre?.ToString(@"hh\:mm"),
+                    Descripcion = producto.Tienda.Descripcion,
+                    TokenPublico = producto.Tienda.TokenPublico,
+                    Slug = producto.Tienda.Slug
+                },
+                Categoria = new CategoriaInfoResponse
+                {
+                    Id = producto.Categoria.Id,
+                    Nombre = producto.Categoria.Nombre,
+                    Icono = producto.Categoria.Icono
+                },
+                Slug = producto.Slug
+            };
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error al obtener el producto", mensaje = ex.Message });
         }
     }
 }

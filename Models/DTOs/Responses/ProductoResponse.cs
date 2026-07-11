@@ -20,6 +20,7 @@ public class ProductoResponse
     public CategoriaInfoResponse Categoria { get; set; } = null!;
     public double? DistanciaKm { get; set; }
     public string? TokenPublico { get; set; }
+    public string? Slug { get; set; }
 }
 
 public class TiendaInfoResponse
@@ -44,6 +45,7 @@ public class TiendaInfoResponse
     public string? HorarioCierre { get; set; }
     public string? Descripcion { get; set; }
     public string? TokenPublico { get; set; }
+    public string? Slug { get; set; }
 }
 
 public class CategoriaInfoResponse

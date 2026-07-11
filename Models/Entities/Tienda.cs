@@ -24,6 +24,8 @@ public class Tienda
     public bool Activo { get; set; } = true;
     public int? UsuarioId { get; set; }
     public string TokenPublico { get; set; } = string.Empty;
+    /// <summary>Slug URL-amigable generado desde el nombre. Ej: "ferreteria-lopez". Inmutable tras creación.</summary>
+    public string Slug { get; set; } = string.Empty;
     public DateTime FechaCreacion { get; set; } = DateTime.Now;
     public DateTime? FechaActualizacion { get; set; }
 

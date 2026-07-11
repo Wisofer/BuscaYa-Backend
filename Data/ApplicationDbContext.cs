@@ -93,10 +93,12 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Activo).HasDefaultValue(true);
             entity.Property(e => e.FavoritosCount).HasDefaultValue(0);
             entity.Property(e => e.TokenPublico).IsRequired().HasMaxLength(50).HasDefaultValue("");
+            entity.Property(e => e.Slug).IsRequired().HasMaxLength(200).HasDefaultValue("");
             
             entity.HasIndex(e => e.Ciudad);
             entity.HasIndex(e => e.Activo);
             entity.HasIndex(e => e.TokenPublico).IsUnique();
+            entity.HasIndex(e => e.Slug).IsUnique();
         });
 
         // Producto
@@ -113,6 +115,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.FotoUrl).HasMaxLength(500);
             entity.Property(e => e.Activo).HasDefaultValue(true);
             entity.Property(e => e.TokenPublico).IsRequired().HasMaxLength(50).HasDefaultValue("");
+            entity.Property(e => e.Slug).IsRequired().HasMaxLength(200).HasDefaultValue("");
             
             entity.HasOne(e => e.Tienda)
                 .WithMany(t => t.Productos)
@@ -129,6 +132,8 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.Activo);
             entity.HasIndex(e => e.Nombre); // Para full-text search
             entity.HasIndex(e => e.TokenPublico).IsUnique();
+            // Slug único dentro de la tienda (combinado tiendaId+slug)
+            entity.HasIndex(e => new { e.TiendaId, e.Slug }).IsUnique();
         });
 
         // ProductoImagen

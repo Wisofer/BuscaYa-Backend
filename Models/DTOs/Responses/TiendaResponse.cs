@@ -26,6 +26,7 @@ public class TiendaResponse
     public int TotalCalificaciones { get; set; }
     public int FavoritosCount { get; set; }
     public string? TokenPublico { get; set; }
+    public string? Slug { get; set; }
     public List<ProductoSimpleResponse> Productos { get; set; } = new();
 
     /// <summary>
@@ -82,4 +83,5 @@ public class ProductoSimpleResponse
     public string? FotoUrl { get; set; }
     public string? CategoriaNombre { get; set; }
     public string? TokenPublico { get; set; }
+    public string? Slug { get; set; }
 }
