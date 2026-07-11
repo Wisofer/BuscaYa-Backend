@@ -1,16 +1,26 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using BuscaYa.Options;
+using BuscaYa.Services.IServices;
 
 namespace BuscaYa.Controllers.Web;
 
 public class PublicController : Controller
 {
     private readonly AppDownloadOptions _appDownload;
+    private readonly ITiendaService _tiendaService;
+    private readonly IProductoService _productoService;
 
-    public PublicController(IOptions<AppDownloadOptions> appDownload)
+    private const string WebPublicaBase = "https://buscaya.cowib.es";
+
+    public PublicController(
+        IOptions<AppDownloadOptions> appDownload,
+        ITiendaService tiendaService,
+        IProductoService productoService)
     {
         _appDownload = appDownload.Value;
+        _tiendaService = tiendaService;
+        _productoService = productoService;
     }
 
     /// <summary>
@@ -25,8 +35,35 @@ public class PublicController : Controller
         if (LooksLikeAndroid(ua) && !string.IsNullOrEmpty(_appDownload.GooglePlayUrl))
             return Redirect(_appDownload.GooglePlayUrl);
 
-        // Desktop: redirigir a la web pública
-        return Redirect("https://buscaya.cowib.es");
+        return Redirect(WebPublicaBase);
+    }
+
+    /// <summary>
+    /// Redirect permanente 301: links viejos /tienda/{token} → nueva URL /s/{slug}
+    /// Cualquiera que tenga un QR o link viejo compartido sigue funcionando.
+    /// </summary>
+    [HttpGet("/tienda/{token}")]
+    public IActionResult RedirectTienda(string token)
+    {
+        var tienda = _tiendaService.ObtenerDetallePorToken(token);
+        if (tienda == null || string.IsNullOrEmpty(tienda.Slug))
+            return RedirectPermanent(WebPublicaBase);
+
+        return RedirectPermanent($"{WebPublicaBase}/s/{tienda.Slug}");
+    }
+
+    /// <summary>
+    /// Redirect permanente 301: links viejos /producto/{token} → nueva URL /s/{tiendaSlug}/{productoSlug}
+    /// </summary>
+    [HttpGet("/producto/{token}")]
+    public IActionResult RedirectProducto(string token)
+    {
+        var producto = _productoService.ObtenerPorToken(token);
+        if (producto == null || string.IsNullOrEmpty(producto.Slug)
+            || producto.Tienda == null || string.IsNullOrEmpty(producto.Tienda.Slug))
+            return RedirectPermanent(WebPublicaBase);
+
+        return RedirectPermanent($"{WebPublicaBase}/s/{producto.Tienda.Slug}/{producto.Slug}");
     }
 
     private static bool LooksLikeIos(string ua) =>
