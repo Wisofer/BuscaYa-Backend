@@ -4,6 +4,8 @@ using BuscaYa.Services.IServices;
 using BuscaYa.Utils;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using BuscaYa.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace BuscaYa.Controllers.API;
 
@@ -15,15 +17,18 @@ public class AdminController : ControllerBase
     private readonly ITiendaService _tiendaService;
     private readonly ICategoriaService _categoriaService;
     private readonly IAnalyticsService _analyticsService;
+    private readonly ApplicationDbContext _context;
 
     public AdminController(
         ITiendaService tiendaService,
         ICategoriaService categoriaService,
-        IAnalyticsService analyticsService)
+        IAnalyticsService analyticsService,
+        ApplicationDbContext context)
     {
         _tiendaService = tiendaService;
         _categoriaService = categoriaService;
         _analyticsService = analyticsService;
+        _context = context;
     }
 
     [HttpGet("tiendas")]
@@ -140,6 +145,39 @@ public class AdminController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { error = "Error al crear categoría", mensaje = ex.Message });
+        }
+    }
+
+    [HttpPost("corregir-slugs")]
+    public IActionResult CorregirSlugs()
+    {
+        try
+        {
+            var tiendas = _tiendaService.ObtenerTodas();
+            var tiendasActualizadas = 0;
+            
+            foreach (var tienda in tiendas)
+            {
+                var nuevoSlug = SlugHelper.GenerarUnico(tienda.Nombre, 
+                    _context.Tiendas, t => t.Slug, tienda.Id, t => t.Id);
+                
+                if (nuevoSlug != tienda.Slug)
+                {
+                    tienda.Slug = nuevoSlug;
+                    tiendasActualizadas++;
+                }
+            }
+            
+            _context.SaveChanges();
+            
+            return Ok(new { 
+                mensaje = "Slugs de tiendas corregidos", 
+                tiendasActualizadas 
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error al corregir slugs", mensaje = ex.Message });
         }
     }
 }
