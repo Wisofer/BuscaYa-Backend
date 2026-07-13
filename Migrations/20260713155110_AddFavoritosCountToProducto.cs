@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -16,6 +16,9 @@ namespace BuscaYa.Migrations
                 type: "integer",
                 nullable: false,
                 defaultValue: 0);
+
+            // Poblar registros existentes con la cantidad real de favoritos
+            migrationBuilder.Sql("UPDATE \"Productos\" SET \"FavoritosCount\" = (SELECT COUNT(*) FROM \"Favoritos\" WHERE \"Favoritos\".\"ProductoId\" = \"Productos\".\"Id\")");
         }
 
         /// <inheritdoc />

@@ -33,32 +33,50 @@ public class ProductoService : IProductoService
 
     public Producto? ObtenerPorId(int id)
     {
-        return _context.Productos
+        var producto = _context.Productos
             .Include(p => p.Tienda)
             .Include(p => p.Categoria)
             .Include(p => p.Imagenes.OrderBy(i => i.Orden))
             .AsNoTracking()
             .FirstOrDefault(p => p.Id == id);
+
+        if (producto != null)
+        {
+            producto.FavoritosCount = _context.Favoritos.Count(f => f.ProductoId == id);
+        }
+        return producto;
     }
 
     public Producto? ObtenerPorToken(string token)
     {
-        return _context.Productos
+        var producto = _context.Productos
             .Include(p => p.Tienda)
             .Include(p => p.Categoria)
             .Include(p => p.Imagenes.OrderBy(i => i.Orden))
             .AsNoTracking()
             .FirstOrDefault(p => p.TokenPublico == token);
+
+        if (producto != null)
+        {
+            producto.FavoritosCount = _context.Favoritos.Count(f => f.ProductoId == producto.Id);
+        }
+        return producto;
     }
 
     public Producto? ObtenerPorSlug(string tiendaSlug, string productoSlug)
     {
-        return _context.Productos
+        var producto = _context.Productos
             .Include(p => p.Tienda)
             .Include(p => p.Categoria)
             .Include(p => p.Imagenes.OrderBy(i => i.Orden))
             .AsNoTracking()
             .FirstOrDefault(p => p.Slug == productoSlug && p.Tienda.Slug == tiendaSlug);
+
+        if (producto != null)
+        {
+            producto.FavoritosCount = _context.Favoritos.Count(f => f.ProductoId == producto.Id);
+        }
+        return producto;
     }
 
     public Producto Crear(int tiendaId, CrearProductoRequest request)
