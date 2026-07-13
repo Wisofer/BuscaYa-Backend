@@ -19,6 +19,9 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Inicializar WebUrlHelper para generación dinámica de enlaces compartir/QR
+WebUrlHelper.Initialize(builder.Configuration["FrontendSettings:WebBaseUrl"]);
+
 builder.Services.Configure<AppDownloadOptions>(
     builder.Configuration.GetSection(AppDownloadOptions.SectionName));
 

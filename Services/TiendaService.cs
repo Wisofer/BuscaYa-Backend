@@ -94,6 +94,7 @@ public class TiendaService : ITiendaService
             FavoritosCount = tienda.FavoritosCount,
             TokenPublico = tienda.TokenPublico,
             Slug = tienda.Slug,
+            CompartirUrl = WebUrlHelper.GenerarUrlTienda(tienda.Slug),
             FacebookUrl = tienda.FacebookUrl,
             InstagramUrl = tienda.InstagramUrl,
             TikTokUrl = tienda.TikTokUrl,
@@ -110,7 +111,8 @@ public class TiendaService : ITiendaService
                 CategoriaNombre = p.Categoria?.Nombre,
                 TokenPublico = p.TokenPublico,
                 Slug = p.Slug,
-                FavoritosCount = p.FavoritosCount
+                FavoritosCount = p.FavoritosCount,
+                CompartirUrl = WebUrlHelper.GenerarUrlProducto(tienda.Slug, p.Slug)
             }).ToList()
         };
 
@@ -168,6 +170,7 @@ public class TiendaService : ITiendaService
             FavoritosCount = tienda.FavoritosCount,
             TokenPublico = tienda.TokenPublico,
             Slug = tienda.Slug,
+            CompartirUrl = WebUrlHelper.GenerarUrlTienda(tienda.Slug),
             FacebookUrl = tienda.FacebookUrl,
             InstagramUrl = tienda.InstagramUrl,
             TikTokUrl = tienda.TikTokUrl,
@@ -184,7 +187,8 @@ public class TiendaService : ITiendaService
                 CategoriaNombre = p.Categoria?.Nombre,
                 TokenPublico = p.TokenPublico,
                 Slug = p.Slug,
-                FavoritosCount = p.FavoritosCount
+                FavoritosCount = p.FavoritosCount,
+                CompartirUrl = WebUrlHelper.GenerarUrlProducto(tienda.Slug, p.Slug)
             }).ToList()
         };
 

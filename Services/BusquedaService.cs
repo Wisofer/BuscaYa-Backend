@@ -119,6 +119,7 @@ public class BusquedaService : IBusquedaService
                 TokenPublico = p.TokenPublico,
                 Slug = p.Slug,
                 FavoritosCount = p.FavoritosCount,
+                CompartirUrl = WebUrlHelper.GenerarUrlProducto(p.Tienda.Slug, p.Slug),
                 Tienda = new TiendaInfoResponse
                 {
                     Id = p.Tienda.Id,
@@ -138,7 +139,9 @@ public class BusquedaService : IBusquedaService
                     HorarioApertura = p.Tienda.HorarioApertura?.ToString(@"hh\:mm"),
                     HorarioCierre = p.Tienda.HorarioCierre?.ToString(@"hh\:mm"),
                     Descripcion = p.Tienda.Descripcion,
-                    TokenPublico = p.Tienda.TokenPublico
+                    TokenPublico = p.Tienda.TokenPublico,
+                    Slug = p.Tienda.Slug,
+                    CompartirUrl = WebUrlHelper.GenerarUrlTienda(p.Tienda.Slug)
                 },
                 Categoria = new CategoriaInfoResponse
                 {

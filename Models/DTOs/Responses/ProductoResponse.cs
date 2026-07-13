@@ -23,6 +23,8 @@ public class ProductoResponse
     public string? Slug { get; set; }
     [System.Text.Json.Serialization.JsonPropertyName("favoritosCount")]
     public int FavoritosCount { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("compartirUrl")]
+    public string? CompartirUrl { get; set; }
 }
 
 public class TiendaInfoResponse
@@ -48,6 +50,8 @@ public class TiendaInfoResponse
     public string? Descripcion { get; set; }
     public string? TokenPublico { get; set; }
     public string? Slug { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("compartirUrl")]
+    public string? CompartirUrl { get; set; }
     [System.Text.Json.Serialization.JsonPropertyName("facebookUrl")]
     public string? FacebookUrl { get; set; }
     [System.Text.Json.Serialization.JsonPropertyName("instagramUrl")]

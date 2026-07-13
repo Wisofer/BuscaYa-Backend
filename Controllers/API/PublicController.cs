@@ -196,6 +196,7 @@ public class PublicController : ControllerBase
                 TokenPublico = producto.TokenPublico,
                 Slug = producto.Slug,
                 FavoritosCount = producto.FavoritosCount,
+                CompartirUrl = WebUrlHelper.GenerarUrlProducto(producto.Tienda.Slug, producto.Slug),
                 Tienda = new TiendaInfoResponse
                 {
                     Id = producto.Tienda.Id,
@@ -218,6 +219,7 @@ public class PublicController : ControllerBase
                     Descripcion = producto.Tienda.Descripcion,
                     TokenPublico = producto.Tienda.TokenPublico,
                     Slug = producto.Tienda.Slug,
+                    CompartirUrl = WebUrlHelper.GenerarUrlTienda(producto.Tienda.Slug),
                     FacebookUrl = producto.Tienda.FacebookUrl,
                     InstagramUrl = producto.Tienda.InstagramUrl,
                     TikTokUrl = producto.Tienda.TikTokUrl
@@ -489,6 +491,7 @@ public class PublicController : ControllerBase
                 TokenPublico = producto.TokenPublico,
                 Slug = producto.Slug,
                 FavoritosCount = producto.FavoritosCount,
+                CompartirUrl = WebUrlHelper.GenerarUrlProducto(producto.Tienda.Slug, producto.Slug),
                 Tienda = new TiendaInfoResponse
                 {
                     Id = producto.Tienda.Id,
@@ -511,6 +514,7 @@ public class PublicController : ControllerBase
                     Descripcion = producto.Tienda.Descripcion,
                     TokenPublico = producto.Tienda.TokenPublico,
                     Slug = producto.Tienda.Slug,
+                    CompartirUrl = WebUrlHelper.GenerarUrlTienda(producto.Tienda.Slug),
                     FacebookUrl = producto.Tienda.FacebookUrl,
                     InstagramUrl = producto.Tienda.InstagramUrl,
                     TikTokUrl = producto.Tienda.TikTokUrl
@@ -587,6 +591,7 @@ public class PublicController : ControllerBase
                 GaleriaUrls = galeriaUrls,
                 TokenPublico = producto.TokenPublico,
                 FavoritosCount = producto.FavoritosCount,
+                CompartirUrl = WebUrlHelper.GenerarUrlProducto(producto.Tienda.Slug, producto.Slug),
                 Tienda = new TiendaInfoResponse
                 {
                     Id = producto.Tienda.Id,
@@ -609,6 +614,7 @@ public class PublicController : ControllerBase
                     Descripcion = producto.Tienda.Descripcion,
                     TokenPublico = producto.Tienda.TokenPublico,
                     Slug = producto.Tienda.Slug,
+                    CompartirUrl = WebUrlHelper.GenerarUrlTienda(producto.Tienda.Slug),
                     FacebookUrl = producto.Tienda.FacebookUrl,
                     InstagramUrl = producto.Tienda.InstagramUrl,
                     TikTokUrl = producto.Tienda.TikTokUrl
