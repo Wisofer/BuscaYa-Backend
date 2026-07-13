@@ -20,6 +20,7 @@ public class Producto
     public string TokenPublico { get; set; } = string.Empty;
     /// <summary>Slug URL-amigable generado desde el nombre. Ej: "martillo-stanley-16oz". Inmutable tras creación.</summary>
     public string Slug { get; set; } = string.Empty;
+    public int FavoritosCount { get; set; }
     public DateTime FechaCreacion { get; set; } = DateTime.Now;
     public DateTime? FechaActualizacion { get; set; }
 

@@ -194,6 +194,8 @@ public class PublicController : ControllerBase
                 FotoUrl = producto.FotoUrl,
                 GaleriaUrls = galeriaUrls,
                 TokenPublico = producto.TokenPublico,
+                Slug = producto.Slug,
+                FavoritosCount = producto.FavoritosCount,
                 Tienda = new TiendaInfoResponse
                 {
                     Id = producto.Tienda.Id,
@@ -486,6 +488,7 @@ public class PublicController : ControllerBase
                 GaleriaUrls = galeriaUrls,
                 TokenPublico = producto.TokenPublico,
                 Slug = producto.Slug,
+                FavoritosCount = producto.FavoritosCount,
                 Tienda = new TiendaInfoResponse
                 {
                     Id = producto.Tienda.Id,
@@ -583,6 +586,7 @@ public class PublicController : ControllerBase
                 FotoUrl = producto.FotoUrl,
                 GaleriaUrls = galeriaUrls,
                 TokenPublico = producto.TokenPublico,
+                FavoritosCount = producto.FavoritosCount,
                 Tienda = new TiendaInfoResponse
                 {
                     Id = producto.Tienda.Id,

@@ -117,6 +117,8 @@ public class BusquedaService : IBusquedaService
                 PorcentajeDescuento = ProductoHelper.CalcularPorcentajeDescuento(p.Precio, p.PrecioAnterior),
                 FotoUrl = p.FotoUrl,
                 TokenPublico = p.TokenPublico,
+                Slug = p.Slug,
+                FavoritosCount = p.FavoritosCount,
                 Tienda = new TiendaInfoResponse
                 {
                     Id = p.Tienda.Id,

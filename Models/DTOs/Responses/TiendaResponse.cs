@@ -90,4 +90,6 @@ public class ProductoSimpleResponse
     public string? CategoriaNombre { get; set; }
     public string? TokenPublico { get; set; }
     public string? Slug { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("favoritosCount")]
+    public int FavoritosCount { get; set; }
 }

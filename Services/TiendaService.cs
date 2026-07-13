@@ -109,7 +109,8 @@ public class TiendaService : ITiendaService
                 FotoUrl = p.FotoUrl,
                 CategoriaNombre = p.Categoria?.Nombre,
                 TokenPublico = p.TokenPublico,
-                Slug = p.Slug
+                Slug = p.Slug,
+                FavoritosCount = p.FavoritosCount
             }).ToList()
         };
 
@@ -182,7 +183,8 @@ public class TiendaService : ITiendaService
                 FotoUrl = p.FotoUrl,
                 CategoriaNombre = p.Categoria?.Nombre,
                 TokenPublico = p.TokenPublico,
-                Slug = p.Slug
+                Slug = p.Slug,
+                FavoritosCount = p.FavoritosCount
             }).ToList()
         };
 

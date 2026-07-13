@@ -115,6 +115,13 @@ public class ClienteController : ControllerBase
             };
 
             _context.Favoritos.Add(favorito);
+
+            var producto = _context.Productos.Find(productoId);
+            if (producto != null)
+            {
+                producto.FavoritosCount++;
+            }
+
             _context.SaveChanges();
 
             return Ok(new { mensaje = "Producto agregado a favoritos" });
@@ -146,6 +153,15 @@ public class ClienteController : ControllerBase
                 if (tienda != null)
                 {
                     tienda.FavoritosCount = Math.Max(0, tienda.FavoritosCount - 1);
+                }
+            }
+
+            if (favorito.ProductoId.HasValue)
+            {
+                var producto = _context.Productos.Find(favorito.ProductoId.Value);
+                if (producto != null)
+                {
+                    producto.FavoritosCount = Math.Max(0, producto.FavoritosCount - 1);
                 }
             }
 

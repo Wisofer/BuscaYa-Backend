@@ -116,6 +116,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Activo).HasDefaultValue(true);
             entity.Property(e => e.TokenPublico).IsRequired().HasMaxLength(50).HasDefaultValue("");
             entity.Property(e => e.Slug).IsRequired().HasMaxLength(200).HasDefaultValue("");
+            entity.Property(e => e.FavoritosCount).HasDefaultValue(0);
             
             entity.HasOne(e => e.Tienda)
                 .WithMany(t => t.Productos)
