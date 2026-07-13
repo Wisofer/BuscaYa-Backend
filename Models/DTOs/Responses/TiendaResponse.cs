@@ -27,6 +27,12 @@ public class TiendaResponse
     public int FavoritosCount { get; set; }
     public string? TokenPublico { get; set; }
     public string? Slug { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("facebookUrl")]
+    public string? FacebookUrl { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("instagramUrl")]
+    public string? InstagramUrl { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("tiktokUrl")]
+    public string? TikTokUrl { get; set; }
     public List<ProductoSimpleResponse> Productos { get; set; } = new();
 
     /// <summary>

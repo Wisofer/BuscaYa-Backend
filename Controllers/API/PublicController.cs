@@ -214,7 +214,11 @@ public class PublicController : ControllerBase
                     HorarioApertura = producto.Tienda.HorarioApertura?.ToString(@"hh\:mm"),
                     HorarioCierre = producto.Tienda.HorarioCierre?.ToString(@"hh\:mm"),
                     Descripcion = producto.Tienda.Descripcion,
-                    TokenPublico = producto.Tienda.TokenPublico
+                    TokenPublico = producto.Tienda.TokenPublico,
+                    Slug = producto.Tienda.Slug,
+                    FacebookUrl = producto.Tienda.FacebookUrl,
+                    InstagramUrl = producto.Tienda.InstagramUrl,
+                    TikTokUrl = producto.Tienda.TikTokUrl
                 },
                 Categoria = new CategoriaInfoResponse
                 {
@@ -503,7 +507,10 @@ public class PublicController : ControllerBase
                     HorarioCierre = producto.Tienda.HorarioCierre?.ToString(@"hh\:mm"),
                     Descripcion = producto.Tienda.Descripcion,
                     TokenPublico = producto.Tienda.TokenPublico,
-                    Slug = producto.Tienda.Slug
+                    Slug = producto.Tienda.Slug,
+                    FacebookUrl = producto.Tienda.FacebookUrl,
+                    InstagramUrl = producto.Tienda.InstagramUrl,
+                    TikTokUrl = producto.Tienda.TikTokUrl
                 },
                 Categoria = new CategoriaInfoResponse
                 {
@@ -597,7 +604,10 @@ public class PublicController : ControllerBase
                     HorarioCierre = producto.Tienda.HorarioCierre?.ToString(@"hh\:mm"),
                     Descripcion = producto.Tienda.Descripcion,
                     TokenPublico = producto.Tienda.TokenPublico,
-                    Slug = producto.Tienda.Slug
+                    Slug = producto.Tienda.Slug,
+                    FacebookUrl = producto.Tienda.FacebookUrl,
+                    InstagramUrl = producto.Tienda.InstagramUrl,
+                    TikTokUrl = producto.Tienda.TikTokUrl
                 },
                 Categoria = new CategoriaInfoResponse
                 {

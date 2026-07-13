@@ -94,6 +94,9 @@ public class TiendaService : ITiendaService
             FavoritosCount = tienda.FavoritosCount,
             TokenPublico = tienda.TokenPublico,
             Slug = tienda.Slug,
+            FacebookUrl = tienda.FacebookUrl,
+            InstagramUrl = tienda.InstagramUrl,
+            TikTokUrl = tienda.TikTokUrl,
             Productos = tienda.Productos.Select(p => new ProductoSimpleResponse
             {
                 Id = p.Id,
@@ -164,6 +167,9 @@ public class TiendaService : ITiendaService
             FavoritosCount = tienda.FavoritosCount,
             TokenPublico = tienda.TokenPublico,
             Slug = tienda.Slug,
+            FacebookUrl = tienda.FacebookUrl,
+            InstagramUrl = tienda.InstagramUrl,
+            TikTokUrl = tienda.TikTokUrl,
             Productos = tienda.Productos.Select(p => new ProductoSimpleResponse
             {
                 Id = p.Id,
@@ -210,6 +216,9 @@ public class TiendaService : ITiendaService
             LogoUrl = request.LogoUrl,
             FotoUrl = request.FotoUrl,
             EstaAbiertaManual = request.EstaAbiertaManual,
+            FacebookUrl = request.FacebookUrl,
+            InstagramUrl = request.InstagramUrl,
+            TikTokUrl = request.TikTokUrl,
             Plan = SD.PlanFree,
             Activo = true,
             TokenPublico = TokenHelper.GenerarToken(24),
@@ -260,6 +269,9 @@ public class TiendaService : ITiendaService
         if (request.LogoUrl != null) tienda.LogoUrl = request.LogoUrl;
         if (request.FotoUrl != null) tienda.FotoUrl = request.FotoUrl;
         if (request.EstaAbiertaManual.HasValue) tienda.EstaAbiertaManual = request.EstaAbiertaManual.Value;
+        if (request.FacebookUrl != null) tienda.FacebookUrl = request.FacebookUrl;
+        if (request.InstagramUrl != null) tienda.InstagramUrl = request.InstagramUrl;
+        if (request.TikTokUrl != null) tienda.TikTokUrl = request.TikTokUrl;
 
         tienda.FechaActualizacion = DateTime.Now;
         _context.SaveChanges();

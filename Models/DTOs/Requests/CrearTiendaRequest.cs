@@ -19,4 +19,10 @@ public class CrearTiendaRequest
     public string? FotoUrl { get; set; }
     /// <summary>Estado manual: true = Abierto, false = Cerrado. Por defecto true al crear.</summary>
     public bool EstaAbiertaManual { get; set; } = true;
+    [System.Text.Json.Serialization.JsonPropertyName("facebookUrl")]
+    public string? FacebookUrl { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("instagramUrl")]
+    public string? InstagramUrl { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("tiktokUrl")]
+    public string? TikTokUrl { get; set; }
 }

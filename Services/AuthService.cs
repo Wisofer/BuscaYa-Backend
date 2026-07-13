@@ -239,6 +239,8 @@ public class AuthService : IAuthService
             Plan = SD.PlanFree, // Todo gratis al inicio
             Activo = true,
             UsuarioId = usuario.Id,
+            TokenPublico = TokenHelper.GenerarToken(24),
+            Slug = SlugHelper.GenerarUnico(nombreTienda, _context.Tiendas, t => t.Slug),
             FechaCreacion = DateTime.Now
         };
 

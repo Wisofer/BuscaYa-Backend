@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace BuscaYa.Utils;
 
@@ -51,9 +52,9 @@ public static class SlugHelper
     public static string GenerarUnico<T>(
         string nombre,
         IQueryable<T> dbSet,
-        Func<T, string> slugSelector,
+        Expression<Func<T, string>> slugSelector,
         int? excludeId = null,
-        Func<T, int>? idSelector = null)
+        Expression<Func<T, int>>? idSelector = null)
     {
         var baseSlug = Generar(nombre);
         if (string.IsNullOrEmpty(baseSlug)) baseSlug = "negocio";
@@ -64,11 +65,26 @@ public static class SlugHelper
         while (true)
         {
             var localSlug = slugActual;
-            var query = dbSet.Where(e => slugSelector(e) == localSlug);
+            var parameter = slugSelector.Parameters[0];
+            var equalExpression = Expression.Equal(
+                slugSelector.Body,
+                Expression.Constant(localSlug)
+            );
+            var lambda = Expression.Lambda<Func<T, bool>>(equalExpression, parameter);
+            
+            var query = dbSet.Where(lambda);
 
             // Excluir el propio registro en actualizaciones
             if (excludeId.HasValue && idSelector != null)
-                query = query.Where(e => idSelector(e) != excludeId.Value);
+            {
+                var idParameter = idSelector.Parameters[0];
+                var notEqualExpression = Expression.NotEqual(
+                    idSelector.Body,
+                    Expression.Constant(excludeId.Value)
+                );
+                var idLambda = Expression.Lambda<Func<T, bool>>(notEqualExpression, idParameter);
+                query = query.Where(idLambda);
+            }
 
             var existe = query.Any();
             if (!existe) break;
