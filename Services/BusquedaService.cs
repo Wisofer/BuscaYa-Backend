@@ -133,7 +133,7 @@ public class BusquedaService : IBusquedaService
                     Latitud = p.Tienda.Latitud,
                     Longitud = p.Tienda.Longitud,
                     FavoritosCount = p.Tienda.FavoritosCount,
-                    EstaAbierta = p.Tienda.EstaAbiertaManual,
+                    EstaAbierta = TiendaHelper.CalcularEstaAbierta(p.Tienda.EstaAbiertaManual, p.Tienda.HorarioApertura, p.Tienda.HorarioCierre),
                     Email = p.Tienda.Email,
                     DiasAtencion = p.Tienda.DiasAtencion,
                     HorarioApertura = p.Tienda.HorarioApertura?.ToString(@"hh\:mm"),
@@ -217,7 +217,8 @@ public class BusquedaService : IBusquedaService
                 LogoUrl = t.LogoUrl,
                 FotoUrl = t.FotoUrl,
                 Plan = t.Plan,
-                EstaAbierta = t.EstaAbiertaManual,
+                EstaAbierta = TiendaHelper.CalcularEstaAbierta(t.EstaAbiertaManual, t.HorarioApertura, t.HorarioCierre),
+                EstaAbiertaManual = t.EstaAbiertaManual,
                 CalificacionPromedio = t.CalificacionPromedio,
                 TotalCalificaciones = t.TotalCalificaciones,
                 FavoritosCount = t.FavoritosCount,
@@ -290,11 +291,22 @@ public class BusquedaService : IBusquedaService
 
         var terminoLower = termino.ToLower();
 
-        var sugerencias = _context.Productos
-            .Where(p => p.Activo && p.Tienda.Activo &&
-                       (p.Nombre.ToLower().Contains(terminoLower) ||
-                        (p.Descripcion != null && p.Descripcion.ToLower().Contains(terminoLower))))
+        var sugerenciasProductos = _context.Productos
+            .Where(p => p.Activo && p.Tienda.Activo && p.Nombre.ToLower().Contains(terminoLower))
             .Select(p => p.Nombre)
+            .Distinct()
+            .Take(limite)
+            .ToList();
+
+        var sugerenciasTiendas = _context.Tiendas
+            .Where(t => t.Activo && t.Nombre.ToLower().Contains(terminoLower))
+            .Select(t => t.Nombre)
+            .Distinct()
+            .Take(limite)
+            .ToList();
+
+        var sugerencias = sugerenciasProductos
+            .Concat(sugerenciasTiendas)
             .Distinct()
             .Take(limite)
             .ToList();
