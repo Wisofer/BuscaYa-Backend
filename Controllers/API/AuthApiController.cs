@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using BuscaYa.Models.Entities;
 using BuscaYa.Services.IServices;
 using BuscaYa.Utils;
 using Microsoft.Extensions.Configuration;
@@ -19,6 +20,7 @@ public class AuthApiController : ControllerBase
     private readonly IConfiguration _configuration;
     private readonly IS3BucketService _s3Service;
     private readonly IAccountDeletionService _accountDeletion;
+    private readonly IRefreshTokenService _refreshTokenService;
     private readonly ILogger<AuthApiController> _logger;
 
     public AuthApiController(
@@ -28,6 +30,7 @@ public class AuthApiController : ControllerBase
         IConfiguration configuration,
         IS3BucketService s3Service,
         IAccountDeletionService accountDeletion,
+        IRefreshTokenService refreshTokenService,
         ILogger<AuthApiController> logger)
     {
         _authService = authService;
@@ -36,11 +39,12 @@ public class AuthApiController : ControllerBase
         _configuration = configuration;
         _s3Service = s3Service;
         _accountDeletion = accountDeletion;
+        _refreshTokenService = refreshTokenService;
         _logger = logger;
     }
 
     [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.NombreUsuario) || string.IsNullOrWhiteSpace(request.Contrasena))
         {
@@ -59,31 +63,8 @@ public class AuthApiController : ControllerBase
             return Unauthorized(new { error = "Usuario inactivo" });
         }
 
-        // Obtener configuración JWT
-        var jwtSettings = _configuration.GetSection("JwtSettings");
-        var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey no configurada");
-        var issuer = jwtSettings["Issuer"] ?? "BuscaYa";
-        var audience = jwtSettings["Audience"] ?? "BuscaYaUsers";
-        var expirationMinutes = int.Parse(jwtSettings["ExpirationInMinutes"] ?? "60");
-
-        // Generar token JWT
-        var token = JwtHelper.GenerateToken(
-            usuario.Id,
-            usuario.NombreUsuario,
-            usuario.Rol,
-            usuario.NombreCompleto,
-            secretKey,
-            issuer,
-            audience,
-            expirationMinutes
-        );
-
-        return Ok(new LoginResponse
-        {
-            Token = token,
-            Usuario = MapToUsuarioInfo(usuario),
-            ExpiraEn = expirationMinutes
-        });
+        var loginResponse = await GenerateLoginResponseAsync(usuario);
+        return Ok(loginResponse);
     }
 
     [HttpPost("google")]
@@ -102,20 +83,8 @@ public class AuthApiController : ControllerBase
                 if (!usuario.Activo)
                     return Unauthorized(new { error = "Usuario inactivo" });
 
-                var jwtSettings = _configuration.GetSection("JwtSettings");
-                var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey no configurada");
-                var issuer = jwtSettings["Issuer"] ?? "BuscaYa";
-                var audience = jwtSettings["Audience"] ?? "BuscaYaUsers";
-                var expirationMinutes = int.Parse(jwtSettings["ExpirationInMinutes"] ?? "60");
-
-                var token = JwtHelper.GenerateToken(usuario.Id, usuario.NombreUsuario, usuario.Rol, usuario.NombreCompleto, secretKey, issuer, audience, expirationMinutes);
-
-                return Ok(new LoginResponse
-                {
-                    Token = token,
-                    Usuario = MapToUsuarioInfo(usuario),
-                    ExpiraEn = expirationMinutes
-                });
+                var loginResponse = await GenerateLoginResponseAsync(usuario);
+                return Ok(loginResponse);
             }
 
             return Ok(new GoogleNeedsCompletionResponse
@@ -152,20 +121,8 @@ public class AuthApiController : ControllerBase
                 if (!usuario.Activo)
                     return Unauthorized(new { error = "Usuario inactivo" });
 
-                var jwtSettings = _configuration.GetSection("JwtSettings");
-                var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey no configurada");
-                var issuer = jwtSettings["Issuer"] ?? "BuscaYa";
-                var audience = jwtSettings["Audience"] ?? "BuscaYaUsers";
-                var expirationMinutes = int.Parse(jwtSettings["ExpirationInMinutes"] ?? "60");
-
-                var token = JwtHelper.GenerateToken(usuario.Id, usuario.NombreUsuario, usuario.Rol, usuario.NombreCompleto, secretKey, issuer, audience, expirationMinutes);
-
-                return Ok(new LoginResponse
-                {
-                    Token = token,
-                    Usuario = MapToUsuarioInfo(usuario),
-                    ExpiraEn = expirationMinutes
-                });
+                var loginResponse = await GenerateLoginResponseAsync(usuario);
+                return Ok(loginResponse);
             }
 
             return Ok(new AppleNeedsCompletionResponse
@@ -217,20 +174,8 @@ public class AuthApiController : ControllerBase
             if (usuario == null)
                 return BadRequest(new { error = "No se pudo crear la cuenta" });
 
-            var jwtSettings = _configuration.GetSection("JwtSettings");
-            var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey no configurada");
-            var issuer = jwtSettings["Issuer"] ?? "BuscaYa";
-            var audience = jwtSettings["Audience"] ?? "BuscaYaUsers";
-            var expirationMinutes = int.Parse(jwtSettings["ExpirationInMinutes"] ?? "60");
-
-            var token = JwtHelper.GenerateToken(usuario.Id, usuario.NombreUsuario, usuario.Rol, usuario.NombreCompleto, secretKey, issuer, audience, expirationMinutes);
-
-            return Ok(new LoginResponse
-            {
-                Token = token,
-                Usuario = MapToUsuarioInfo(usuario),
-                ExpiraEn = expirationMinutes
-            });
+            var loginResponse = await GenerateLoginResponseAsync(usuario);
+            return Ok(loginResponse);
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -274,20 +219,8 @@ public class AuthApiController : ControllerBase
             if (usuario == null)
                 return BadRequest(new { error = "No se pudo crear la cuenta" });
 
-            var jwtSettings = _configuration.GetSection("JwtSettings");
-            var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey no configurada");
-            var issuer = jwtSettings["Issuer"] ?? "BuscaYa";
-            var audience = jwtSettings["Audience"] ?? "BuscaYaUsers";
-            var expirationMinutes = int.Parse(jwtSettings["ExpirationInMinutes"] ?? "60");
-
-            var token = JwtHelper.GenerateToken(usuario.Id, usuario.NombreUsuario, usuario.Rol, usuario.NombreCompleto, secretKey, issuer, audience, expirationMinutes);
-
-            return Ok(new LoginResponse
-            {
-                Token = token,
-                Usuario = MapToUsuarioInfo(usuario),
-                ExpiraEn = expirationMinutes
-            });
+            var loginResponse = await GenerateLoginResponseAsync(usuario);
+            return Ok(loginResponse);
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -297,6 +230,36 @@ public class AuthApiController : ControllerBase
         {
             return BadRequest(new { error = ex.Message });
         }
+    }
+
+    private async Task<LoginResponse> GenerateLoginResponseAsync(Usuario usuario)
+    {
+        var jwtSettings = _configuration.GetSection("JwtSettings");
+        var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey no configurada");
+        var issuer = jwtSettings["Issuer"] ?? "BuscaYa";
+        var audience = jwtSettings["Audience"] ?? "BuscaYaUsers";
+        var expirationMinutes = int.Parse(jwtSettings["ExpirationInMinutes"] ?? "60");
+
+        var token = JwtHelper.GenerateToken(
+            usuario.Id,
+            usuario.NombreUsuario,
+            usuario.Rol,
+            usuario.NombreCompleto,
+            secretKey,
+            issuer,
+            audience,
+            expirationMinutes
+        );
+
+        var refreshToken = await _refreshTokenService.CreateAsync(usuario.Id);
+
+        return new LoginResponse
+        {
+            Token = token,
+            RefreshToken = refreshToken,
+            Usuario = MapToUsuarioInfo(usuario),
+            ExpiraEn = expirationMinutes
+        };
     }
 
     private UsuarioInfoResponse MapToUsuarioInfo(Models.Entities.Usuario u, AccountDeletionStatusDto? del = null)
@@ -319,7 +282,7 @@ public class AuthApiController : ControllerBase
     }
 
     [HttpPost("register")]
-    public IActionResult Register([FromBody] RegisterRequest request)
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         try
         {
@@ -356,35 +319,58 @@ public class AuthApiController : ControllerBase
                 return BadRequest(new { error = "Error al crear la cuenta" });
             }
 
-            // Generar token JWT automáticamente después del registro
-            var jwtSettings = _configuration.GetSection("JwtSettings");
-            var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey no configurada");
-            var issuer = jwtSettings["Issuer"] ?? "BuscaYa";
-            var audience = jwtSettings["Audience"] ?? "BuscaYaUsers";
-            var expirationMinutes = int.Parse(jwtSettings["ExpirationInMinutes"] ?? "60");
-
-            var token = JwtHelper.GenerateToken(
-                usuario.Id,
-                usuario.NombreUsuario,
-                usuario.Rol,
-                usuario.NombreCompleto,
-                secretKey,
-                issuer,
-                audience,
-                expirationMinutes
-            );
-
-            return Ok(new LoginResponse
-            {
-                Token = token,
-                Usuario = MapToUsuarioInfo(usuario),
-                ExpiraEn = expirationMinutes
-            });
+            var loginResponse = await GenerateLoginResponseAsync(usuario);
+            return Ok(loginResponse);
         }
         catch (Exception ex)
         {
             return StatusCode(500, new { error = "Error al registrar usuario", mensaje = ex.Message });
         }
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request?.RefreshToken))
+            return BadRequest(new { error = "refresh_token es requerido." });
+
+        var (usuario, newRefresh, error) = await _refreshTokenService.RotateAsync(request.RefreshToken);
+        if (error != null || usuario == null || newRefresh == null)
+            return Unauthorized(new { error = error ?? "No se pudo renovar la sesión." });
+
+        // Generar nuevo access token y refresh token rotado
+        var jwtSettings = _configuration.GetSection("JwtSettings");
+        var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey no configurada");
+        var issuer = jwtSettings["Issuer"] ?? "BuscaYa";
+        var audience = jwtSettings["Audience"] ?? "BuscaYaUsers";
+        var expirationMinutes = int.Parse(jwtSettings["ExpirationInMinutes"] ?? "60");
+
+        var token = JwtHelper.GenerateToken(
+            usuario.Id,
+            usuario.NombreUsuario,
+            usuario.Rol,
+            usuario.NombreCompleto,
+            secretKey,
+            issuer,
+            audience,
+            expirationMinutes
+        );
+
+        return Ok(new LoginResponse
+        {
+            Token = token,
+            RefreshToken = newRefresh,
+            Usuario = MapToUsuarioInfo(usuario),
+            ExpiraEn = expirationMinutes
+        });
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout([FromBody] LogoutRequest? request = null)
+    {
+        if (!string.IsNullOrWhiteSpace(request?.RefreshToken))
+            await _refreshTokenService.RevokeAsync(request.RefreshToken);
+        return Ok(new { success = true });
     }
 
     [HttpPost("forgot-password")]
@@ -653,9 +639,22 @@ public class ValidateResetPasswordTokenRequest
 public class LoginResponse
 {
     public string Token { get; set; } = string.Empty;
+    public string? RefreshToken { get; set; }
     public UsuarioInfoResponse Usuario { get; set; } = null!;
     public int ExpiraEn { get; set; }
 }
+
+public class RefreshTokenRequest
+{
+    [Required(ErrorMessage = "El refresh token es requerido")]
+    public string RefreshToken { get; set; } = string.Empty;
+}
+
+public class LogoutRequest
+{
+    public string? RefreshToken { get; set; }
+}
+
 
 public class UsuarioInfoResponse
 {

@@ -41,6 +41,8 @@ public class ApplicationDbContext : DbContext
     // Publicidad / Banners
     public DbSet<Publicidad> Publicidades { get; set; }
 
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -340,6 +342,18 @@ public class ApplicationDbContext : DbContext
             // Índices para la consulta de la app móvil (activos ordenados)
             entity.HasIndex(e => e.Activo);
             entity.HasIndex(e => e.Orden);
+        });
+
+        // RefreshToken
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TokenHash).IsRequired().HasMaxLength(64);
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.HasOne(e => e.Usuario)
+                .WithMany()
+                .HasForeignKey(e => e.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
