@@ -122,7 +122,7 @@ public class TiendaController : ControllerBase
             if (!tiendaId.HasValue)
                 return Unauthorized(new { error = "No tienes una tienda asociada" });
 
-            var productos = _productoService.ObtenerPorTienda(tiendaId.Value);
+            var productos = _productoService.ObtenerPorTienda(tiendaId.Value, incluirInactivos: true);
             return Ok(productos);
         }
         catch (Exception ex)

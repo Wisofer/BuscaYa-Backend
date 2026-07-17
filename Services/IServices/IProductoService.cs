@@ -5,7 +5,7 @@ namespace BuscaYa.Services.IServices;
 
 public interface IProductoService
 {
-    List<Producto> ObtenerPorTienda(int tiendaId);
+    List<Producto> ObtenerPorTienda(int tiendaId, bool incluirInactivos = false);
     Producto? ObtenerPorId(int id);
     Producto? ObtenerPorToken(string token);
     Producto? ObtenerPorSlug(string tiendaSlug, string productoSlug);

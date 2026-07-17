@@ -21,10 +21,16 @@ public class ProductoService : IProductoService
         _logger = logger;
     }
 
-    public List<Producto> ObtenerPorTienda(int tiendaId)
+    public List<Producto> ObtenerPorTienda(int tiendaId, bool incluirInactivos = false)
     {
-        return _context.Productos
-            .Where(p => p.TiendaId == tiendaId && p.Activo)
+        var query = _context.Productos.Where(p => p.TiendaId == tiendaId);
+        
+        if (!incluirInactivos)
+        {
+            query = query.Where(p => p.Activo);
+        }
+
+        return query
             .Include(p => p.Categoria)
             .AsNoTracking()
             .OrderBy(p => p.Nombre)
@@ -249,9 +255,7 @@ public class ProductoService : IProductoService
         var producto = _context.Productos.Find(id);
         if (producto == null) return false;
 
-        // Soft delete
-        producto.Activo = false;
-        producto.FechaActualizacion = DateTime.Now;
+        _context.Productos.Remove(producto);
         _context.SaveChanges();
         return true;
     }
