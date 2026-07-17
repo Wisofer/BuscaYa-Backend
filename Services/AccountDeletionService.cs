@@ -62,22 +62,6 @@ public class AccountDeletionService : IAccountDeletionService
                 error = null
             };
 
-        var hasPassword = !string.IsNullOrEmpty(user.Contrasena);
-        if (hasPassword)
-        {
-            if (string.IsNullOrWhiteSpace(password) || !PasswordHelper.VerifyPassword(password, user.Contrasena))
-                return new AccountDeletionRequestResult { ok = false, error = "Contraseña incorrecta." };
-        }
-        else
-        {
-            if (!confirmWithoutPassword)
-                return new AccountDeletionRequestResult
-                {
-                    ok = false,
-                    error = "Confirma que deseas eliminar la cuenta (confirm_without_password: true)."
-                };
-        }
-
         var scheduled = DateTime.UtcNow.Add(AccountDeletionPolicy.GracePeriod);
         user.AccountDeletionRequestedAt = DateTime.UtcNow;
         user.AccountDeletionScheduledAt = scheduled;
