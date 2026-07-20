@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Security.Claims;
 
+using Microsoft.Extensions.Caching.Memory;
+
 namespace BuscaYa.Controllers.API;
 
 [ApiController]
@@ -20,6 +22,9 @@ public class PublicController : ControllerBase
     private readonly IAnalyticsService _analyticsService;
     private readonly IProductoService _productoService;
     private readonly INotificationTriggerService _notificationTriggerService;
+    private readonly IMemoryCache _cache;
+
+    private const string CategoriasCacheKey = "categorias_activas_cache";
 
     public PublicController(
         IBusquedaService busquedaService,
@@ -27,7 +32,8 @@ public class PublicController : ControllerBase
         ICategoriaService categoriaService,
         IAnalyticsService analyticsService,
         IProductoService productoService,
-        INotificationTriggerService notificationTriggerService)
+        INotificationTriggerService notificationTriggerService,
+        IMemoryCache cache)
     {
         _busquedaService = busquedaService;
         _tiendaService = tiendaService;
@@ -35,6 +41,7 @@ public class PublicController : ControllerBase
         _analyticsService = analyticsService;
         _productoService = productoService;
         _notificationTriggerService = notificationTriggerService;
+        _cache = cache;
     }
 
     private int? GetUserId()
@@ -256,7 +263,13 @@ public class PublicController : ControllerBase
     {
         try
         {
-            var categorias = _categoriaService.ObtenerActivas();
+            if (!_cache.TryGetValue(CategoriasCacheKey, out object? categorias))
+            {
+                categorias = _categoriaService.ObtenerActivas();
+                var cacheOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromMinutes(15));
+                _cache.Set(CategoriasCacheKey, categorias, cacheOptions);
+            }
             return Ok(categorias);
         }
         catch (Exception ex)
@@ -270,6 +283,45 @@ public class PublicController : ControllerBase
     {
         try
         {
+            if (!lat.HasValue && !lng.HasValue)
+            {
+                const string cacheKey = "tiendas_todas_publicas_cache";
+                if (!_cache.TryGetValue(cacheKey, out object? cachedResponse))
+                {
+                    var todas = _tiendaService.ObtenerTodas();
+                    cachedResponse = todas.Select(t => new
+                    {
+                        t.Id,
+                        t.Nombre,
+                        t.Descripcion,
+                        t.Telefono,
+                        t.WhatsApp,
+                        t.Email,
+                        t.Direccion,
+                        t.Latitud,
+                        t.Longitud,
+                        t.Ciudad,
+                        t.Departamento,
+                        t.LogoUrl,
+                        t.FotoUrl,
+                        t.Plan,
+                        EstaAbierta = TiendaHelper.CalcularEstaAbierta(t.EstaAbiertaManual, t.HorarioApertura, t.HorarioCierre),
+                        EstaAbiertaManual = t.EstaAbiertaManual,
+                        t.CalificacionPromedio,
+                        t.TotalCalificaciones,
+                        t.FavoritosCount,
+                        TokenPublico = t.TokenPublico
+                    }).ToList();
+
+                    var cacheOptions = new MemoryCacheEntryOptions()
+                        .SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
+
+                    _cache.Set(cacheKey, cachedResponse, cacheOptions);
+                }
+
+                return Ok(cachedResponse);
+            }
+
             List<BuscaYa.Models.Entities.Tienda> tiendas;
             if (lat.HasValue && lng.HasValue)
             {
@@ -279,7 +331,6 @@ public class PublicController : ControllerBase
             {
                 tiendas = _tiendaService.ObtenerTodas();
             }
-
             var response = tiendas.Select(t => new
             {
                 t.Id,

@@ -27,6 +27,7 @@ public class TiendaService : ITiendaService
     public List<Tienda> ObtenerTodas()
     {
         return _context.Tiendas
+            .AsNoTracking()
             .Where(t => t.Activo)
             .OrderBy(t => t.Nombre)
             .ToList();
@@ -35,6 +36,7 @@ public class TiendaService : ITiendaService
     public Tienda? ObtenerPorId(int id)
     {
         return _context.Tiendas
+            .AsNoTracking()
             .Include(t => t.Productos.Where(p => p.Activo))
             .ThenInclude(p => p.Categoria)
             .FirstOrDefault(t => t.Id == id);
@@ -43,6 +45,7 @@ public class TiendaService : ITiendaService
     public List<Tienda> ObtenerPorCiudad(string ciudad)
     {
         return _context.Tiendas
+            .AsNoTracking()
             .Where(t => t.Ciudad == ciudad && t.Activo)
             .OrderBy(t => t.Nombre)
             .ToList();
@@ -51,6 +54,7 @@ public class TiendaService : ITiendaService
     public List<Tienda> BuscarCercanas(decimal lat, decimal lng, double radioKm)
     {
         var todas = _context.Tiendas
+            .AsNoTracking()
             .Where(t => t.Activo)
             .ToList();
 

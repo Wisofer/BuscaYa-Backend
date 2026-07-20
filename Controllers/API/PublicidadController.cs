@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using BuscaYa.Data;
 using BuscaYa.Models.Entities;
 using BuscaYa.Services.IServices;
@@ -17,37 +18,46 @@ namespace BuscaYa.Controllers.API;
 public class PublicidadPublicController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
+    private readonly IMemoryCache _cache;
+    private const string CacheKey = "publicidades_activas_cache";
 
-    public PublicidadPublicController(ApplicationDbContext db)
+    public PublicidadPublicController(ApplicationDbContext db, IMemoryCache cache)
     {
         _db = db;
+        _cache = cache;
     }
 
     /// <summary>
     /// Retorna la lista de publicidades activas ordenadas para el carrusel de inicio.
-    /// La app móvil usa el campo ImageUrl para decidir el modo de visualización:
-    ///   - ImageUrl presente → imagen full-bleed.
-    ///   - ImageUrl nulo     → gradiente nativo con Titulo y Subtitulo.
+    /// Guardado en caché por 10 minutos para reducir tráfico a PostgreSQL.
     /// </summary>
     [HttpGet("publicidades")]
     public async Task<IActionResult> ObtenerPublicidades()
     {
         try
         {
-            var publicidades = await _db.Publicidades
-                .Where(p => p.Activo)
-                .OrderBy(p => p.Orden)
-                .ThenBy(p => p.Id)
-                .Select(p => new
-                {
-                    p.Id,
-                    p.ImageUrl,
-                    p.Titulo,
-                    p.Subtitulo,
-                    p.AccionUrl,
-                    p.Orden
-                })
-                .ToListAsync();
+            if (!_cache.TryGetValue(CacheKey, out object? publicidades))
+            {
+                publicidades = await _db.Publicidades
+                    .Where(p => p.Activo)
+                    .OrderBy(p => p.Orden)
+                    .ThenBy(p => p.Id)
+                    .Select(p => new
+                    {
+                        p.Id,
+                        p.ImageUrl,
+                        p.Titulo,
+                        p.Subtitulo,
+                        p.AccionUrl,
+                        p.Orden
+                    })
+                    .ToListAsync();
+
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
+
+                _cache.Set(CacheKey, publicidades, cacheEntryOptions);
+            }
 
             return Ok(publicidades);
         }
