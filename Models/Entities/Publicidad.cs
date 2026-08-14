@@ -39,6 +39,11 @@ public class Publicidad
     public int Orden { get; set; } = 0;
 
     /// <summary>
+    /// Código ISO de país destino (ej. "NI", "GT", "HN", "CR", "CO"). Null o "ALL" = Global para todo LATAM.
+    /// </summary>
+    public string? CountryCode { get; set; }
+
+    /// <summary>
     /// Indica si el banner está activo y debe mostrarse en la app.
     /// </summary>
     public bool Activo { get; set; } = true;

@@ -50,6 +50,39 @@ public class PublicController : ControllerBase
         return int.TryParse(userIdClaim, out var userId) ? userId : null;
     }
 
+    [HttpGet("paises")]
+    [AllowAnonymous]
+    public IActionResult ObtenerPaises()
+    {
+        var paises = RegionCatalog.Countries.Select(c => new PaisDto
+        {
+            Code = c.Code,
+            Name = c.NameEs,
+            CurrencyIso = c.CurrencyIso,
+            CurrencySymbol = c.CurrencySymbol,
+            FlagEmoji = RegionCatalog.GetFlagEmoji(c.Code),
+            TimezoneId = c.TimezoneId,
+            CenterLat = c.CenterLat,
+            CenterLng = c.CenterLng,
+            DefaultZoom = c.DefaultZoom
+        }).ToList();
+
+        return Ok(paises);
+    }
+
+    [HttpGet("paises/{code}/departamentos")]
+    [AllowAnonymous]
+    public IActionResult ObtenerDepartamentosPorPais(string code)
+    {
+        var departamentos = RegionCatalog.GetDepartments(code);
+        return Ok(new
+        {
+            countryCode = code.ToUpper(),
+            flagEmoji = RegionCatalog.GetFlagEmoji(code),
+            departamentos
+        });
+    }
+
     [HttpGet("buscar")]
     public IActionResult Buscar([FromQuery] BuscarRequest request)
     {
@@ -279,16 +312,18 @@ public class PublicController : ControllerBase
     }
 
     [HttpGet("tiendas")]
-    public IActionResult ObtenerTiendas([FromQuery] decimal? lat, [FromQuery] decimal? lng, [FromQuery] double? radioKm)
+    public IActionResult ObtenerTiendas([FromQuery] decimal? lat, [FromQuery] decimal? lng, [FromQuery] double? radioKm, [FromQuery] string? countryCode)
     {
         try
         {
+            var code = string.IsNullOrWhiteSpace(countryCode) ? "ALL" : countryCode.Trim().ToUpper();
+
             if (!lat.HasValue && !lng.HasValue)
             {
-                const string cacheKey = "tiendas_todas_publicas_cache";
+                var cacheKey = $"tiendas_todas_publicas_{code}";
                 if (!_cache.TryGetValue(cacheKey, out object? cachedResponse))
                 {
-                    var todas = _tiendaService.ObtenerTodas();
+                    var todas = _tiendaService.ObtenerTodas(countryCode);
                     cachedResponse = todas.Select(t => new
                     {
                         t.Id,
@@ -302,6 +337,10 @@ public class PublicController : ControllerBase
                         t.Longitud,
                         t.Ciudad,
                         t.Departamento,
+                        t.CountryCode,
+                        t.Pais,
+                        t.CurrencyCode,
+                        t.CurrencySymbol,
                         t.LogoUrl,
                         t.FotoUrl,
                         t.Plan,
@@ -310,7 +349,8 @@ public class PublicController : ControllerBase
                         t.CalificacionPromedio,
                         t.TotalCalificaciones,
                         t.FavoritosCount,
-                        TokenPublico = t.TokenPublico
+                        TokenPublico = t.TokenPublico,
+                        t.Slug
                     }).ToList();
 
                     var cacheOptions = new MemoryCacheEntryOptions()
@@ -325,11 +365,11 @@ public class PublicController : ControllerBase
             List<BuscaYa.Models.Entities.Tienda> tiendas;
             if (lat.HasValue && lng.HasValue)
             {
-                tiendas = _tiendaService.BuscarCercanas(lat.Value, lng.Value, radioKm ?? 100.0);
+                tiendas = _tiendaService.BuscarCercanas(lat.Value, lng.Value, radioKm ?? 100.0, countryCode);
             }
             else
             {
-                tiendas = _tiendaService.ObtenerTodas();
+                tiendas = _tiendaService.ObtenerTodas(countryCode);
             }
             var response = tiendas.Select(t => new
             {
@@ -344,6 +384,10 @@ public class PublicController : ControllerBase
                 t.Longitud,
                 t.Ciudad,
                 t.Departamento,
+                t.CountryCode,
+                t.Pais,
+                t.CurrencyCode,
+                t.CurrencySymbol,
                 t.LogoUrl,
                 t.FotoUrl,
                 t.Plan,
@@ -352,7 +396,8 @@ public class PublicController : ControllerBase
                 t.CalificacionPromedio,
                 t.TotalCalificaciones,
                 t.FavoritosCount,
-                TokenPublico = t.TokenPublico
+                TokenPublico = t.TokenPublico,
+                t.Slug
             });
 
             return Ok(response);
@@ -364,11 +409,11 @@ public class PublicController : ControllerBase
     }
 
     [HttpGet("sugerencias")]
-    public IActionResult Sugerencias([FromQuery] string termino, [FromQuery] int limite = 10)
+    public IActionResult Sugerencias([FromQuery] string termino, [FromQuery] int limite = 10, [FromQuery] string? countryCode = null)
     {
         try
         {
-            var sugerencias = _busquedaService.Sugerencias(termino, limite);
+            var sugerencias = _busquedaService.Sugerencias(termino, limite, countryCode);
             return Ok(sugerencias);
         }
         catch (Exception ex)

@@ -248,6 +248,10 @@ namespace BuscaYa.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CountryCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("timestamp without time zone");
 
@@ -266,6 +270,8 @@ namespace BuscaYa.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CountryCode");
 
                     b.HasIndex("Fecha");
 
@@ -507,6 +513,10 @@ namespace BuscaYa.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
 
+                    b.Property<string>("CountryCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
                     b.Property<DateTime>("FechaCreacion")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp without time zone")
@@ -532,6 +542,8 @@ namespace BuscaYa.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Activo");
+
+                    b.HasIndex("CountryCode");
 
                     b.HasIndex("Orden");
 
@@ -656,6 +668,27 @@ namespace BuscaYa.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("CountryCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("NI");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("NIO");
+
+                    b.Property<string>("CurrencySymbol")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("C$");
+
                     b.Property<string>("Departamento")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -723,6 +756,13 @@ namespace BuscaYa.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("Pais")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("Nicaragua");
+
                     b.Property<string>("Plan")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -768,6 +808,8 @@ namespace BuscaYa.Migrations
 
                     b.HasIndex("Ciudad");
 
+                    b.HasIndex("CountryCode");
+
                     b.HasIndex("Slug")
                         .IsUnique();
 
@@ -807,6 +849,10 @@ namespace BuscaYa.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
+
+                    b.Property<string>("CountryCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(200)
@@ -861,6 +907,8 @@ namespace BuscaYa.Migrations
                     b.HasIndex("AppleId")
                         .IsUnique()
                         .HasFilter("\"AppleId\" IS NOT NULL");
+
+                    b.HasIndex("CountryCode");
 
                     b.HasIndex("GoogleId")
                         .IsUnique()

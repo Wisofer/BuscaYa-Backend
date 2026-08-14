@@ -5,6 +5,7 @@ public class HistorialBusqueda
     public int Id { get; set; }
     public int? UsuarioId { get; set; } // Nullable para búsquedas anónimas
     public string Termino { get; set; } = string.Empty;
+    public string? CountryCode { get; set; }
     public decimal? Latitud { get; set; }
     public decimal? Longitud { get; set; }
     public DateTime Fecha { get; set; } = DateTime.Now;

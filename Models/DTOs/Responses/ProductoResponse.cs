@@ -33,6 +33,10 @@ public class TiendaInfoResponse
     public string Nombre { get; set; } = string.Empty;
     public string Direccion { get; set; } = string.Empty;
     public string Ciudad { get; set; } = string.Empty;
+    public string CountryCode { get; set; } = "NI";
+    public string Pais { get; set; } = "Nicaragua";
+    public string CurrencyCode { get; set; } = "NIO";
+    public string CurrencySymbol { get; set; } = "C$";
     public string WhatsApp { get; set; } = string.Empty;
     public string? Telefono { get; set; }
     public string? LogoUrl { get; set; }

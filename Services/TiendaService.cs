@@ -24,11 +24,19 @@ public class TiendaService : ITiendaService
         _logger = logger;
     }
 
-    public List<Tienda> ObtenerTodas()
+    public List<Tienda> ObtenerTodas(string? countryCode = null)
     {
-        return _context.Tiendas
+        var query = _context.Tiendas
             .AsNoTracking()
-            .Where(t => t.Activo)
+            .Where(t => t.Activo);
+
+        if (!string.IsNullOrWhiteSpace(countryCode))
+        {
+            var code = countryCode.Trim().ToUpper();
+            query = query.Where(t => t.CountryCode == code);
+        }
+
+        return query
             .OrderBy(t => t.Nombre)
             .ToList();
     }
@@ -51,12 +59,19 @@ public class TiendaService : ITiendaService
             .ToList();
     }
 
-    public List<Tienda> BuscarCercanas(decimal lat, decimal lng, double radioKm)
+    public List<Tienda> BuscarCercanas(decimal lat, decimal lng, double radioKm, string? countryCode = null)
     {
-        var todas = _context.Tiendas
+        var query = _context.Tiendas
             .AsNoTracking()
-            .Where(t => t.Activo)
-            .ToList();
+            .Where(t => t.Activo);
+
+        if (!string.IsNullOrWhiteSpace(countryCode))
+        {
+            var code = countryCode.Trim().ToUpper();
+            query = query.Where(t => t.CountryCode == code);
+        }
+
+        var todas = query.ToList();
 
         return todas
             .Where(t =>
@@ -86,6 +101,10 @@ public class TiendaService : ITiendaService
             Longitud = tienda.Longitud,
             Ciudad = tienda.Ciudad,
             Departamento = tienda.Departamento,
+            CountryCode = tienda.CountryCode,
+            Pais = tienda.Pais,
+            CurrencyCode = tienda.CurrencyCode,
+            CurrencySymbol = tienda.CurrencySymbol,
             HorarioApertura = tienda.HorarioApertura,
             HorarioCierre = tienda.HorarioCierre,
             DiasAtencion = tienda.DiasAtencion,

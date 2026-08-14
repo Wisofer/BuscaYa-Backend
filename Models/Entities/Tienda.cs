@@ -13,6 +13,10 @@ public class Tienda
     public decimal Longitud { get; set; }
     public string Ciudad { get; set; } = string.Empty;
     public string Departamento { get; set; } = string.Empty;
+    public string CountryCode { get; set; } = "NI";
+    public string Pais { get; set; } = "Nicaragua";
+    public string CurrencyCode { get; set; } = "NIO";
+    public string CurrencySymbol { get; set; } = "C$";
     public TimeSpan? HorarioApertura { get; set; }
     public TimeSpan? HorarioCierre { get; set; }
     public string? DiasAtencion { get; set; }

@@ -274,6 +274,8 @@ public class AuthApiController : ControllerBase
             Email = u.Email,
             Telefono = u.Telefono,
             FotoPerfilUrl = u.FotoPerfilUrl,
+            CountryCode = u.CountryCode,
+            FlagEmoji = RegionCatalog.GetFlagEmoji(u.CountryCode),
             TiendaId = u.TiendaId,
             AccountDeletionPending = del.pending,
             AccountDeletionScheduledAt = del.scheduled_deletion_at,
@@ -508,6 +510,50 @@ public class AuthApiController : ControllerBase
         }
     }
 
+    [HttpPatch("me/country")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public IActionResult ActualizarPaisUsuario([FromBody] UpdateCountryRequest request)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(new { error = "Usuario no autenticado" });
+            }
+
+            if (string.IsNullOrWhiteSpace(request?.CountryCode))
+            {
+                return BadRequest(new { error = "El código de país es requerido" });
+            }
+
+            var entry = RegionCatalog.FindByCode(request.CountryCode);
+            if (entry == null)
+            {
+                return BadRequest(new { error = "Código de país no soportado en LATAM" });
+            }
+
+            var usuario = _authService.ObtenerUsuarioPorId(userId);
+            if (usuario == null)
+            {
+                return NotFound(new { error = "Usuario no encontrado" });
+            }
+
+            usuario.CountryCode = entry.Code;
+            _authService.ActualizarPerfil(usuario.Id, usuario.NombreCompleto, usuario.Telefono, usuario.Email, usuario.FotoPerfilUrl);
+
+            return Ok(new
+            {
+                mensaje = "País actualizado correctamente",
+                usuario = MapToUsuarioInfo(usuario)
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error al actualizar el país del usuario", mensaje = ex.Message });
+        }
+    }
+
     /// <summary>
     /// Programa la eliminación definitiva de la cuenta y de todos los datos en 10 días (UTC).
     /// Con contraseña local: envía <c>password</c>. Solo red social sin contraseña almacenada: <c>confirm_without_password: true</c>.
@@ -665,6 +711,8 @@ public class UsuarioInfoResponse
     public string? Email { get; set; }
     public string? Telefono { get; set; }
     public string? FotoPerfilUrl { get; set; }
+    public string? CountryCode { get; set; }
+    public string? FlagEmoji { get; set; }
     public int? TiendaId { get; set; }
 
     /// <summary>True si hay una eliminación programada pendiente.</summary>
@@ -741,4 +789,9 @@ public class AppleCompleteRequest
     public string NombreCompleto { get; set; } = string.Empty;
     public string? Telefono { get; set; }
     public string? Email { get; set; }
+}
+
+public class UpdateCountryRequest
+{
+    public string CountryCode { get; set; } = string.Empty;
 }

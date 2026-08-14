@@ -6,5 +6,5 @@ namespace BuscaYa.Services.IServices;
 public interface IBusquedaService
 {
     BuscarResponse BuscarProductos(BuscarRequest request);
-    List<string> Sugerencias(string termino, int limite = 10);
+    List<string> Sugerencias(string termino, int limite = 10, string? countryCode = null);
 }

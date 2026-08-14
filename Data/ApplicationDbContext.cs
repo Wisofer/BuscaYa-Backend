@@ -58,6 +58,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Telefono).HasMaxLength(20);
             entity.Property(e => e.Email).HasMaxLength(200);
             entity.Property(e => e.FotoPerfilUrl).HasMaxLength(500);
+            entity.Property(e => e.CountryCode).HasMaxLength(10);
             entity.Property(e => e.GoogleId).HasMaxLength(128);
             entity.Property(e => e.AppleId).HasMaxLength(128);
             entity.Property(e => e.PasswordResetTokenHash).HasMaxLength(128);
@@ -67,6 +68,7 @@ public class ApplicationDbContext : DbContext
 
             entity.HasIndex(e => e.AccountDeletionScheduledAt);
             entity.HasIndex(e => e.PasswordResetTokenExpiresAt);
+            entity.HasIndex(e => e.CountryCode);
             
             entity.HasOne(e => e.Tienda)
                 .WithOne(t => t.Usuario)
@@ -88,6 +90,10 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Longitud).HasColumnType("decimal(11,8)");
             entity.Property(e => e.Ciudad).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Departamento).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.CountryCode).IsRequired().HasMaxLength(10).HasDefaultValue("NI");
+            entity.Property(e => e.Pais).IsRequired().HasMaxLength(100).HasDefaultValue("Nicaragua");
+            entity.Property(e => e.CurrencyCode).IsRequired().HasMaxLength(10).HasDefaultValue("NIO");
+            entity.Property(e => e.CurrencySymbol).IsRequired().HasMaxLength(10).HasDefaultValue("C$");
             entity.Property(e => e.DiasAtencion).HasMaxLength(100);
             entity.Property(e => e.LogoUrl).HasMaxLength(500);
             entity.Property(e => e.FotoUrl).HasMaxLength(500);
@@ -98,6 +104,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Slug).IsRequired().HasMaxLength(200).HasDefaultValue("");
             
             entity.HasIndex(e => e.Ciudad);
+            entity.HasIndex(e => e.CountryCode);
             entity.HasIndex(e => e.Activo);
             entity.HasIndex(e => e.TokenPublico).IsUnique();
             entity.HasIndex(e => e.Slug).IsUnique();
@@ -231,6 +238,8 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Latitud).HasColumnType("decimal(10,8)");
             entity.Property(e => e.Longitud).HasColumnType("decimal(11,8)");
             
+            entity.Property(e => e.CountryCode).HasMaxLength(10);
+            
             entity.HasOne(e => e.Usuario)
                 .WithMany(u => u.HistorialBusquedas)
                 .HasForeignKey(e => e.UsuarioId)
@@ -238,6 +247,7 @@ public class ApplicationDbContext : DbContext
             
             entity.HasIndex(e => e.UsuarioId);
             entity.HasIndex(e => e.Fecha);
+            entity.HasIndex(e => e.CountryCode);
         });
 
         // DireccionGuardada
@@ -335,6 +345,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Titulo).HasMaxLength(200);
             entity.Property(e => e.Subtitulo).HasMaxLength(500);
             entity.Property(e => e.AccionUrl).HasMaxLength(500);
+            entity.Property(e => e.CountryCode).HasMaxLength(10);
             entity.Property(e => e.Orden).HasDefaultValue(0);
             entity.Property(e => e.Activo).HasDefaultValue(true);
             entity.Property(e => e.FechaCreacion).HasDefaultValueSql("NOW()");
@@ -342,6 +353,7 @@ public class ApplicationDbContext : DbContext
             // Índices para la consulta de la app móvil (activos ordenados)
             entity.HasIndex(e => e.Activo);
             entity.HasIndex(e => e.Orden);
+            entity.HasIndex(e => e.CountryCode);
         });
 
         // RefreshToken

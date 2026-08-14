@@ -32,14 +32,23 @@ public class PublicidadPublicController : ControllerBase
     /// Guardado en caché por 10 minutos para reducir tráfico a PostgreSQL.
     /// </summary>
     [HttpGet("publicidades")]
-    public async Task<IActionResult> ObtenerPublicidades()
+    public async Task<IActionResult> ObtenerPublicidades([FromQuery] string? countryCode)
     {
         try
         {
-            if (!_cache.TryGetValue(CacheKey, out object? publicidades))
+            var code = string.IsNullOrWhiteSpace(countryCode) ? "ALL" : countryCode.Trim().ToUpper();
+            var cacheKey = $"{CacheKey}_{code}";
+
+            if (!_cache.TryGetValue(cacheKey, out object? publicidades))
             {
-                publicidades = await _db.Publicidades
-                    .Where(p => p.Activo)
+                var query = _db.Publicidades.Where(p => p.Activo);
+
+                if (!string.IsNullOrWhiteSpace(countryCode))
+                {
+                    query = query.Where(p => p.CountryCode == null || p.CountryCode == "ALL" || p.CountryCode == code);
+                }
+
+                publicidades = await query
                     .OrderBy(p => p.Orden)
                     .ThenBy(p => p.Id)
                     .Select(p => new
@@ -49,14 +58,15 @@ public class PublicidadPublicController : ControllerBase
                         p.Titulo,
                         p.Subtitulo,
                         p.AccionUrl,
-                        p.Orden
+                        p.Orden,
+                        p.CountryCode
                     })
                     .ToListAsync();
 
                 var cacheEntryOptions = new MemoryCacheEntryOptions()
                     .SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
 
-                _cache.Set(CacheKey, publicidades, cacheEntryOptions);
+                _cache.Set(cacheKey, publicidades, cacheEntryOptions);
             }
 
             return Ok(publicidades);

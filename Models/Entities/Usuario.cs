@@ -12,6 +12,7 @@ public class Usuario
     public string? Telefono { get; set; }
     public string? Email { get; set; }
     public string? FotoPerfilUrl { get; set; }
+    public string? CountryCode { get; set; }
     /// <summary>Identificador único de Google (sub del idToken). Null si el usuario no se registró con Google.</summary>
     public string? GoogleId { get; set; }
     /// <summary>Identificador único de Apple (sub del identityToken). Null si el usuario no se registró con Apple.</summary>

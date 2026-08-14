@@ -35,6 +35,13 @@ public class BusquedaService : IBusquedaService
                 p.Tienda.Nombre.ToLower().Contains(termino));
         }
 
+        // Filtrar por país
+        if (!string.IsNullOrWhiteSpace(request.CountryCode))
+        {
+            var countryCode = request.CountryCode.Trim().ToUpper();
+            query = query.Where(p => p.Tienda.CountryCode == countryCode);
+        }
+
         // Filtrar por categoría
         if (request.CategoriaId.HasValue)
         {
@@ -126,6 +133,10 @@ public class BusquedaService : IBusquedaService
                     Nombre = p.Tienda.Nombre,
                     Direccion = p.Tienda.Direccion,
                     Ciudad = p.Tienda.Ciudad,
+                    CountryCode = p.Tienda.CountryCode,
+                    Pais = p.Tienda.Pais,
+                    CurrencyCode = p.Tienda.CurrencyCode,
+                    CurrencySymbol = p.Tienda.CurrencySymbol,
                     WhatsApp = p.Tienda.WhatsApp,
                     Telefono = p.Tienda.Telefono,
                     LogoUrl = p.Tienda.LogoUrl,
@@ -284,22 +295,33 @@ public class BusquedaService : IBusquedaService
         };
     }
 
-    public List<string> Sugerencias(string termino, int limite = 10)
+    public List<string> Sugerencias(string termino, int limite = 10, string? countryCode = null)
     {
         if (string.IsNullOrWhiteSpace(termino) || termino.Length < 2)
             return new List<string>();
 
         var terminoLower = termino.ToLower();
+        var code = string.IsNullOrWhiteSpace(countryCode) ? null : countryCode.Trim().ToUpper();
 
-        var sugerenciasProductos = _context.Productos
-            .Where(p => p.Activo && p.Tienda.Activo && p.Nombre.ToLower().Contains(terminoLower))
+        var queryProductos = _context.Productos
+            .Where(p => p.Activo && p.Tienda.Activo && p.Nombre.ToLower().Contains(terminoLower));
+
+        var queryTiendas = _context.Tiendas
+            .Where(t => t.Activo && t.Nombre.ToLower().Contains(terminoLower));
+
+        if (!string.IsNullOrWhiteSpace(code))
+        {
+            queryProductos = queryProductos.Where(p => p.Tienda.CountryCode == code);
+            queryTiendas = queryTiendas.Where(t => t.CountryCode == code);
+        }
+
+        var sugerenciasProductos = queryProductos
             .Select(p => p.Nombre)
             .Distinct()
             .Take(limite)
             .ToList();
 
-        var sugerenciasTiendas = _context.Tiendas
-            .Where(t => t.Activo && t.Nombre.ToLower().Contains(terminoLower))
+        var sugerenciasTiendas = queryTiendas
             .Select(t => t.Nombre)
             .Distinct()
             .Take(limite)

@@ -13,6 +13,10 @@ public class TiendaResponse
     public decimal Longitud { get; set; }
     public string Ciudad { get; set; } = string.Empty;
     public string Departamento { get; set; } = string.Empty;
+    public string CountryCode { get; set; } = "NI";
+    public string Pais { get; set; } = "Nicaragua";
+    public string CurrencyCode { get; set; } = "NIO";
+    public string CurrencySymbol { get; set; } = "C$";
     public TimeSpan? HorarioApertura { get; set; }
     public TimeSpan? HorarioCierre { get; set; }
     public string? DiasAtencion { get; set; }
@@ -41,7 +45,7 @@ public class TiendaResponse
 
     /// <summary>
     /// Dirección completa en un solo campo, pensada para el frontend móvil.
-    /// Ejemplo: "Dirección..., Ciudad, Departamento".
+    /// Ejemplo: "Dirección..., Ciudad, Departamento, País".
     /// </summary>
     public string DireccionCompleta
     {
@@ -51,6 +55,7 @@ public class TiendaResponse
             if (!string.IsNullOrWhiteSpace(Direccion)) partes.Add(Direccion);
             if (!string.IsNullOrWhiteSpace(Ciudad)) partes.Add(Ciudad);
             if (!string.IsNullOrWhiteSpace(Departamento)) partes.Add(Departamento);
+            if (!string.IsNullOrWhiteSpace(Pais)) partes.Add(Pais);
             return string.Join(", ", partes);
         }
     }

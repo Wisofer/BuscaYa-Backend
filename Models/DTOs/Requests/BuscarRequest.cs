@@ -4,6 +4,7 @@ public class BuscarRequest
 {
     // Termino es opcional: si viene vacío o null, se interpreta como búsqueda amplia (Destacados)
     public string? Termino { get; set; }
+    public string? CountryCode { get; set; }
     public decimal? Latitud { get; set; }
     public decimal? Longitud { get; set; }
     public double? RadioKm { get; set; } = 5.0;
