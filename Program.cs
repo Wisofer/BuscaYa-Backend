@@ -157,6 +157,8 @@ builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<IReporteService, ReporteService>();
 builder.Services.AddScoped<IPushNotificationService, PushNotificationService>();
 builder.Services.AddScoped<INotificationTriggerService, NotificationTriggerService>();
+builder.Services.AddSingleton<IVenezuelaExchangeRateService, VenezuelaExchangeRateService>();
+builder.Services.AddHostedService<VenezuelaRatePushBackgroundService>();
 builder.Services.AddHostedService<NotificationReminderBackgroundService>();
 
 // Inicializar Firebase (credenciales desde env o archivo Secrets)

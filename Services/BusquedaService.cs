@@ -239,6 +239,8 @@ public class BusquedaService : IBusquedaService
                 FacebookUrl = t.FacebookUrl,
                 InstagramUrl = t.InstagramUrl,
                 TikTokUrl = t.TikTokUrl,
+                ExchangeRateMode = t.ExchangeRateMode,
+                ExchangeRate = t.ExchangeRate,
                 Productos = t.Productos.Select(p => new ProductoSimpleResponse
                 {
                     Id = p.Id,

@@ -42,6 +42,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Publicidad> Publicidades { get; set; }
 
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<ExchangeRateLog> ExchangeRateLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

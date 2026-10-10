@@ -62,6 +62,8 @@ public class TiendaInfoResponse
     public string? InstagramUrl { get; set; }
     [System.Text.Json.Serialization.JsonPropertyName("tiktokUrl")]
     public string? TikTokUrl { get; set; }
+    public string? ExchangeRateMode { get; set; }
+    public decimal? ExchangeRate { get; set; }
 }
 
 public class CategoriaInfoResponse

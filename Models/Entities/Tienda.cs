@@ -27,6 +27,11 @@ public class Tienda
     public string Plan { get; set; } = "Free"; // Free, Pro
     public bool Activo { get; set; } = true;
     public int? UsuarioId { get; set; }
+    
+    // ConfiguraciÃ³n Bimonetaria
+    public string? ExchangeRateMode { get; set; }
+    public decimal? ExchangeRate { get; set; }
+
     public string TokenPublico { get; set; } = string.Empty;
     /// <summary>Slug URL-amigable generado desde el nombre. Ej: "ferreteria-lopez". Inmutable tras creación.</summary>
     public string Slug { get; set; } = string.Empty;

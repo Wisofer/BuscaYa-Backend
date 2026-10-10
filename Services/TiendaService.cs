@@ -122,6 +122,8 @@ public class TiendaService : ITiendaService
             FacebookUrl = tienda.FacebookUrl,
             InstagramUrl = tienda.InstagramUrl,
             TikTokUrl = tienda.TikTokUrl,
+            ExchangeRateMode = tienda.ExchangeRateMode,
+            ExchangeRate = tienda.ExchangeRate,
             Productos = tienda.Productos.Select(p => new ProductoSimpleResponse
             {
                 Id = p.Id,
@@ -199,6 +201,8 @@ public class TiendaService : ITiendaService
             FacebookUrl = tienda.FacebookUrl,
             InstagramUrl = tienda.InstagramUrl,
             TikTokUrl = tienda.TikTokUrl,
+            ExchangeRateMode = tienda.ExchangeRateMode,
+            ExchangeRate = tienda.ExchangeRate,
             Productos = tienda.Productos.Select(p => new ProductoSimpleResponse
             {
                 Id = p.Id,
@@ -303,6 +307,8 @@ public class TiendaService : ITiendaService
         if (request.FacebookUrl != null) tienda.FacebookUrl = request.FacebookUrl;
         if (request.InstagramUrl != null) tienda.InstagramUrl = request.InstagramUrl;
         if (request.TikTokUrl != null) tienda.TikTokUrl = request.TikTokUrl;
+        if (request.ExchangeRateMode != null) tienda.ExchangeRateMode = request.ExchangeRateMode;
+        if (request.ExchangeRate.HasValue) tienda.ExchangeRate = request.ExchangeRate.Value;
 
         tienda.FechaActualizacion = DateTime.Now;
         _context.SaveChanges();

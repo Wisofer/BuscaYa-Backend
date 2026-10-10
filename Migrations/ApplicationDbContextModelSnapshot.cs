@@ -209,6 +209,45 @@ namespace BuscaYa.Migrations
                     b.ToTable("Estadisticas");
                 });
 
+            modelBuilder.Entity("BuscaYa.Models.Entities.ExchangeRateLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Fecha")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("fecha");
+
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("mode");
+
+                    b.Property<decimal>("Rate")
+                        .HasColumnType("numeric(14,4)")
+                        .HasColumnName("rate");
+
+                    b.Property<string>("Source")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("source");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("exchange_rate_logs");
+                });
+
             modelBuilder.Entity("BuscaYa.Models.Entities.Favorito", b =>
                 {
                     b.Property<int>("Id")
@@ -713,6 +752,12 @@ namespace BuscaYa.Migrations
 
                     b.Property<bool>("EstaAbiertaManual")
                         .HasColumnType("boolean");
+
+                    b.Property<decimal?>("ExchangeRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("ExchangeRateMode")
+                        .HasColumnType("text");
 
                     b.Property<string>("FacebookUrl")
                         .HasColumnType("text");
