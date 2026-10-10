@@ -69,6 +69,12 @@
                             Configuraciones
                         </a>
                     </li>
+                    <li>
+                        <a href="/admin/dev-tests" class="@(ViewContext.RouteData.Values["action"]?.ToString() == "DevTests" ? "active" : "")">
+                            <i class="bi bi-code-slash"></i>
+                            Dev Tests (Multi-Moneda)
+                        </a>
+                    </li>
                     <li class="mt-auto pt-4 border-t border-base-content/10">
                         <a href="/logout" onclick="event.preventDefault(); document.getElementById('logoutForm').submit();" class="text-error">
                             <i class="bi bi-box-arrow-right"></i>

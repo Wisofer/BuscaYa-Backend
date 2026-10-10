@@ -799,4 +799,74 @@ public class AdminController : Controller
         TempData["Mensaje"] = "Banner eliminado correctamente.";
         return RedirectToAction("Publicidad");
     }
+    [HttpGet("/admin/dev-tests")]
+    public async Task<IActionResult> DevTests([FromServices] IVenezuelaExchangeRateService rateService, int? tiendaId)
+    {
+        var rate = await rateService.GetLatestRatesAsync();
+        ViewBag.Rate = rate;
+
+        var allTiendas = await _context.Tiendas.Select(b => new { b.Id, Name = b.Nombre }).ToListAsync();
+        ViewBag.AllTiendas = allTiendas;
+
+        var tienda = tiendaId.HasValue 
+            ? await _context.Tiendas.Where(b => b.Id == tiendaId.Value).Select(b => new { b.Id, b.ExchangeRateMode, Name = b.Nombre, b.ExchangeRate }).FirstOrDefaultAsync()
+            : await _context.Tiendas.Select(b => new { b.Id, b.ExchangeRateMode, Name = b.Nombre, b.ExchangeRate }).FirstOrDefaultAsync();
+
+        ViewBag.TiendaId = tienda?.Id ?? 0;
+        ViewBag.Mode = tienda?.ExchangeRateMode ?? "BCV";
+        ViewBag.TiendaName = tienda?.Name ?? "Tienda de Prueba";
+        ViewBag.ManualRate = tienda?.ExchangeRate ?? 0m;
+
+        return View("~/Views/Admin/DevTests.cshtml");
+    }
+
+    [HttpPost("/admin/dev-tests/save-mode")]
+    public async Task<IActionResult> DevTestsSaveMode([FromBody] SaveBimonetaryModeRequest request)
+    {
+        var tienda = await _context.Tiendas.FindAsync(request.TiendaId);
+        if (tienda == null) return NotFound("Tienda no encontrada.");
+        
+        tienda.ExchangeRateMode = request.Mode;
+        if (request.Mode == "MANUAL" && request.ManualRate.HasValue)
+        {
+            tienda.ExchangeRate = request.ManualRate.Value;
+        }
+        await _context.SaveChangesAsync();
+        
+        return Ok(new { success = true, mode = tienda.ExchangeRateMode, rate = tienda.ExchangeRate });
+    }
+
+    [HttpPost("/admin/dev-tests/income")]
+    public async Task<IActionResult> DevTestsIncome([FromBody] DevIncomeRequest request)
+    {
+        var tienda = await _context.Tiendas.FindAsync(request.TiendaId);
+        if (tienda == null) return NotFound("Tienda no encontrada.");
+        
+        // Simular respuesta
+        return Ok(new { 
+            success = true, 
+            message = "Transacción guardada", 
+            tiendaId = tienda.Id, 
+            amountUsd = request.Amount, 
+            totalBs = request.TotalBs, 
+            tasa = request.TasaCambio, 
+            mode = request.ExchangeRateMode 
+        });
+    }
+}
+
+public class SaveBimonetaryModeRequest
+{
+    public int TiendaId { get; set; }
+    public string Mode { get; set; } = string.Empty;
+    public decimal? ManualRate { get; set; }
+}
+
+public class DevIncomeRequest
+{
+    public int TiendaId { get; set; }
+    public decimal Amount { get; set; }
+    public decimal? TotalBs { get; set; }
+    public decimal? TasaCambio { get; set; }
+    public string? ExchangeRateMode { get; set; }
 }
