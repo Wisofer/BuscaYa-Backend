@@ -50,6 +50,21 @@ public class AuthService : IAuthService
             return null;
         }
 
+        // Auto-migración transparente de hash legado a PBKDF2 moderno
+        if (PasswordHelper.NeedsRehash(usuario.Contrasena))
+        {
+            try
+            {
+                usuario.Contrasena = PasswordHelper.HashPassword(contrasena);
+                _context.SaveChanges();
+                _logger.LogInformation("Contraseña del usuario {UsuarioId} migrada transparentemente a PBKDF2.", usuario.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo actualizar el hash de contraseña para el usuario {UsuarioId}", usuario.Id);
+            }
+        }
+
         return usuario;
     }
 
@@ -76,10 +91,17 @@ public class AuthService : IAuthService
             .Any(u => u.NombreUsuario.ToLower() == nombreNorm);
     }
 
-    public Usuario? RegistrarCliente(string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email)
+    public Usuario? RegistrarCliente(string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email, string? countryCode = null)
     {
         if (ExisteNombreUsuario(nombreUsuario))
             return null;
+
+        string? validCountryCode = null;
+        if (!string.IsNullOrWhiteSpace(countryCode))
+        {
+            var entry = RegionCatalog.FindByCode(countryCode);
+            validCountryCode = entry?.Code;
+        }
 
         var usuario = new Usuario
         {
@@ -88,6 +110,7 @@ public class AuthService : IAuthService
             NombreCompleto = (nombreCompleto ?? "").Trim(),
             Telefono = telefono?.Trim(),
             Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim(),
+            CountryCode = validCountryCode,
             Rol = SD.RolCliente,
             Activo = true,
             FechaCreacion = DateTime.Now,
@@ -122,10 +145,17 @@ public class AuthService : IAuthService
         return null;
     }
 
-    public Usuario? RegistrarClienteConGoogle(string googleId, string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl)
+    public Usuario? RegistrarClienteConGoogle(string googleId, string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl, string? countryCode = null)
     {
         if (ExisteNombreUsuario(nombreUsuario))
             return null;
+
+        string? validCountryCode = null;
+        if (!string.IsNullOrWhiteSpace(countryCode))
+        {
+            var entry = RegionCatalog.FindByCode(countryCode);
+            validCountryCode = entry?.Code;
+        }
 
         var usuario = new Usuario
         {
@@ -136,6 +166,7 @@ public class AuthService : IAuthService
             Telefono = telefono?.Trim(),
             Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim(),
             FotoPerfilUrl = fotoPerfilUrl,
+            CountryCode = validCountryCode,
             Rol = SD.RolCliente,
             Activo = true,
             FechaCreacion = DateTime.Now,
@@ -169,10 +200,17 @@ public class AuthService : IAuthService
         return null;
     }
 
-    public Usuario? RegistrarClienteConApple(string appleId, string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl)
+    public Usuario? RegistrarClienteConApple(string appleId, string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl, string? countryCode = null)
     {
         if (ExisteNombreUsuario(nombreUsuario))
             return null;
+
+        string? validCountryCode = null;
+        if (!string.IsNullOrWhiteSpace(countryCode))
+        {
+            var entry = RegionCatalog.FindByCode(countryCode);
+            validCountryCode = entry?.Code;
+        }
 
         var usuario = new Usuario
         {
@@ -183,6 +221,7 @@ public class AuthService : IAuthService
             Telefono = telefono?.Trim(),
             Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim(),
             FotoPerfilUrl = fotoPerfilUrl,
+            CountryCode = validCountryCode,
             Rol = SD.RolCliente,
             Activo = true,
             FechaCreacion = DateTime.Now,
@@ -197,7 +236,7 @@ public class AuthService : IAuthService
     public Usuario? ConvertirClienteATienda(int usuarioId, string nombreTienda, string? descripcionTienda,
         string? telefonoTienda, string whatsAppTienda, string? emailTienda,
         string direccionTienda, decimal latitud, decimal longitud, string ciudad, string departamento,
-        TimeSpan? horarioApertura, TimeSpan? horarioCierre, string? diasAtencion, string? logoTienda, string? fotoTienda)
+        TimeSpan? horarioApertura, TimeSpan? horarioCierre, string? diasAtencion, string? logoTienda, string? fotoTienda, string? countryCode = null)
     {
         // Buscar el usuario
         var usuario = _context.Usuarios.Find(usuarioId);
@@ -218,19 +257,28 @@ public class AuthService : IAuthService
             return null; // Ya tiene tienda asociada
         }
 
+        // Determinar país, moneda y datos regionales de la tienda
+        var targetCountry = !string.IsNullOrWhiteSpace(countryCode) ? countryCode : usuario.CountryCode;
+        var regionEntry = RegionCatalog.FindByCode(targetCountry) ?? RegionCatalog.GetDefault();
+        var formattedWhatsApp = RegionCatalog.FormatPhoneForWhatsApp(whatsAppTienda, regionEntry.Code);
+
         // Crear la tienda asociada
         var tienda = new Tienda
         {
             Nombre = nombreTienda,
             Descripcion = descripcionTienda,
             Telefono = telefonoTienda,
-            WhatsApp = whatsAppTienda,
+            WhatsApp = formattedWhatsApp,
             Email = emailTienda,
             Direccion = direccionTienda,
             Latitud = latitud,
             Longitud = longitud,
             Ciudad = ciudad,
             Departamento = departamento,
+            CountryCode = regionEntry.Code,
+            Pais = regionEntry.NameEs,
+            CurrencyCode = regionEntry.CurrencyIso,
+            CurrencySymbol = regionEntry.CurrencySymbol,
             HorarioApertura = horarioApertura,
             HorarioCierre = horarioCierre,
             DiasAtencion = diasAtencion,
@@ -247,9 +295,13 @@ public class AuthService : IAuthService
         _context.Tiendas.Add(tienda);
         _context.SaveChanges();
 
-        // Actualizar el usuario: cambiar rol y vincular tienda
+        // Actualizar el usuario: cambiar rol, vincular tienda y sincronizar CountryCode si estaba vacío
         usuario.Rol = SD.RolTiendaOwner;
         usuario.TiendaId = tienda.Id;
+        if (string.IsNullOrEmpty(usuario.CountryCode))
+        {
+            usuario.CountryCode = regionEntry.Code;
+        }
         _context.SaveChanges();
 
         return usuario;

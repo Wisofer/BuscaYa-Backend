@@ -124,4 +124,88 @@ public static class RegionCatalog
             _ => "🌐"
         };
     }
+
+    public static string GetTaxIdLabel(string? countryCode)
+    {
+        return (countryCode ?? "").Trim().ToUpperInvariant() switch
+        {
+            "VE" => "RIF",
+            "CO" or "GT" or "SV" or "BO" => "NIT",
+            "MX" => "RFC",
+            "CL" or "UY" => "RUT",
+            "AR" => "CUIT",
+            "DO" => "RNC",
+            "HN" => "RTN",
+            "BR" => "CNPJ",
+            "CR" => "Cédula",
+            _ => "RUC"
+        };
+    }
+
+    public static string GetDialCode(string? countryCode)
+    {
+        return (countryCode ?? "").Trim().ToUpperInvariant() switch
+        {
+            "AR" => "54",
+            "BZ" => "501",
+            "BO" => "591",
+            "BR" => "55",
+            "CL" => "56",
+            "CO" => "57",
+            "CR" => "506",
+            "CU" => "53",
+            "DO" => "1",
+            "EC" => "593",
+            "SV" => "503",
+            "GT" => "502",
+            "HT" => "509",
+            "HN" => "504",
+            "MX" => "52",
+            "NI" => "505",
+            "PA" => "507",
+            "PY" => "595",
+            "PE" => "51",
+            "UY" => "598",
+            "VE" => "58",
+            "PR" => "1",
+            "US" or "USA" => "1",
+            "ES" => "34",
+            _ => "505"
+        };
+    }
+
+    /// <summary>
+    /// Normaliza cualquier número de teléfono con el código de país del comercio para enlaces wa.me.
+    /// Si un comercio en Nicaragua (NI) ingresa solo sus 8 dígitos locales (ej: 82310100),
+    /// automáticamente le antepone 505, resultando en 50582310100.
+    /// </summary>
+    public static string FormatPhoneForWhatsApp(string? phone, string? countryCode)
+    {
+        if (string.IsNullOrWhiteSpace(phone)) return string.Empty;
+        var digits = new string(phone.Where(char.IsDigit).ToArray());
+        if (string.IsNullOrEmpty(digits)) return string.Empty;
+
+        var dialCode = GetDialCode(countryCode);
+
+        // Si ya empieza con el código de país y tiene longitud internacional razonable
+        if (digits.StartsWith(dialCode) && digits.Length >= dialCode.Length + 7)
+        {
+            return digits;
+        }
+
+        // Si empieza con 0 (común en Venezuela ej. 0414... o Ecuador ej. 09...), quitar el 0 inicial
+        if (digits.StartsWith("0") && digits.Length >= 9)
+        {
+            digits = digits.Substring(1);
+            if (digits.StartsWith(dialCode)) return digits;
+        }
+
+        // Si es un número local de 7 a 10 dígitos (ej. 8 dígitos en Centroamérica o 10 en Colombia/Venezuela)
+        if (digits.Length >= 7 && digits.Length <= 10)
+        {
+            return dialCode + digits;
+        }
+
+        return digits;
+    }
 }

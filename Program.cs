@@ -9,10 +9,12 @@ using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
 using System.Text;
+using System.Threading.RateLimiting;
 
 // Configurar Npgsql para manejar DateTime correctamente con PostgreSQL
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -33,6 +35,42 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.WriteIndented = false;
     });
 builder.Services.AddControllersWithViews();
+
+// Manejo global de excepciones nativo .NET 9 y Problem Details (RFC 7807)
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
+// Rate Limiting nativo .NET 9 contra ataques de fuerza bruta y saturación
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.ContentType = "application/json; charset=utf-8";
+        await context.HttpContext.Response.WriteAsJsonAsync(new
+        {
+            status = 429,
+            error = "Demasiadas peticiones. Por favor, espera un momento antes de reintentar.",
+            retryAfterSeconds = 60
+        }, token);
+    };
+
+    options.AddFixedWindowLimiter("auth-policy", opt =>
+    {
+        opt.PermitLimit = 15;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 0;
+    });
+
+    options.AddFixedWindowLimiter("api-policy", opt =>
+    {
+        opt.PermitLimit = 120;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 2;
+    });
+});
 
 // Configurar URLs en minúsculas
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
@@ -197,6 +235,9 @@ using (var scope = app.Services.CreateScope())
         // Aplicar migraciones
         dbContext.Database.Migrate();
 
+        // Auto-sanación resiliente del esquema para columnas críticas e índices (estilo NegoExpress)
+        await DatabaseSchemaSelfHeal.ApplyAsync(dbContext, logger);
+
         // Crear usuario admin si no existe
         InicializarUsuarioAdmin.CrearAdminSiNoExiste(dbContext, logger);
         
@@ -210,19 +251,44 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configurar el pipeline HTTP
+app.UseExceptionHandler();
+app.UseMiddleware<SecurityHeadersMiddleware>();
+
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/error");
     app.UseHsts();
     app.UseHttpsRedirection();
 }
-else
-{
-    app.UseDeveloperExceptionPage();
-}
 
-// Manejar códigos de estado (404, 403, 500, etc.)
-app.UseStatusCodePagesWithReExecute("/error", "?statusCode={0}");
+// Manejar códigos de estado: JSON para /api, vista MVC para web
+app.UseStatusCodePages(async statusCodeContext =>
+{
+    var request = statusCodeContext.HttpContext.Request;
+    if (request.Path.StartsWithSegments("/api"))
+    {
+        statusCodeContext.HttpContext.Response.ContentType = "application/json; charset=utf-8";
+        var statusCode = statusCodeContext.HttpContext.Response.StatusCode;
+        var message = statusCode switch
+        {
+            401 => "No autorizado. Token inválido o expirado.",
+            403 => "Acceso denegado. No tienes permisos para este recurso.",
+            404 => "El recurso solicitado no fue encontrado.",
+            429 => "Límite de peticiones excedido.",
+            _ => $"Error HTTP {statusCode}"
+        };
+        await statusCodeContext.HttpContext.Response.WriteAsJsonAsync(new
+        {
+            status = statusCode,
+            error = message,
+            errorMessages = new[] { message },
+            path = request.Path.Value
+        });
+    }
+    else
+    {
+        statusCodeContext.HttpContext.Response.Redirect($"/error?statusCode={statusCodeContext.HttpContext.Response.StatusCode}");
+    }
+});
 
 // Configurar archivos estáticos
 app.UseStaticFiles();
@@ -231,6 +297,9 @@ app.UseStaticFiles();
 app.UseCors("AllowMobileApp");
 
 app.UseRouting();
+
+// Habilitar Rate Limiting
+app.UseRateLimiter();
 
 // Habilitar sesiones
 app.UseSession();

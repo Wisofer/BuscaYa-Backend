@@ -10,15 +10,20 @@ public static class WhatsAppHelper
     /// <summary>
     /// Genera un link de WhatsApp con un mensaje personalizado para un producto
     /// </summary>
-    /// <param name="whatsappNumber">Número de WhatsApp (puede incluir código de país, ej: 50582310100)</param>
+    /// <param name="whatsappNumber">Número de WhatsApp (puede ser local o internacional)</param>
     /// <param name="nombreProducto">Nombre del producto</param>
     /// <param name="precio">Precio del producto (opcional)</param>
     /// <param name="moneda">Moneda del producto (opcional, default: C$)</param>
+    /// <param name="countryCode">Código ISO del país de la tienda (opcional, ej: NI, CR, VE)</param>
     /// <returns>URL de WhatsApp con mensaje personalizado</returns>
-    public static string GenerarLinkProducto(string whatsappNumber, string nombreProducto, decimal? precio = null, string moneda = "C$")
+    public static string GenerarLinkProducto(string whatsappNumber, string nombreProducto, decimal? precio = null, string moneda = "C$", string? countryCode = null)
     {
-        // Limpiar el número de WhatsApp (remover espacios, guiones, etc.)
-        var numeroLimpio = LimpiarNumeroWhatsApp(whatsappNumber);
+        // Normalizar el número con el código de país internacional
+        var numeroLimpio = RegionCatalog.FormatPhoneForWhatsApp(whatsappNumber, countryCode);
+        if (string.IsNullOrEmpty(numeroLimpio))
+        {
+            numeroLimpio = LimpiarNumeroWhatsApp(whatsappNumber);
+        }
         
         // Generar mensaje personalizado
         var mensaje = GenerarMensajeProducto(nombreProducto, precio, moneda);
@@ -68,10 +73,15 @@ public static class WhatsAppHelper
     /// Genera un link de WhatsApp simple (sin mensaje personalizado)
     /// </summary>
     /// <param name="whatsappNumber">Número de WhatsApp</param>
+    /// <param name="countryCode">Código ISO del país de la tienda (opcional, ej: NI, CR, VE)</param>
     /// <returns>URL de WhatsApp</returns>
-    public static string GenerarLinkSimple(string whatsappNumber)
+    public static string GenerarLinkSimple(string whatsappNumber, string? countryCode = null)
     {
-        var numeroLimpio = LimpiarNumeroWhatsApp(whatsappNumber);
+        var numeroLimpio = RegionCatalog.FormatPhoneForWhatsApp(whatsappNumber, countryCode);
+        if (string.IsNullOrEmpty(numeroLimpio))
+        {
+            numeroLimpio = LimpiarNumeroWhatsApp(whatsappNumber);
+        }
         return $"https://wa.me/{numeroLimpio}";
     }
 }

@@ -293,7 +293,8 @@ public class ClienteController : ControllerBase
                 return BadRequest(new { error = "Los datos de la tienda son requeridos" });
             }
 
-            // Convertir Cliente a TiendaOwner y crear tienda
+            // Convertir Cliente a TiendaOwner y crear tienda con soporte multi-país
+            var targetCountry = !string.IsNullOrWhiteSpace(request.CountryCode) ? request.CountryCode : usuario.CountryCode;
             var usuarioActualizado = _authService.ConvertirClienteATienda(
                 userId.Value,
                 request.NombreTienda,
@@ -310,7 +311,8 @@ public class ClienteController : ControllerBase
                 request.HorarioCierre,
                 request.DiasAtencion,
                 request.LogoTienda,
-                request.FotoTienda
+                request.FotoTienda,
+                targetCountry
             );
 
             if (usuarioActualizado == null)
@@ -359,6 +361,7 @@ public class CrearTiendaRequest
     public decimal Longitud { get; set; }
     public string Ciudad { get; set; } = string.Empty;
     public string Departamento { get; set; } = string.Empty;
+    public string? CountryCode { get; set; }
     public TimeSpan? HorarioApertura { get; set; }
     public TimeSpan? HorarioCierre { get; set; }
     public string? DiasAtencion { get; set; }

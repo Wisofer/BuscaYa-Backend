@@ -12,6 +12,7 @@ public class ActualizarTiendaRequest
     public decimal? Longitud { get; set; }
     public string? Ciudad { get; set; }
     public string? Departamento { get; set; }
+    public string? CountryCode { get; set; }
     public TimeSpan? HorarioApertura { get; set; }
     public TimeSpan? HorarioCierre { get; set; }
     public string? DiasAtencion { get; set; }

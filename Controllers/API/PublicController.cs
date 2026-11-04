@@ -6,6 +6,7 @@ using BuscaYa.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Security.Claims;
+using Microsoft.AspNetCore.RateLimiting;
 
 using Microsoft.Extensions.Caching.Memory;
 
@@ -13,6 +14,7 @@ namespace BuscaYa.Controllers.API;
 
 [ApiController]
 [Route("api/public")]
+[EnableRateLimiting("api-policy")]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class PublicController : ControllerBase
 {
@@ -208,7 +210,8 @@ public class PublicController : ControllerBase
                 producto.Tienda.WhatsApp,
                 producto.Nombre,
                 producto.Precio,
-                producto.Moneda
+                producto.Moneda,
+                producto.Tienda.CountryCode
             );
 
             var galeriaUrls = new List<string>();
@@ -561,7 +564,8 @@ public class PublicController : ControllerBase
                 producto.Tienda.WhatsApp,
                 producto.Nombre,
                 producto.Precio,
-                producto.Moneda ?? "C$"
+                producto.Moneda ?? "C$",
+                producto.Tienda.CountryCode
             );
 
             var galeriaUrls = new List<string>();
@@ -662,7 +666,8 @@ public class PublicController : ControllerBase
                 producto.Tienda.WhatsApp,
                 producto.Nombre,
                 producto.Precio,
-                producto.Moneda ?? "C$"
+                producto.Moneda ?? "C$",
+                producto.Tienda.CountryCode
             );
 
             var galeriaUrls = new List<string>();

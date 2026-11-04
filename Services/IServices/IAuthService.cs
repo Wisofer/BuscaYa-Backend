@@ -10,26 +10,26 @@ public interface IAuthService
     bool EsUsuarioNormal(Usuario? usuario);
 
     // Registro
-    Usuario? RegistrarCliente(string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email);
+    Usuario? RegistrarCliente(string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email, string? countryCode = null);
     bool ExisteNombreUsuario(string nombreUsuario);
 
     // Google
     /// <summary>Busca usuario por GoogleId o por email (de Google).</summary>
     Usuario? ObtenerUsuarioPorGoogleIdOEmail(string? googleId, string? email);
     /// <summary>Registra cliente vinculado a Google (googleId, contraseña hasheada, etc.).</summary>
-    Usuario? RegistrarClienteConGoogle(string googleId, string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl);
+    Usuario? RegistrarClienteConGoogle(string googleId, string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl, string? countryCode = null);
 
     // Apple
     /// <summary>Busca usuario por AppleId o por email (de Apple).</summary>
     Usuario? ObtenerUsuarioPorAppleIdOEmail(string? appleId, string? email);
     /// <summary>Registra cliente vinculado a Apple (appleId, contraseña hasheada, etc.).</summary>
-    Usuario? RegistrarClienteConApple(string appleId, string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl);
+    Usuario? RegistrarClienteConApple(string appleId, string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl, string? countryCode = null);
 
     // Convertir Cliente a TiendaOwner
     Usuario? ConvertirClienteATienda(int usuarioId, string nombreTienda, string? descripcionTienda,
         string? telefonoTienda, string whatsAppTienda, string? emailTienda,
         string direccionTienda, decimal latitud, decimal longitud, string ciudad, string departamento,
-        TimeSpan? horarioApertura, TimeSpan? horarioCierre, string? diasAtencion, string? logoTienda, string? fotoTienda);
+        TimeSpan? horarioApertura, TimeSpan? horarioCierre, string? diasAtencion, string? logoTienda, string? fotoTienda, string? countryCode = null);
 
     // Actualizar perfil de usuario
     bool ActualizarPerfil(int usuarioId, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl = null);

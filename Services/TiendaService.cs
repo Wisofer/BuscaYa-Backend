@@ -233,18 +233,33 @@ public class TiendaService : ITiendaService
 
     public Tienda Crear(CrearTiendaRequest request, int? usuarioId = null)
     {
+        // Resolver país, moneda y datos regionales
+        string? targetCountryCode = request.CountryCode;
+        if (string.IsNullOrWhiteSpace(targetCountryCode) && usuarioId.HasValue)
+        {
+            var user = _context.Usuarios.Find(usuarioId.Value);
+            targetCountryCode = user?.CountryCode;
+        }
+
+        var regionEntry = RegionCatalog.FindByCode(targetCountryCode) ?? RegionCatalog.GetDefault();
+        var formattedWhatsApp = RegionCatalog.FormatPhoneForWhatsApp(request.WhatsApp, regionEntry.Code);
+
         var tienda = new Tienda
         {
             Nombre = request.Nombre,
             Descripcion = request.Descripcion,
             Telefono = request.Telefono,
-            WhatsApp = request.WhatsApp,
+            WhatsApp = formattedWhatsApp,
             Email = request.Email,
             Direccion = request.Direccion,
             Latitud = request.Latitud,
             Longitud = request.Longitud,
             Ciudad = request.Ciudad,
             Departamento = request.Departamento,
+            CountryCode = regionEntry.Code,
+            Pais = regionEntry.NameEs,
+            CurrencyCode = regionEntry.CurrencyIso,
+            CurrencySymbol = regionEntry.CurrencySymbol,
             HorarioApertura = request.HorarioApertura,
             HorarioCierre = request.HorarioCierre,
             DiasAtencion = request.DiasAtencion,
@@ -263,6 +278,18 @@ public class TiendaService : ITiendaService
 
         _context.Tiendas.Add(tienda);
         _context.SaveChanges();
+
+        // Sincronizar país con el usuario si aún no tenía uno configurado
+        if (usuarioId.HasValue)
+        {
+            var user = _context.Usuarios.Find(usuarioId.Value);
+            if (user != null && string.IsNullOrEmpty(user.CountryCode))
+            {
+                user.CountryCode = regionEntry.Code;
+                _context.SaveChanges();
+            }
+        }
+
         FireAndForgetNotifyNewStoreNearby(tienda.Id);
         return tienda;
     }
@@ -291,13 +318,32 @@ public class TiendaService : ITiendaService
         if (request.Nombre != null) tienda.Nombre = request.Nombre;
         if (request.Descripcion != null) tienda.Descripcion = request.Descripcion;
         if (request.Telefono != null) tienda.Telefono = request.Telefono;
-        if (request.WhatsApp != null) tienda.WhatsApp = request.WhatsApp;
+        if (request.WhatsApp != null)
+        {
+            tienda.WhatsApp = RegionCatalog.FormatPhoneForWhatsApp(request.WhatsApp, tienda.CountryCode);
+        }
         if (request.Email != null) tienda.Email = request.Email;
         if (request.Direccion != null) tienda.Direccion = request.Direccion;
         if (request.Latitud.HasValue) tienda.Latitud = request.Latitud.Value;
         if (request.Longitud.HasValue) tienda.Longitud = request.Longitud.Value;
         if (request.Ciudad != null) tienda.Ciudad = request.Ciudad;
         if (request.Departamento != null) tienda.Departamento = request.Departamento;
+        if (!string.IsNullOrWhiteSpace(request.CountryCode))
+        {
+            var entry = RegionCatalog.FindByCode(request.CountryCode);
+            if (entry != null)
+            {
+                tienda.CountryCode = entry.Code;
+                tienda.Pais = entry.NameEs;
+                tienda.CurrencyCode = entry.CurrencyIso;
+                tienda.CurrencySymbol = entry.CurrencySymbol;
+                // Re-normalizar WhatsApp con el nuevo país si no se pasó uno nuevo
+                if (request.WhatsApp == null && !string.IsNullOrEmpty(tienda.WhatsApp))
+                {
+                    tienda.WhatsApp = RegionCatalog.FormatPhoneForWhatsApp(tienda.WhatsApp, entry.Code);
+                }
+            }
+        }
         if (request.HorarioApertura.HasValue) tienda.HorarioApertura = request.HorarioApertura;
         if (request.HorarioCierre.HasValue) tienda.HorarioCierre = request.HorarioCierre;
         if (request.DiasAtencion != null) tienda.DiasAtencion = request.DiasAtencion;

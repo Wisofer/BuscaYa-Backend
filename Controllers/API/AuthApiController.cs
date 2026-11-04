@@ -7,11 +7,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace BuscaYa.Controllers.API;
 
 [ApiController]
 [Route("api/auth")]
+[EnableRateLimiting("auth-policy")]
 public class AuthApiController : ControllerBase
 {
     private readonly IAuthService _authService;
@@ -83,6 +85,7 @@ public class AuthApiController : ControllerBase
                 if (!usuario.Activo)
                     return Unauthorized(new { error = "Usuario inactivo" });
 
+                ApplyCountryFromOnboarding(usuario, request?.CountryCode);
                 var loginResponse = await GenerateLoginResponseAsync(usuario);
                 return Ok(loginResponse);
             }
@@ -121,6 +124,7 @@ public class AuthApiController : ControllerBase
                 if (!usuario.Activo)
                     return Unauthorized(new { error = "Usuario inactivo" });
 
+                ApplyCountryFromOnboarding(usuario, request?.CountryCode);
                 var loginResponse = await GenerateLoginResponseAsync(usuario);
                 return Ok(loginResponse);
             }
@@ -168,7 +172,8 @@ public class AuthApiController : ControllerBase
                 request.NombreCompleto,
                 request.Telefono,
                 emailNormalizado,
-                null
+                null,
+                request.CountryCode
             );
 
             if (usuario == null)
@@ -213,7 +218,8 @@ public class AuthApiController : ControllerBase
                 request.NombreCompleto,
                 request.Telefono,
                 emailNormalizado,
-                payload.PictureUrl
+                payload.PictureUrl,
+                request.CountryCode
             );
 
             if (usuario == null)
@@ -230,6 +236,17 @@ public class AuthApiController : ControllerBase
         {
             return BadRequest(new { error = ex.Message });
         }
+    }
+
+    private void ApplyCountryFromOnboarding(Usuario user, string? countryCode)
+    {
+        if (string.IsNullOrWhiteSpace(countryCode)) return;
+        var entry = RegionCatalog.FindByCode(countryCode);
+        if (entry == null) return;
+        if (!string.IsNullOrEmpty(user.CountryCode)) return;
+
+        user.CountryCode = entry.Code;
+        _authService.ActualizarPerfil(user.Id, user.NombreCompleto, user.Telefono, user.Email, user.FotoPerfilUrl);
     }
 
     private async Task<LoginResponse> GenerateLoginResponseAsync(Usuario usuario)
@@ -265,6 +282,7 @@ public class AuthApiController : ControllerBase
     private UsuarioInfoResponse MapToUsuarioInfo(Models.Entities.Usuario u, AccountDeletionStatusDto? del = null)
     {
         del ??= _accountDeletion.GetStatus(u.Id);
+        RegionCatalog.TryResolveCurrency(u.CountryCode, out var currencyCode, out var currencySymbol);
         return new UsuarioInfoResponse
         {
             Id = u.Id,
@@ -276,6 +294,8 @@ public class AuthApiController : ControllerBase
             FotoPerfilUrl = u.FotoPerfilUrl,
             CountryCode = u.CountryCode,
             FlagEmoji = RegionCatalog.GetFlagEmoji(u.CountryCode),
+            CurrencyCode = currencyCode,
+            CurrencySymbol = currencySymbol,
             TiendaId = u.TiendaId,
             AccountDeletionPending = del.pending,
             AccountDeletionScheduledAt = del.scheduled_deletion_at,
@@ -307,13 +327,14 @@ public class AuthApiController : ControllerBase
                 ? null 
                 : request.Email.Trim();
 
-            // Registrar cliente
+            // Registrar cliente con país opcional para onboarding atómico
             var usuario = _authService.RegistrarCliente(
                 request.NombreUsuario,
                 request.Contrasena,
                 request.NombreCompleto,
                 request.Telefono,
-                emailNormalizado
+                emailNormalizado,
+                request.CountryCode
             );
 
             if (usuario == null)
@@ -648,6 +669,7 @@ public class RegisterRequest
     public string NombreCompleto { get; set; } = string.Empty;
     public string? Email { get; set; }
     public string? Telefono { get; set; }
+    public string? CountryCode { get; set; }
 }
 
 public class ForgotPasswordRequest
@@ -713,6 +735,8 @@ public class UsuarioInfoResponse
     public string? FotoPerfilUrl { get; set; }
     public string? CountryCode { get; set; }
     public string? FlagEmoji { get; set; }
+    public string? CurrencyCode { get; set; }
+    public string? CurrencySymbol { get; set; }
     public int? TiendaId { get; set; }
 
     /// <summary>True si hay una eliminación programada pendiente.</summary>
@@ -747,6 +771,7 @@ public class ActualizarUsuarioRequest
 public class GoogleLoginRequest
 {
     public string IdToken { get; set; } = string.Empty;
+    public string? CountryCode { get; set; }
 }
 
 public class GoogleNeedsCompletionResponse
@@ -765,6 +790,7 @@ public class GoogleCompleteRequest
     public string NombreCompleto { get; set; } = string.Empty;
     public string? Telefono { get; set; }
     public string? Email { get; set; }
+    public string? CountryCode { get; set; }
 }
 
 // ——— Apple Auth ———
@@ -772,6 +798,7 @@ public class GoogleCompleteRequest
 public class AppleLoginRequest
 {
     public string IdentityToken { get; set; } = string.Empty;
+    public string? CountryCode { get; set; }
 }
 
 public class AppleNeedsCompletionResponse
@@ -789,6 +816,7 @@ public class AppleCompleteRequest
     public string NombreCompleto { get; set; } = string.Empty;
     public string? Telefono { get; set; }
     public string? Email { get; set; }
+    public string? CountryCode { get; set; }
 }
 
 public class UpdateCountryRequest
