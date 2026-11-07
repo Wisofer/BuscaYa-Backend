@@ -25,6 +25,7 @@ public class PublicController : ControllerBase
     private readonly IProductoService _productoService;
     private readonly INotificationTriggerService _notificationTriggerService;
     private readonly IMemoryCache _cache;
+    private readonly IAuthService _authService;
 
     private const string CategoriasCacheKey = "categorias_activas_cache";
 
@@ -35,7 +36,8 @@ public class PublicController : ControllerBase
         IAnalyticsService analyticsService,
         IProductoService productoService,
         INotificationTriggerService notificationTriggerService,
-        IMemoryCache cache)
+        IMemoryCache cache,
+        IAuthService authService)
     {
         _busquedaService = busquedaService;
         _tiendaService = tiendaService;
@@ -44,6 +46,7 @@ public class PublicController : ControllerBase
         _productoService = productoService;
         _notificationTriggerService = notificationTriggerService;
         _cache = cache;
+        _authService = authService;
     }
 
     private int? GetUserId()
@@ -90,6 +93,19 @@ public class PublicController : ControllerBase
     {
         try
         {
+            if (string.IsNullOrWhiteSpace(request.CountryCode))
+            {
+                var userId = GetUserId();
+                if (userId.HasValue)
+                {
+                    var usuario = _authService.ObtenerUsuarioPorId(userId.Value);
+                    if (!string.IsNullOrWhiteSpace(usuario?.CountryCode))
+                    {
+                        request.CountryCode = usuario.CountryCode;
+                    }
+                }
+            }
+
             var response = _busquedaService.BuscarProductos(request);
             return Ok(response);
         }
@@ -254,7 +270,7 @@ public class PublicController : ControllerBase
                     Longitud = producto.Tienda.Longitud,
                     FavoritosCount = producto.Tienda.FavoritosCount,
                     WhatsAppUrl = whatsappUrl, // Link personalizado con mensaje del producto
-                    EstaAbierta = TiendaHelper.CalcularEstaAbierta(producto.Tienda.EstaAbiertaManual, producto.Tienda.HorarioApertura, producto.Tienda.HorarioCierre),
+                    EstaAbierta = TiendaHelper.CalcularEstaAbierta(producto.Tienda.EstaAbiertaManual, producto.Tienda.HorarioApertura, producto.Tienda.HorarioCierre, producto.Tienda.CountryCode),
                     Email = producto.Tienda.Email,
                     DiasAtencion = producto.Tienda.DiasAtencion,
                     HorarioApertura = producto.Tienda.HorarioApertura?.ToString(@"hh\:mm"),
@@ -315,99 +331,56 @@ public class PublicController : ControllerBase
     }
 
     [HttpGet("tiendas")]
-    public IActionResult ObtenerTiendas([FromQuery] decimal? lat, [FromQuery] decimal? lng, [FromQuery] double? radioKm, [FromQuery] string? countryCode)
+    public IActionResult ObtenerTiendas([FromQuery] ObtenerTiendasRequest request)
     {
         try
         {
-            var code = string.IsNullOrWhiteSpace(countryCode) ? "ALL" : countryCode.Trim().ToUpper();
-
-            if (!lat.HasValue && !lng.HasValue)
+            if (string.IsNullOrWhiteSpace(request.CountryCode))
             {
-                var cacheKey = $"tiendas_todas_publicas_{code}";
-                if (!_cache.TryGetValue(cacheKey, out object? cachedResponse))
+                var userId = GetUserId();
+                if (userId.HasValue)
                 {
-                    var todas = _tiendaService.ObtenerTodas(countryCode);
-                    cachedResponse = todas.Select(t => new
+                    var usuario = _authService.ObtenerUsuarioPorId(userId.Value);
+                    if (!string.IsNullOrWhiteSpace(usuario?.CountryCode))
                     {
-                        t.Id,
-                        t.Nombre,
-                        t.Descripcion,
-                        t.Telefono,
-                        t.WhatsApp,
-                        t.Email,
-                        t.Direccion,
-                        t.Latitud,
-                        t.Longitud,
-                        t.Ciudad,
-                        t.Departamento,
-                        t.CountryCode,
-                        t.Pais,
-                        t.CurrencyCode,
-                        t.CurrencySymbol,
-                        t.LogoUrl,
-                        t.FotoUrl,
-                        t.Plan,
-                        EstaAbierta = TiendaHelper.CalcularEstaAbierta(t.EstaAbiertaManual, t.HorarioApertura, t.HorarioCierre),
-                        EstaAbiertaManual = t.EstaAbiertaManual,
-                        t.CalificacionPromedio,
-                        t.TotalCalificaciones,
-                        t.FavoritosCount,
-                        TokenPublico = t.TokenPublico,
-                        t.Slug
-                    }).ToList();
+                        request.CountryCode = usuario.CountryCode;
+                    }
+                }
+            }
 
-                    var cacheOptions = new MemoryCacheEntryOptions()
-                        .SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
+            bool hasFiltersOrGps = request.Latitud.HasValue ||
+                                   request.Longitud.HasValue ||
+                                   !string.IsNullOrWhiteSpace(request.Termino) ||
+                                   request.CategoriaId.HasValue ||
+                                   request.Pagina.HasValue;
 
-                    _cache.Set(cacheKey, cachedResponse, cacheOptions);
+            if (!hasFiltersOrGps)
+            {
+                var code = string.IsNullOrWhiteSpace(request.CountryCode) ? "ALL" : request.CountryCode.Trim().ToUpper();
+                var cacheKey = $"tiendas_explorar_publicas_{code}";
+                if (_cache.TryGetValue(cacheKey, out List<TiendaResponse>? cachedResponse) && cachedResponse != null)
+                {
+                    return Ok(cachedResponse);
                 }
 
-                return Ok(cachedResponse);
+                var tiendas = _tiendaService.ExplorarTiendas(request);
+                var cacheOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
+                _cache.Set(cacheKey, tiendas, cacheOptions);
+                return Ok(tiendas);
             }
 
-            List<BuscaYa.Models.Entities.Tienda> tiendas;
-            if (lat.HasValue && lng.HasValue)
-            {
-                tiendas = _tiendaService.BuscarCercanas(lat.Value, lng.Value, radioKm ?? 100.0, countryCode);
-            }
-            else
-            {
-                tiendas = _tiendaService.ObtenerTodas(countryCode);
-            }
-            var response = tiendas.Select(t => new
-            {
-                t.Id,
-                t.Nombre,
-                t.Descripcion,
-                t.Telefono,
-                t.WhatsApp,
-                t.Email,
-                t.Direccion,
-                t.Latitud,
-                t.Longitud,
-                t.Ciudad,
-                t.Departamento,
-                t.CountryCode,
-                t.Pais,
-                t.CurrencyCode,
-                t.CurrencySymbol,
-                t.LogoUrl,
-                t.FotoUrl,
-                t.Plan,
-                EstaAbierta = TiendaHelper.CalcularEstaAbierta(t.EstaAbiertaManual, t.HorarioApertura, t.HorarioCierre),
-                EstaAbiertaManual = t.EstaAbiertaManual,
-                t.CalificacionPromedio,
-                t.TotalCalificaciones,
-                t.FavoritosCount,
-                TokenPublico = t.TokenPublico,
-                t.Slug
-            });
-
+            var response = _tiendaService.ExplorarTiendas(request);
             return Ok(response);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = "Error al obtener las tiendas", mensaje = ex.Message });
+            return StatusCode(500, new
+            {
+                errorMessages = new[] { "Error al obtener las tiendas" },
+                error = "Error al obtener las tiendas",
+                mensaje = ex.Message
+            });
         }
     }
 
@@ -607,7 +580,7 @@ public class PublicController : ControllerBase
                     Longitud = producto.Tienda.Longitud,
                     FavoritosCount = producto.Tienda.FavoritosCount,
                     WhatsAppUrl = whatsappUrl,
-                    EstaAbierta = TiendaHelper.CalcularEstaAbierta(producto.Tienda.EstaAbiertaManual, producto.Tienda.HorarioApertura, producto.Tienda.HorarioCierre),
+                    EstaAbierta = TiendaHelper.CalcularEstaAbierta(producto.Tienda.EstaAbiertaManual, producto.Tienda.HorarioApertura, producto.Tienda.HorarioCierre, producto.Tienda.CountryCode),
                     Email = producto.Tienda.Email,
                     DiasAtencion = producto.Tienda.DiasAtencion,
                     HorarioApertura = producto.Tienda.HorarioApertura?.ToString(@"hh\:mm"),
@@ -708,7 +681,7 @@ public class PublicController : ControllerBase
                     Longitud = producto.Tienda.Longitud,
                     FavoritosCount = producto.Tienda.FavoritosCount,
                     WhatsAppUrl = whatsappUrl,
-                    EstaAbierta = TiendaHelper.CalcularEstaAbierta(producto.Tienda.EstaAbiertaManual, producto.Tienda.HorarioApertura, producto.Tienda.HorarioCierre),
+                    EstaAbierta = TiendaHelper.CalcularEstaAbierta(producto.Tienda.EstaAbiertaManual, producto.Tienda.HorarioApertura, producto.Tienda.HorarioCierre, producto.Tienda.CountryCode),
                     Email = producto.Tienda.Email,
                     DiasAtencion = producto.Tienda.DiasAtencion,
                     HorarioApertura = producto.Tienda.HorarioApertura?.ToString(@"hh\:mm"),

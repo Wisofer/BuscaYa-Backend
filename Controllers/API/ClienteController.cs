@@ -93,6 +93,38 @@ public class ClienteController : ControllerBase
         }
     }
 
+    [HttpDelete("favoritos/tienda/{tiendaId}")]
+    public IActionResult EliminarFavoritoTienda(int tiendaId)
+    {
+        try
+        {
+            var userId = GetUserId();
+            if (!userId.HasValue)
+                return Unauthorized();
+
+            var favorito = _context.Favoritos
+                .FirstOrDefault(f => f.UsuarioId == userId.Value && f.TiendaId == tiendaId);
+
+            if (favorito == null)
+                return NotFound(new { error = "La tienda no está en tus favoritos" });
+
+            var tienda = _context.Tiendas.Find(tiendaId);
+            if (tienda != null)
+            {
+                tienda.FavoritosCount = Math.Max(0, tienda.FavoritosCount - 1);
+            }
+
+            _context.Favoritos.Remove(favorito);
+            _context.SaveChanges();
+
+            return Ok(new { mensaje = "Tienda eliminada de favoritos" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error al eliminar favorito", mensaje = ex.Message });
+        }
+    }
+
     [HttpPost("favoritos/producto/{productoId}")]
     public IActionResult AgregarFavoritoProducto(int productoId)
     {
@@ -129,6 +161,38 @@ public class ClienteController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { error = "Error al agregar favorito", mensaje = ex.Message });
+        }
+    }
+
+    [HttpDelete("favoritos/producto/{productoId}")]
+    public IActionResult EliminarFavoritoProducto(int productoId)
+    {
+        try
+        {
+            var userId = GetUserId();
+            if (!userId.HasValue)
+                return Unauthorized();
+
+            var favorito = _context.Favoritos
+                .FirstOrDefault(f => f.UsuarioId == userId.Value && f.ProductoId == productoId);
+
+            if (favorito == null)
+                return NotFound(new { error = "El producto no está en tus favoritos" });
+
+            var producto = _context.Productos.Find(productoId);
+            if (producto != null)
+            {
+                producto.FavoritosCount = Math.Max(0, producto.FavoritosCount - 1);
+            }
+
+            _context.Favoritos.Remove(favorito);
+            _context.SaveChanges();
+
+            return Ok(new { mensaje = "Producto eliminado de favoritos" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error al eliminar favorito", mensaje = ex.Message });
         }
     }
 
@@ -295,6 +359,18 @@ public class ClienteController : ControllerBase
 
             // Convertir Cliente a TiendaOwner y crear tienda con soporte multi-país
             var targetCountry = !string.IsNullOrWhiteSpace(request.CountryCode) ? request.CountryCode : usuario.CountryCode;
+            
+            // Salvaguarda de ubicación GPS: si no se enviaron coordenadas o vienen en cero,
+            // evitar Null Island (Golfo de Guinea) asignando el centro geográfico del país del usuario.
+            var lat = request.Latitud;
+            var lng = request.Longitud;
+            if (lat == 0 && lng == 0)
+            {
+                var region = RegionCatalog.FindByCode(targetCountry) ?? RegionCatalog.GetDefault();
+                lat = (decimal)region.CenterLat;
+                lng = (decimal)region.CenterLng;
+            }
+
             var usuarioActualizado = _authService.ConvertirClienteATienda(
                 userId.Value,
                 request.NombreTienda,
@@ -303,8 +379,8 @@ public class ClienteController : ControllerBase
                 request.WhatsAppTienda,
                 request.EmailTienda,
                 request.DireccionTienda,
-                request.Latitud,
-                request.Longitud,
+                lat,
+                lng,
                 request.Ciudad,
                 request.Departamento,
                 request.HorarioApertura,
@@ -351,12 +427,27 @@ public class CrearDireccionRequest
 
 public class CrearTiendaRequest
 {
-    public string NombreTienda { get; set; } = string.Empty;
+    private string _nombreTienda = string.Empty;
+    public string NombreTienda { get => _nombreTienda; set => _nombreTienda = value; }
+    public string Nombre { get => _nombreTienda; set => _nombreTienda = string.IsNullOrWhiteSpace(_nombreTienda) ? value : _nombreTienda; }
+
     public string? DescripcionTienda { get; set; }
+    public string? Descripcion { get => DescripcionTienda; set => DescripcionTienda ??= value; }
+
     public string? TelefonoTienda { get; set; }
-    public string WhatsAppTienda { get; set; } = string.Empty;
+    public string? Telefono { get => TelefonoTienda; set => TelefonoTienda ??= value; }
+
+    private string _whatsAppTienda = string.Empty;
+    public string WhatsAppTienda { get => _whatsAppTienda; set => _whatsAppTienda = value; }
+    public string WhatsApp { get => _whatsAppTienda; set => _whatsAppTienda = string.IsNullOrWhiteSpace(_whatsAppTienda) ? value : _whatsAppTienda; }
+
     public string? EmailTienda { get; set; }
-    public string DireccionTienda { get; set; } = string.Empty;
+    public string? Email { get => EmailTienda; set => EmailTienda ??= value; }
+
+    private string _direccionTienda = string.Empty;
+    public string DireccionTienda { get => _direccionTienda; set => _direccionTienda = value; }
+    public string Direccion { get => _direccionTienda; set => _direccionTienda = string.IsNullOrWhiteSpace(_direccionTienda) ? value : _direccionTienda; }
+
     public decimal Latitud { get; set; }
     public decimal Longitud { get; set; }
     public string Ciudad { get; set; } = string.Empty;
@@ -366,5 +457,7 @@ public class CrearTiendaRequest
     public TimeSpan? HorarioCierre { get; set; }
     public string? DiasAtencion { get; set; }
     public string? LogoTienda { get; set; }
+    public string? LogoUrl { get => LogoTienda; set => LogoTienda ??= value; }
     public string? FotoTienda { get; set; }
+    public string? FotoUrl { get => FotoTienda; set => FotoTienda ??= value; }
 }

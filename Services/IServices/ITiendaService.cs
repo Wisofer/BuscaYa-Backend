@@ -10,6 +10,7 @@ public interface ITiendaService
     Tienda? ObtenerPorId(int id);
     List<Tienda> ObtenerPorCiudad(string ciudad);
     List<Tienda> BuscarCercanas(decimal lat, decimal lng, double radioKm, string? countryCode = null);
+    List<TiendaResponse> ExplorarTiendas(ObtenerTiendasRequest request);
     TiendaResponse? ObtenerDetalle(int id, decimal? latUsuario = null, decimal? lngUsuario = null);
     TiendaResponse? ObtenerDetallePorToken(string token, decimal? latUsuario = null, decimal? lngUsuario = null);
     TiendaResponse? ObtenerDetallePorSlug(string slug, decimal? latUsuario = null, decimal? lngUsuario = null);

@@ -47,6 +47,7 @@ public class TiendaInfoResponse
     public int FavoritosCount { get; set; }
     public string? WhatsAppUrl { get; set; } // Link de WhatsApp con mensaje personalizado (para productos)
     public bool EstaAbierta { get; set; }
+    public double? DistanciaKm { get; set; }
     public string? Email { get; set; }
     public string? DiasAtencion { get; set; }
     public string? HorarioApertura { get; set; }

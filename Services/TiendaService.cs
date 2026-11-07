@@ -73,14 +73,185 @@ public class TiendaService : ITiendaService
 
         var todas = query.ToList();
 
-        return todas
+        var locales = todas
             .Where(t =>
             {
                 var distancia = GeolocationHelper.CalcularDistanciaKm(lat, lng, t.Latitud, t.Longitud);
                 return distancia <= radioKm;
             })
+            .ToList();
+
+        // Fallback: Si no hay en el radio especificado, no dejamos la pantalla en blanco y devolvemos las más cercanas del país
+        var resultado = locales.Any() ? locales : todas;
+
+        return resultado
             .OrderBy(t => GeolocationHelper.CalcularDistanciaKm(lat, lng, t.Latitud, t.Longitud))
             .ToList();
+    }
+
+    public List<TiendaResponse> ExplorarTiendas(ObtenerTiendasRequest request)
+    {
+        var query = _context.Tiendas
+            .AsNoTracking()
+            .Include(t => t.Productos.Where(p => p.Activo))
+            .ThenInclude(p => p.Categoria)
+            .Where(t => t.Activo);
+
+        // 1. Filtrar por país
+        if (!string.IsNullOrWhiteSpace(request.CountryCode))
+        {
+            var code = request.CountryCode.Trim().ToUpper();
+            query = query.Where(t => t.CountryCode == code);
+        }
+
+        // 2. Filtrar por término (nombre, descripción, ciudad o departamento)
+        if (!string.IsNullOrWhiteSpace(request.Termino))
+        {
+            var termino = request.Termino.Trim().ToLower();
+            query = query.Where(t =>
+                t.Nombre.ToLower().Contains(termino) ||
+                (t.Descripcion != null && t.Descripcion.ToLower().Contains(termino)) ||
+                t.Ciudad.ToLower().Contains(termino) ||
+                (t.Departamento != null && t.Departamento.ToLower().Contains(termino)));
+        }
+
+        // 3. Filtrar por categoría
+        if (request.CategoriaId.HasValue)
+        {
+            query = query.Where(t => t.Productos.Any(p => p.CategoriaId == request.CategoriaId.Value));
+        }
+
+        var tiendas = query.ToList();
+        bool hasGps = request.Latitud.HasValue && request.Longitud.HasValue;
+
+        // 4. Filtrar por radio con Fallback inteligente (evita que la app quede en blanco)
+        if (hasGps)
+        {
+            var radioKm = (request.RadioKm.HasValue && request.RadioKm.Value > 0) ? request.RadioKm.Value : SD.RadioBusquedaDefault;
+            var locales = tiendas
+                .Where(t =>
+                {
+                    var distancia = GeolocationHelper.CalcularDistanciaKm(
+                        request.Latitud!.Value, request.Longitud!.Value,
+                        t.Latitud, t.Longitud);
+                    return distancia <= radioKm;
+                })
+                .ToList();
+
+            // Si hay tiendas en el radio, las usamos; si no, omitimos el corte estricto (fallback hiperlocal)
+            if (locales.Any())
+            {
+                tiendas = locales;
+            }
+        }
+
+        // 5. Proyección a TiendaResponse con cálculo geodésico y estado dinámico
+        var tiendasMapped = tiendas.Select(t =>
+        {
+            double? dist = null;
+            if (hasGps)
+            {
+                var d = GeolocationHelper.CalcularDistanciaKm(
+                    request.Latitud!.Value, request.Longitud!.Value,
+                    t.Latitud, t.Longitud);
+                dist = double.IsNaN(d) || double.IsInfinity(d) ? null : Math.Round(d, 2);
+            }
+
+            var estaAbierta = TiendaHelper.CalcularEstaAbierta(t.EstaAbiertaManual, t.HorarioApertura, t.HorarioCierre, t.CountryCode);
+
+            return new TiendaResponse
+            {
+                Id = t.Id,
+                Nombre = t.Nombre,
+                Descripcion = t.Descripcion,
+                Telefono = t.Telefono,
+                WhatsApp = t.WhatsApp,
+                Email = t.Email,
+                Direccion = t.Direccion,
+                Latitud = t.Latitud,
+                Longitud = t.Longitud,
+                Ciudad = t.Ciudad,
+                Departamento = t.Departamento,
+                CountryCode = t.CountryCode,
+                Pais = t.Pais,
+                CurrencyCode = t.CurrencyCode,
+                CurrencySymbol = t.CurrencySymbol,
+                HorarioApertura = t.HorarioApertura,
+                HorarioCierre = t.HorarioCierre,
+                DiasAtencion = t.DiasAtencion,
+                LogoUrl = t.LogoUrl,
+                FotoUrl = t.FotoUrl,
+                Plan = t.Plan,
+                EstaAbierta = estaAbierta,
+                EstaAbiertaManual = t.EstaAbiertaManual,
+                CalificacionPromedio = t.CalificacionPromedio,
+                TotalCalificaciones = t.TotalCalificaciones,
+                FavoritosCount = t.FavoritosCount,
+                TokenPublico = t.TokenPublico,
+                Slug = t.Slug,
+                CompartirUrl = WebUrlHelper.GenerarUrlTienda(t.Slug),
+                FacebookUrl = t.FacebookUrl,
+                InstagramUrl = t.InstagramUrl,
+                TikTokUrl = t.TikTokUrl,
+                ExchangeRateMode = t.ExchangeRateMode,
+                ExchangeRate = t.ExchangeRate,
+                DistanciaKm = dist,
+                Productos = t.Productos.Select(p => new ProductoSimpleResponse
+                {
+                    Id = p.Id,
+                    Nombre = p.Nombre,
+                    Precio = p.Precio,
+                    Moneda = p.Moneda,
+                    EnOferta = p.EnOferta,
+                    PrecioAnterior = p.PrecioAnterior,
+                    PorcentajeDescuento = ProductoHelper.CalcularPorcentajeDescuento(p.Precio, p.PrecioAnterior),
+                    FotoUrl = p.FotoUrl,
+                    CategoriaNombre = p.Categoria?.Nombre,
+                    TokenPublico = p.TokenPublico,
+                    Slug = p.Slug,
+                    FavoritosCount = p.FavoritosCount,
+                    CompartirUrl = WebUrlHelper.GenerarUrlProducto(t.Slug, p.Slug)
+                }).ToList()
+            };
+        }).AsEnumerable();
+
+        // 6. Ordenamiento por Proximidad (El punto clave) — Sin discriminación de planes (100% gratuito)
+        if (hasGps)
+        {
+            // Con GPS:
+            // 1. Boost para abiertas (EstaAbierta = true primero)
+            // 2. Orden ascendente por cercanía (distanciaKm ASC)
+            // 3. Popularidad y Calificaciones
+            // 4. Nombre
+            tiendasMapped = tiendasMapped
+                .OrderByDescending(t => t.EstaAbierta)
+                .ThenBy(t => t.DistanciaKm ?? double.MaxValue)
+                .ThenByDescending(t => t.FavoritosCount)
+                .ThenByDescending(t => t.CalificacionPromedio)
+                .ThenBy(t => t.Nombre);
+        }
+        else
+        {
+            // Sin GPS:
+            // 1. Tiendas abiertas primero
+            // 2. Popularidad y calificaciones
+            // 3. Nombre
+            tiendasMapped = tiendasMapped
+                .OrderByDescending(t => t.EstaAbierta)
+                .ThenByDescending(t => t.FavoritosCount)
+                .ThenByDescending(t => t.CalificacionPromedio)
+                .ThenBy(t => t.Nombre);
+        }
+
+        // 7. Paginación si fue requerida
+        if (request.Pagina.HasValue && request.TamanoPagina.HasValue && request.TamanoPagina.Value > 0)
+        {
+            var pagina = Math.Max(1, request.Pagina.Value);
+            var tamano = Math.Min(request.TamanoPagina.Value, SD.TamanoPaginaMaximo);
+            tiendasMapped = tiendasMapped.Skip((pagina - 1) * tamano).Take(tamano);
+        }
+
+        return tiendasMapped.ToList();
     }
 
     public TiendaResponse? ObtenerDetalle(int id, decimal? latUsuario = null, decimal? lngUsuario = null)
@@ -111,7 +282,7 @@ public class TiendaService : ITiendaService
             LogoUrl = tienda.LogoUrl,
             FotoUrl = tienda.FotoUrl,
             Plan = tienda.Plan,
-            EstaAbierta = TiendaHelper.CalcularEstaAbierta(tienda.EstaAbiertaManual, tienda.HorarioApertura, tienda.HorarioCierre),
+            EstaAbierta = TiendaHelper.CalcularEstaAbierta(tienda.EstaAbiertaManual, tienda.HorarioApertura, tienda.HorarioCierre, tienda.CountryCode),
             EstaAbiertaManual = tienda.EstaAbiertaManual,
             CalificacionPromedio = tienda.CalificacionPromedio,
             TotalCalificaciones = tienda.TotalCalificaciones,
@@ -144,9 +315,10 @@ public class TiendaService : ITiendaService
 
         if (latUsuario.HasValue && lngUsuario.HasValue)
         {
-            response.DistanciaKm = GeolocationHelper.CalcularDistanciaKm(
+            var d = GeolocationHelper.CalcularDistanciaKm(
                 latUsuario.Value, lngUsuario.Value,
                 tienda.Latitud, tienda.Longitud);
+            response.DistanciaKm = double.IsNaN(d) || double.IsInfinity(d) ? null : Math.Round(d, 2);
         }
 
         return response;
@@ -184,13 +356,17 @@ public class TiendaService : ITiendaService
             Longitud = tienda.Longitud,
             Ciudad = tienda.Ciudad,
             Departamento = tienda.Departamento,
+            CountryCode = tienda.CountryCode,
+            Pais = tienda.Pais,
+            CurrencyCode = tienda.CurrencyCode,
+            CurrencySymbol = tienda.CurrencySymbol,
             HorarioApertura = tienda.HorarioApertura,
             HorarioCierre = tienda.HorarioCierre,
             DiasAtencion = tienda.DiasAtencion,
             LogoUrl = tienda.LogoUrl,
             FotoUrl = tienda.FotoUrl,
             Plan = tienda.Plan,
-            EstaAbierta = TiendaHelper.CalcularEstaAbierta(tienda.EstaAbiertaManual, tienda.HorarioApertura, tienda.HorarioCierre),
+            EstaAbierta = TiendaHelper.CalcularEstaAbierta(tienda.EstaAbiertaManual, tienda.HorarioApertura, tienda.HorarioCierre, tienda.CountryCode),
             EstaAbiertaManual = tienda.EstaAbiertaManual,
             CalificacionPromedio = tienda.CalificacionPromedio,
             TotalCalificaciones = tienda.TotalCalificaciones,
@@ -223,9 +399,10 @@ public class TiendaService : ITiendaService
 
         if (latUsuario.HasValue && lngUsuario.HasValue)
         {
-            response.DistanciaKm = GeolocationHelper.CalcularDistanciaKm(
+            var d = GeolocationHelper.CalcularDistanciaKm(
                 latUsuario.Value, lngUsuario.Value,
                 tienda.Latitud, tienda.Longitud);
+            response.DistanciaKm = double.IsNaN(d) || double.IsInfinity(d) ? null : Math.Round(d, 2);
         }
 
         return response;

@@ -9,7 +9,7 @@ public class CrearProductoRequest
     public bool EnOferta { get; set; }
     /// <summary>Precio anterior cuando EnOferta es true; opcional. Se usa para mostrar "antes X, ahora Y" y % descuento.</summary>
     public decimal? PrecioAnterior { get; set; }
-    public string Moneda { get; set; } = "C$";
+    public string? Moneda { get; set; }
     public int CategoriaId { get; set; }
     /// <summary>URL de la imagen principal (para listados). Si no se envía, se usa la primera de ImagenesUrls.</summary>
     public string? FotoUrl { get; set; }

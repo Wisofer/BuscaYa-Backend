@@ -111,6 +111,13 @@ public class ProductoService : IProductoService
             request.Nombre,
             _context.Productos.Where(p => p.TiendaId == tiendaId),
             p => p.Slug);
+
+        // Herencia regional de moneda: si el request no envía moneda o trae C$ residual en país distinto de NI,
+        // hereda automáticamente el símbolo o código de moneda oficial de la tienda (ej: $ para US/MX, ₡ para CR).
+        var monedaFinal = (!string.IsNullOrWhiteSpace(request.Moneda) && (request.Moneda != "C$" || tienda.CountryCode == "NI"))
+            ? request.Moneda
+            : (!string.IsNullOrWhiteSpace(tienda.CurrencySymbol) ? tienda.CurrencySymbol : (tienda.CurrencyCode ?? "USD"));
+
         var producto = new Producto
         {
             TiendaId = tiendaId,
@@ -119,7 +126,7 @@ public class ProductoService : IProductoService
             Precio = request.Precio,
             PrecioAnterior = request.EnOferta ? request.PrecioAnterior : null,
             EnOferta = request.EnOferta,
-            Moneda = request.Moneda,
+            Moneda = monedaFinal,
             CategoriaId = request.CategoriaId,
             FotoUrl = imagenPrincipal,
             Activo = true,

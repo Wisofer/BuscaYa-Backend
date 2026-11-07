@@ -41,11 +41,21 @@ public static class RegionCatalog
         new CountryEntry("PE", "Perú", "PEN", "S/", "America/Lima", -12.0464, -77.0428, 11),
         new CountryEntry("DO", "República Dominicana", "DOP", "RD$", "America/Santo_Domingo", 18.4861, -69.9312, 11),
         new CountryEntry("UY", "Uruguay", "UYU", "$", "America/Montevideo", -34.9011, -56.1645, 11),
-        new CountryEntry("VE", "Venezuela", "USD", "$", "America/Caracas", 10.4806, -66.9036, 11)
+        new CountryEntry("VE", "Venezuela", "USD", "$", "America/Caracas", 10.4806, -66.9036, 11),
+        new CountryEntry("US", "Estados Unidos", "USD", "$", "America/New_York", 37.0902, -95.7129, 4)
     };
 
     private static readonly Dictionary<string, List<string>> DepartmentsByCountry = new(StringComparer.OrdinalIgnoreCase)
     {
+        ["US"] = new()
+        {
+            "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia",
+            "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland",
+            "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
+            "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
+            "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming",
+            "District of Columbia", "Puerto Rico"
+        },
         ["NI"] = new() { "Managua", "León", "Granada", "Masaya", "Carazo", "Chinandega", "Rivas", "Estelí", "Matagalpa", "Jinotega", "Madriz", "Nueva Segovia", "Chontales", "Boaco", "Río San Juan", "RACCN", "RACCS" },
         ["GT"] = new() { "Guatemala", "Sacatepéquez", "Quetzaltenango", "Alta Verapaz", "Escuintla", "Izabal", "Huehuetenango", "San Marcos", "Chimaltenango", "Suchitepéquez", "Santa Rosa", "Retalhuleu", "Sololá", "Petén", "Chiquimula", "El Progreso", "Jalapa", "Jutiapa", "Quiché", "Totonicapán", "Zacapa", "Baja Verapaz" },
         ["SV"] = new() { "San Salvador", "La Libertad", "Santa Ana", "San Miguel", "Sonsonate", "Usulután", "Ahuachapán", "La Paz", "Cuscatlán", "Chalatenango", "Morazán", "San Vicente", "Cabañas", "La Unión" },
@@ -121,6 +131,7 @@ public static class RegionCatalog
             "PE" => "🇵🇪",
             "UY" => "🇺🇾",
             "VE" => "🇻🇪",
+            "US" or "USA" => "🇺🇸",
             _ => "🌐"
         };
     }
@@ -129,6 +140,7 @@ public static class RegionCatalog
     {
         return (countryCode ?? "").Trim().ToUpperInvariant() switch
         {
+            "US" or "USA" => "EIN",
             "VE" => "RIF",
             "CO" or "GT" or "SV" or "BO" => "NIT",
             "MX" => "RFC",
