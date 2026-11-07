@@ -215,6 +215,12 @@ public class TiendaService : ITiendaService
             };
         }).AsEnumerable();
 
+        // 5.1 Filtrar solo tiendas abiertas si se especificó
+        if (request.SoloAbiertas == true)
+        {
+            tiendasMapped = tiendasMapped.Where(t => t.EstaAbierta);
+        }
+
         // 6. Ordenamiento por Proximidad (El punto clave) — Sin discriminación de planes (100% gratuito)
         if (hasGps)
         {

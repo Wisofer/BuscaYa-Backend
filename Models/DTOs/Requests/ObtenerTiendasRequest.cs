@@ -16,6 +16,7 @@ public class ObtenerTiendasRequest
     public int? CategoriaId { get; set; }
     public string? CountryCode { get; set; }
     public string? Termino { get; set; }
+    public bool? SoloAbiertas { get; set; }
     public int? Pagina { get; set; }
     public int? TamanoPagina { get; set; }
 }

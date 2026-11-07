@@ -16,4 +16,10 @@ public class BuscarRequest
     public int? CategoriaId { get; set; }
     public int Pagina { get; set; } = 1;
     public int TamanoPagina { get; set; } = 20;
+
+    // Filtros inteligentes adicionales
+    public bool? SoloOfertas { get; set; }
+    public bool? SoloAbiertas { get; set; }
+    public decimal? PrecioMin { get; set; }
+    public decimal? PrecioMax { get; set; }
 }

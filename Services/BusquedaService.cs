@@ -48,8 +48,32 @@ public class BusquedaService : IBusquedaService
             query = query.Where(p => p.CategoriaId == request.CategoriaId.Value);
         }
 
+        // Filtrar por solo ofertas
+        if (request.SoloOfertas == true)
+        {
+            query = query.Where(p => p.EnOferta);
+        }
+
+        // Filtrar por rango de precio
+        if (request.PrecioMin.HasValue)
+        {
+            query = query.Where(p => p.Precio >= request.PrecioMin.Value);
+        }
+        if (request.PrecioMax.HasValue)
+        {
+            query = query.Where(p => p.Precio <= request.PrecioMax.Value);
+        }
+
         var productos = query.ToList();
         bool hasGps = request.Latitud.HasValue && request.Longitud.HasValue;
+
+        // Filtrar productos por estado de tienda abierta
+        if (request.SoloAbiertas == true)
+        {
+            productos = productos
+                .Where(p => TiendaHelper.CalcularEstaAbierta(p.Tienda.EstaAbiertaManual, p.Tienda.HorarioApertura, p.Tienda.HorarioCierre, p.Tienda.CountryCode))
+                .ToList();
+        }
 
         // Filtrar por distancia si hay coordenadas GPS con Fallback inteligente
         if (hasGps)
@@ -208,6 +232,14 @@ public class BusquedaService : IBusquedaService
         }
 
         var tiendasList = queryTiendas.ToList();
+
+        // Filtrar tiendas abiertas si se solicitó
+        if (request.SoloAbiertas == true)
+        {
+            tiendasList = tiendasList
+                .Where(t => TiendaHelper.CalcularEstaAbierta(t.EstaAbiertaManual, t.HorarioApertura, t.HorarioCierre, t.CountryCode))
+                .ToList();
+        }
 
         // Filtrar tiendas por distancia con Fallback inteligente
         if (hasGps)
