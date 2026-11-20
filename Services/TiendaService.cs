@@ -73,6 +73,12 @@ public class TiendaService : ITiendaService
 
         var todas = query.ToList();
 
+        // Fallback anti-pantalla en blanco si el país no tiene comercios registrados aún
+        if (todas.Count == 0 && !string.IsNullOrWhiteSpace(countryCode))
+        {
+            todas = _context.Tiendas.AsNoTracking().Where(t => t.Activo).ToList();
+        }
+
         var locales = todas
             .Where(t =>
             {
@@ -122,6 +128,33 @@ public class TiendaService : ITiendaService
         }
 
         var tiendas = query.ToList();
+
+        // Fallback anti-pantalla en blanco si el país no tiene comercios registrados aún (ej. revisor de Apple o país nuevo)
+        if (tiendas.Count == 0 && !string.IsNullOrWhiteSpace(request.CountryCode))
+        {
+            var fallbackQuery = _context.Tiendas
+                .AsNoTracking()
+                .Include(t => t.Productos.Where(p => p.Activo))
+                .ThenInclude(p => p.Categoria)
+                .Where(t => t.Activo);
+
+            if (!string.IsNullOrWhiteSpace(request.Termino))
+            {
+                var termino = request.Termino.Trim().ToLower();
+                fallbackQuery = fallbackQuery.Where(t =>
+                    t.Nombre.ToLower().Contains(termino) ||
+                    (t.Descripcion != null && t.Descripcion.ToLower().Contains(termino)) ||
+                    t.Ciudad.ToLower().Contains(termino) ||
+                    (t.Departamento != null && t.Departamento.ToLower().Contains(termino)));
+            }
+
+            if (request.CategoriaId.HasValue)
+            {
+                fallbackQuery = fallbackQuery.Where(t => t.Productos.Any(p => p.CategoriaId == request.CategoriaId.Value));
+            }
+
+            tiendas = fallbackQuery.ToList();
+        }
         bool hasGps = request.Latitud.HasValue && request.Longitud.HasValue;
 
         // 4. Filtrar por radio con Fallback inteligente (evita que la app quede en blanco)

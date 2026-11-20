@@ -65,6 +65,47 @@ public class BusquedaService : IBusquedaService
         }
 
         var productos = query.ToList();
+
+        // Fallback anti-pantalla en blanco: si el país seleccionado aún no tiene comercios/productos registrados
+        // (ej: un revisor de Apple o usuario en un país nuevo), fallback a comercios activos para no dejar la app vacía.
+        if (productos.Count == 0 && !string.IsNullOrWhiteSpace(request.CountryCode))
+        {
+            var fallbackQuery = _context.Productos
+                .Include(p => p.Tienda)
+                .Include(p => p.Categoria)
+                .Where(p => p.Activo && p.Tienda.Activo);
+
+            if (!string.IsNullOrWhiteSpace(request.Termino))
+            {
+                var termino = request.Termino.ToLower();
+                fallbackQuery = fallbackQuery.Where(p =>
+                    p.Nombre.ToLower().Contains(termino) ||
+                    (p.Descripcion != null && p.Descripcion.ToLower().Contains(termino)) ||
+                    p.Tienda.Nombre.ToLower().Contains(termino));
+            }
+
+            if (request.CategoriaId.HasValue)
+            {
+                fallbackQuery = fallbackQuery.Where(p => p.CategoriaId == request.CategoriaId.Value);
+            }
+
+            if (request.SoloOfertas == true)
+            {
+                fallbackQuery = fallbackQuery.Where(p => p.EnOferta);
+            }
+
+            if (request.PrecioMin.HasValue)
+            {
+                fallbackQuery = fallbackQuery.Where(p => p.Precio >= request.PrecioMin.Value);
+            }
+            if (request.PrecioMax.HasValue)
+            {
+                fallbackQuery = fallbackQuery.Where(p => p.Precio <= request.PrecioMax.Value);
+            }
+
+            productos = fallbackQuery.ToList();
+        }
+
         bool hasGps = request.Latitud.HasValue && request.Longitud.HasValue;
 
         // Filtrar productos por estado de tienda abierta
@@ -232,6 +273,32 @@ public class BusquedaService : IBusquedaService
         }
 
         var tiendasList = queryTiendas.ToList();
+
+        // Fallback anti-pantalla en blanco para tiendas: si el país no tiene comercios aún, fallback global
+        if (tiendasList.Count == 0 && !string.IsNullOrWhiteSpace(request.CountryCode))
+        {
+            var fallbackTiendas = _context.Tiendas
+                .Include(t => t.Productos.Where(p => p.Activo))
+                .ThenInclude(p => p.Categoria)
+                .Where(t => t.Activo);
+
+            if (!string.IsNullOrWhiteSpace(request.Termino))
+            {
+                var termino = request.Termino.ToLower();
+                fallbackTiendas = fallbackTiendas.Where(t => 
+                    t.Nombre.ToLower().Contains(termino) || 
+                    (t.Descripcion != null && t.Descripcion.ToLower().Contains(termino)) ||
+                    t.Ciudad.ToLower().Contains(termino) ||
+                    (t.Departamento != null && t.Departamento.ToLower().Contains(termino)));
+            }
+
+            if (request.CategoriaId.HasValue)
+            {
+                fallbackTiendas = fallbackTiendas.Where(t => t.Productos.Any(p => p.CategoriaId == request.CategoriaId.Value));
+            }
+
+            tiendasList = fallbackTiendas.ToList();
+        }
 
         // Filtrar tiendas abiertas si se solicitó
         if (request.SoloAbiertas == true)

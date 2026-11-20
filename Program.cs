@@ -243,6 +243,9 @@ using (var scope = app.Services.CreateScope())
         
         // Poblar datos de San Carlos
         await SeedSanCarlos.SeedAsync(dbContext);
+
+        // Poblar comercios y productos de muestra para Estados Unidos (Apple Review & EE.UU.)
+        await SeedAppReviewData.SeedAsync(dbContext, logger);
     }
     catch (Exception ex)
     {
