@@ -127,7 +127,7 @@ public class VenezuelaRatePushBackgroundService : BackgroundService
         var veTiendas = await db.Tiendas
             .AsNoTracking()
             .Include(b => b.Usuario)
-            .ThenInclude(u => u.Dispositivos)
+            .ThenInclude(u => u!.Dispositivos)
             .Where(b => b.Activo && b.CountryCode == "VE")
             .ToListAsync(stoppingToken);
 
@@ -189,7 +189,7 @@ public class VenezuelaRatePushBackgroundService : BackgroundService
                 ["diff"] = FormatRateExact(diff)
             };
 
-            await push.SendPushNotificationAsync(null, bcvDevices, extraData, dataOnly: false);
+            await push.SendPushNotificationAsync(bcvDevices, title, body, extraData, typeTag);
         }
 
         // 2. Enviar lote masivo Euro BCV
@@ -212,7 +212,7 @@ public class VenezuelaRatePushBackgroundService : BackgroundService
                 ["diff"] = FormatRateExact(diff)
             };
 
-            await push.SendPushNotificationAsync(null, eurDevices, extraData, dataOnly: false);
+            await push.SendPushNotificationAsync(eurDevices, title, body, extraData, typeTag);
         }
 
         // 3. Enviar lote masivo Dólar Paralelo
@@ -235,7 +235,7 @@ public class VenezuelaRatePushBackgroundService : BackgroundService
                 ["diff"] = FormatRateExact(diff)
             };
 
-            await push.SendPushNotificationAsync(null, paraleloDevices, extraData, dataOnly: false);
+            await push.SendPushNotificationAsync(paraleloDevices, title, body, extraData, typeTag);
         }
 
         int totalSentDevices = bcvDevices.Count + eurDevices.Count + paraleloDevices.Count;

@@ -57,18 +57,18 @@ builder.Services.AddRateLimiter(options =>
 
     options.AddFixedWindowLimiter("auth-policy", opt =>
     {
-        opt.PermitLimit = 15;
+        opt.PermitLimit = 40;
         opt.Window = TimeSpan.FromMinutes(1);
         opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-        opt.QueueLimit = 0;
+        opt.QueueLimit = 5;
     });
 
     options.AddFixedWindowLimiter("api-policy", opt =>
     {
-        opt.PermitLimit = 120;
+        opt.PermitLimit = 240;
         opt.Window = TimeSpan.FromMinutes(1);
         opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-        opt.QueueLimit = 2;
+        opt.QueueLimit = 5;
     });
 });
 

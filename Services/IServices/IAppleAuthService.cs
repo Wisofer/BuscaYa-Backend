@@ -7,5 +7,5 @@ public record AppleTokenPayload(string AppleId, string? Email, string? Name);
 public interface IAppleAuthService
 {
     /// <summary>Verifica el identityToken con las claves públicas de Apple (JWKS) y devuelve sub (AppleId), email y name si vienen en el token.</summary>
-    Task<AppleTokenPayload> VerifyIdentityTokenAsync(string identityToken, CancellationToken cancellationToken = default);
+    Task<AppleTokenPayload> VerifyIdentityTokenAsync(string identityToken, string? userIdentifier = null, CancellationToken cancellationToken = default);
 }

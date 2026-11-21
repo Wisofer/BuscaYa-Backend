@@ -24,6 +24,8 @@ public interface IAuthService
     Usuario? ObtenerUsuarioPorAppleIdOEmail(string? appleId, string? email);
     /// <summary>Registra cliente vinculado a Apple (appleId, contraseña hasheada, etc.).</summary>
     Usuario? RegistrarClienteConApple(string appleId, string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl, string? countryCode = null);
+    /// <summary>Vincula AppleId a un usuario existente si aún no lo tiene vinculado.</summary>
+    bool VincularAppleId(int usuarioId, string appleId);
 
     // Convertir Cliente a TiendaOwner
     Usuario? ConvertirClienteATienda(int usuarioId, string nombreTienda, string? descripcionTienda,
@@ -32,7 +34,7 @@ public interface IAuthService
         TimeSpan? horarioApertura, TimeSpan? horarioCierre, string? diasAtencion, string? logoTienda, string? fotoTienda, string? countryCode = null);
 
     // Actualizar perfil de usuario
-    bool ActualizarPerfil(int usuarioId, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl = null);
+    bool ActualizarPerfil(int usuarioId, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl = null, string? countryCode = null);
 
     // Recuperación de contraseña
     Task RequestPasswordResetAsync(string email, CancellationToken cancellationToken = default);

@@ -116,13 +116,18 @@ public class AuthApiController : ControllerBase
 
         try
         {
-            var payload = await _appleAuthService.VerifyIdentityTokenAsync(request.IdentityToken, cancellationToken).ConfigureAwait(false);
+            var payload = await _appleAuthService.VerifyIdentityTokenAsync(request.IdentityToken, request.UserIdentifier, cancellationToken).ConfigureAwait(false);
             var usuario = _authService.ObtenerUsuarioPorAppleIdOEmail(payload.AppleId, payload.Email);
 
             if (usuario != null)
             {
                 if (!usuario.Activo)
                     return Unauthorized(new { error = "Usuario inactivo" });
+
+                if (string.IsNullOrEmpty(usuario.AppleId) && !string.IsNullOrEmpty(payload.AppleId))
+                {
+                    _authService.VincularAppleId(usuario.Id, payload.AppleId);
+                }
 
                 ApplyCountryFromOnboarding(usuario, request?.CountryCode);
                 var loginResponse = await GenerateLoginResponseAsync(usuario);
@@ -156,7 +161,7 @@ public class AuthApiController : ControllerBase
 
         try
         {
-            var payload = await _appleAuthService.VerifyIdentityTokenAsync(request.IdentityToken, cancellationToken).ConfigureAwait(false);
+            var payload = await _appleAuthService.VerifyIdentityTokenAsync(request.IdentityToken, request.UserIdentifier, cancellationToken).ConfigureAwait(false);
             var usuarioExistente = _authService.ObtenerUsuarioPorAppleIdOEmail(payload.AppleId, payload.Email);
             if (usuarioExistente != null)
                 return BadRequest(new { error = "Este usuario de Apple ya tiene una cuenta. Use Iniciar sesión con Apple." });
@@ -164,7 +169,9 @@ public class AuthApiController : ControllerBase
             if (_authService.ExisteNombreUsuario(request.NombreUsuario))
                 return BadRequest(new { error = "El nombre de usuario ya está en uso" });
 
-            string? emailNormalizado = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
+            string? emailNormalizado = !string.IsNullOrWhiteSpace(request.Email)
+                ? request.Email.Trim()
+                : (!string.IsNullOrWhiteSpace(payload.Email) ? payload.Email.Trim() : null);
             var usuario = _authService.RegistrarClienteConApple(
                 payload.AppleId,
                 request.NombreUsuario,
@@ -210,7 +217,9 @@ public class AuthApiController : ControllerBase
             if (_authService.ExisteNombreUsuario(request.NombreUsuario))
                 return BadRequest(new { error = "El nombre de usuario ya está en uso" });
 
-            string? emailNormalizado = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
+            string? emailNormalizado = !string.IsNullOrWhiteSpace(request.Email)
+                ? request.Email.Trim()
+                : (!string.IsNullOrWhiteSpace(payload.Email) ? payload.Email.Trim() : null);
             var usuario = _authService.RegistrarClienteConGoogle(
                 payload.GoogleId,
                 request.NombreUsuario,
@@ -246,7 +255,7 @@ public class AuthApiController : ControllerBase
         if (!string.IsNullOrEmpty(user.CountryCode)) return;
 
         user.CountryCode = entry.Code;
-        _authService.ActualizarPerfil(user.Id, user.NombreCompleto, user.Telefono, user.Email, user.FotoPerfilUrl);
+        _authService.ActualizarPerfil(user.Id, user.NombreCompleto, user.Telefono, user.Email, user.FotoPerfilUrl, entry.Code);
     }
 
     private async Task<LoginResponse> GenerateLoginResponseAsync(Usuario usuario)
@@ -505,7 +514,7 @@ public class AuthApiController : ControllerBase
             }
 
             // Actualizar perfil (incl. fotoPerfilUrl si viene)
-            var actualizado = _authService.ActualizarPerfil(userId, request.NombreCompleto, request.Telefono, emailNormalizado, request.FotoPerfilUrl);
+            var actualizado = _authService.ActualizarPerfil(userId, request.NombreCompleto, request.Telefono, emailNormalizado, request.FotoPerfilUrl, request.CountryCode);
             
             if (!actualizado)
             {
@@ -561,7 +570,7 @@ public class AuthApiController : ControllerBase
             }
 
             usuario.CountryCode = entry.Code;
-            _authService.ActualizarPerfil(usuario.Id, usuario.NombreCompleto, usuario.Telefono, usuario.Email, usuario.FotoPerfilUrl);
+            _authService.ActualizarPerfil(usuario.Id, usuario.NombreCompleto, usuario.Telefono, usuario.Email, usuario.FotoPerfilUrl, entry.Code);
 
             return Ok(new
             {
@@ -764,6 +773,7 @@ public class ActualizarUsuarioRequest
     public string? Telefono { get; set; }
     public string? Email { get; set; }
     public string? FotoPerfilUrl { get; set; }
+    public string? CountryCode { get; set; }
 }
 
 // ——— Google Auth ———
@@ -798,6 +808,8 @@ public class GoogleCompleteRequest
 public class AppleLoginRequest
 {
     public string IdentityToken { get; set; } = string.Empty;
+    public string? UserIdentifier { get; set; }
+    public string? AuthorizationCode { get; set; }
     public string? CountryCode { get; set; }
 }
 
@@ -811,6 +823,7 @@ public class AppleNeedsCompletionResponse
 public class AppleCompleteRequest
 {
     public string IdentityToken { get; set; } = string.Empty;
+    public string? UserIdentifier { get; set; }
     public string NombreUsuario { get; set; } = string.Empty;
     public string Contrasena { get; set; } = string.Empty;
     public string NombreCompleto { get; set; } = string.Empty;

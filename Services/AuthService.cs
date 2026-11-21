@@ -200,6 +200,24 @@ public class AuthService : IAuthService
         return null;
     }
 
+    public bool VincularAppleId(int usuarioId, string appleId)
+    {
+        if (usuarioId <= 0 || string.IsNullOrWhiteSpace(appleId))
+            return false;
+
+        var usuario = _context.Usuarios.FirstOrDefault(u => u.Id == usuarioId);
+        if (usuario == null) return false;
+
+        if (string.IsNullOrEmpty(usuario.AppleId))
+        {
+            usuario.AppleId = appleId.Trim();
+            _context.SaveChanges();
+            return true;
+        }
+
+        return false;
+    }
+
     public Usuario? RegistrarClienteConApple(string appleId, string nombreUsuario, string contrasena, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl, string? countryCode = null)
     {
         if (ExisteNombreUsuario(nombreUsuario))
@@ -307,7 +325,7 @@ public class AuthService : IAuthService
         return usuario;
     }
 
-    public bool ActualizarPerfil(int usuarioId, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl = null)
+    public bool ActualizarPerfil(int usuarioId, string nombreCompleto, string? telefono, string? email, string? fotoPerfilUrl = null, string? countryCode = null)
     {
         var usuario = _context.Usuarios.Find(usuarioId);
         if (usuario == null || !usuario.Activo)
@@ -325,6 +343,15 @@ public class AuthService : IAuthService
         usuario.Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim();
         if (fotoPerfilUrl != null)
             usuario.FotoPerfilUrl = fotoPerfilUrl;
+
+        if (!string.IsNullOrWhiteSpace(countryCode))
+        {
+            var entry = RegionCatalog.FindByCode(countryCode);
+            if (entry != null)
+            {
+                usuario.CountryCode = entry.Code;
+            }
+        }
 
         _context.SaveChanges();
         return true;

@@ -66,6 +66,26 @@ public static class SeedAppReviewData
                 await context.SaveChangesAsync();
             }
 
+            // 1b. Obtener o crear usuario cliente para pruebas del Revisor de Apple
+            var demoClient = await context.Usuarios.FirstOrDefaultAsync(u => u.Email == "demo@buscaya.app" || u.NombreUsuario == "demo_apple");
+            if (demoClient == null)
+            {
+                demoClient = new Usuario
+                {
+                    NombreUsuario = "demo_apple",
+                    Email = "demo@buscaya.app",
+                    Contrasena = PasswordHelper.HashPassword("BuscaYa2026!"),
+                    NombreCompleto = "Apple Reviewer Customer",
+                    Telefono = "+14085550199",
+                    Rol = SD.RolCliente,
+                    CountryCode = "US",
+                    Activo = true,
+                    FechaCreacion = DateTime.UtcNow
+                };
+                context.Usuarios.Add(demoClient);
+                await context.SaveChangesAsync();
+            }
+
             // 2. Mapear categorías existentes
             var categorias = await context.Categorias.ToListAsync();
             int GetCatId(params string[] nombres)
